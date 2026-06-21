@@ -1,0 +1,23 @@
+import { configureStore } from "@reduxjs/toolkit";
+
+import { authReducer } from "@/features/auth/authSlice";
+
+/**
+ * Feature slice pattern (add per module under src/features/<feature>/):
+ *
+ * 1. <feature>Service.ts  — HTTP calls via apiClient (no Redux)
+ * 2. <feature>Slice.ts    — createSlice + createAsyncThunk wrapping the service
+ * 3. <feature>Selectors.ts — memoized selectors for derived state
+ * 4. Register the reducer below: `<feature>: featureReducer`
+ *
+ * Components use useAppDispatch / useAppSelector from @/app/hooks.
+ * Keep local form/UI state in components; use Redux for shared global state only.
+ */
+export const store = configureStore({
+  reducer: {
+    auth: authReducer,
+  },
+});
+
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
