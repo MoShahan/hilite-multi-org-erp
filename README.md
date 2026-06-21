@@ -39,23 +39,23 @@ Press **Ctrl+C** to stop the API and frontend. PostgreSQL keeps running in the b
 
 ### Other useful commands
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev:apps` | Start API and frontend only (Postgres already running) |
-| `npm run db:up` | Start PostgreSQL |
-| `npm run db:down` | Stop PostgreSQL |
-| `npm run db:ps` | Check PostgreSQL status |
-| `npm run db:migrate` | Run database migrations |
-| `npm run db:seed` | Seed development data |
-| `npm run db:studio` | Open Prisma Studio |
+| Command              | Description                                            |
+| -------------------- | ------------------------------------------------------ |
+| `npm run dev:apps`   | Start API and frontend only (Postgres already running) |
+| `npm run db:up`      | Start PostgreSQL                                       |
+| `npm run db:down`    | Stop PostgreSQL                                        |
+| `npm run db:ps`      | Check PostgreSQL status                                |
+| `npm run db:migrate` | Run database migrations                                |
+| `npm run db:seed`    | Seed development data                                  |
+| `npm run db:studio`  | Open Prisma Studio                                     |
 
 ### Seed credentials (development)
 
 After running `npm run db:seed`, these users are available for future auth testing:
 
-| Email | Role | Password |
-|-------|------|----------|
-| `admin@hilite.com` | Platform Admin | `Admin@123` |
+| Email                      | Role                        | Password        |
+| -------------------------- | --------------------------- | --------------- |
+| `admin@hilite.com`         | Platform Admin              | `Admin@123`     |
 | `admin@hilitebuilders.com` | Org Admin (HiLite Builders) | `HBuilders@123` |
 
 ## Theme
@@ -63,6 +63,3 @@ After running `npm run db:seed`, these users are available for future auth testi
 The UI uses an Apple-inspired design with **light**, **dark**, and **system** modes. Use the toggle in the app header (or on the login page) to switch themes.
 
 ## Documentation
-
-- [Task Breakdown](docs/Task_Breakdown.md) — step-by-step build checklist
-- [Project Requirements Guide](docs/Project_Requirements_Guide.md) — architecture, schema, and API reference

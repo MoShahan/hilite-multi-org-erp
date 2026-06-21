@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
-const TRACK_WIDTH = 56;
-const KNOB_SIZE = 36;
+const TRACK_WIDTH = 28;
+const KNOB_SIZE = 22;
 const ANIMATION_MS = 350;
 
 export const ThemeToggle = () => {
@@ -33,9 +33,9 @@ export const ThemeToggle = () => {
 
   if (!mounted) {
     return (
-      <div className="px-2 py-1" aria-hidden>
+      <div className="py-0.5 pl-1 pr-3" aria-hidden>
         <div
-          className="h-8 rounded-full bg-muted/40"
+          className="h-4 rounded-full bg-muted/40"
           style={{ width: TRACK_WIDTH }}
         />
       </div>
@@ -59,7 +59,7 @@ export const ThemeToggle = () => {
   const knobOffset = isDark ? TRACK_WIDTH : 0;
 
   return (
-    <div className="px-2 py-1">
+    <div className="py-0.5 pl-1 pr-3">
       <button
         type="button"
         role="switch"
@@ -67,8 +67,8 @@ export const ThemeToggle = () => {
         aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
         onClick={toggleTheme}
         className={cn(
-          "relative h-8 shrink-0 overflow-visible rounded-full transition-[background-color,box-shadow] ease-in-out",
-          "focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+          "relative h-4 shrink-0 overflow-visible rounded-full transition-[background-color,box-shadow] ease-in-out",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
           isDark
             ? "bg-[#2a3042] shadow-[inset_3px_3px_8px_rgba(0,0,0,0.45),inset_-2px_-2px_6px_rgba(255,255,255,0.05)]"
             : "bg-[#e8ecf0] shadow-[inset_3px_3px_8px_rgba(0,0,0,0.1),inset_-3px_-3px_8px_rgba(255,255,255,0.95)]",
@@ -96,9 +96,9 @@ export const ThemeToggle = () => {
           }}
         >
           {isDark ? (
-            <Moon className="size-3.5" strokeWidth={2.25} />
+            <Moon className="size-2" strokeWidth={2.25} />
           ) : (
-            <Sun className="size-3.5" strokeWidth={2.25} />
+            <Sun className="size-2" strokeWidth={2.25} />
           )}
         </span>
       </button>

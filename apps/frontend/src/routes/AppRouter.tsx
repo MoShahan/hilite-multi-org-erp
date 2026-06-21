@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import { PageSkeleton } from "@/components/PageSkeleton";
@@ -26,6 +26,18 @@ const OrganizationsPage = lazy(() =>
   })),
 );
 
+const OrganizationDetailPage = lazy(() =>
+  import("@/features/platform/pages/OrganizationDetailPage").then((module) => ({
+    default: module.OrganizationDetailPage,
+  })),
+);
+
+const PlatformAdminLayout = ({ children }: { children: ReactNode }) => (
+  <RequireRole roles={["PLATFORM_ADMIN"]}>
+    <AppLayout>{children}</AppLayout>
+  </RequireRole>
+);
+
 export const AppRouter = () => {
   return (
     <>
@@ -48,11 +60,17 @@ export const AppRouter = () => {
             <Route
               path="/platform/organizations"
               element={
-                <RequireRole roles={["PLATFORM_ADMIN"]}>
-                  <AppLayout>
-                    <OrganizationsPage />
-                  </AppLayout>
-                </RequireRole>
+                <PlatformAdminLayout>
+                  <OrganizationsPage />
+                </PlatformAdminLayout>
+              }
+            />
+            <Route
+              path="/platform/organizations/:id"
+              element={
+                <PlatformAdminLayout>
+                  <OrganizationDetailPage />
+                </PlatformAdminLayout>
               }
             />
           </Route>

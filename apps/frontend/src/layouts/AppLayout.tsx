@@ -1,10 +1,12 @@
-import { useNavigate } from "react-router-dom";
-
-import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import { UserMenu } from "@/components/UserMenu";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { Button } from "@/components/ui/button";
-import { selectAuthUser } from "@/features/auth/authSelectors";
-import { logout } from "@/features/auth/authSlice";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AppSidebar } from "@/layouts/AppSidebar";
 
 import type { ReactNode } from "react";
 
@@ -13,40 +15,23 @@ type AppLayoutProps = {
 };
 
 export const AppLayout = ({ children }: AppLayoutProps) => {
-  const dispatch = useAppDispatch();
-  const navigate = useNavigate();
-  const user = useAppSelector(selectAuthUser);
-
-  const handleLogout = async () => {
-    await dispatch(logout());
-    navigate("/login", { replace: true });
-  };
-
   return (
-    <div className="min-h-screen bg-background">
-      <header className="glass-panel sticky top-0 z-50">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 md:px-8">
-          <h1 className="text-lg font-semibold tracking-tight">
-            HILITE Sales OS
-          </h1>
-          <div className="flex items-center gap-3">
-            {user ? (
-              <span className="hidden text-sm text-muted-foreground sm:inline">
-                {user.name}
-              </span>
-            ) : null}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void handleLogout()}
-            >
-              Sign out
-            </Button>
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto max-w-6xl p-6 md:p-8">{children}</main>
-    </div>
+    <TooltipProvider>
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="glass-panel sticky top-0 z-40 flex h-14 shrink-0 items-center gap-3 border-b px-4 md:px-6">
+            <SidebarTrigger className="-ml-1 size-8" />
+            <div className="flex flex-1 items-center justify-end gap-3">
+              <ThemeToggle />
+              <UserMenu />
+            </div>
+          </header>
+          <main className="flex flex-1 flex-col bg-muted/20 p-4 md:p-6">
+            {children}
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
+    </TooltipProvider>
   );
 };
