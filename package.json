@@ -1,0 +1,20 @@
+{
+  "name": "hilite-erp",
+  "private": true,
+  "scripts": {
+    "dev": "docker compose up -d && concurrently -n backend,frontend -c blue,green \"npm run dev --prefix apps/backend\" \"npm run dev --prefix apps/frontend\"",
+    "dev:apps": "concurrently -n backend,frontend -c blue,green \"npm run dev --prefix apps/backend\" \"npm run dev --prefix apps/frontend\"",
+    "dev:backend": "npm run dev --prefix apps/backend",
+    "dev:frontend": "npm run dev --prefix apps/frontend",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:ps": "docker compose ps",
+    "db:migrate": "npm run db:migrate --prefix apps/backend",
+    "db:seed": "npm run db:seed --prefix apps/backend",
+    "db:studio": "npm run db:studio --prefix apps/backend",
+    "setup": "npm install --prefix apps/backend && npm install --prefix apps/frontend && npm run db:up && npm run db:migrate && npm run db:seed"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
