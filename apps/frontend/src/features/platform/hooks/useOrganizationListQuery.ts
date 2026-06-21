@@ -1,0 +1,71 @@
+import { useCallback, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
+
+import { useAppDispatch } from "@/app/hooks";
+
+import {
+  clearListFilters,
+  parseOrganizationListParams,
+  serializeOrganizationListParams,
+} from "../organizationListParams";
+import { fetchOrganizations } from "../platformSlice";
+
+import type { OrganizationListQuery } from "../platformTypes";
+
+export const useOrganizationListQuery = () => {
+  const dispatch = useAppDispatch();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const query = useMemo(
+    () => parseOrganizationListParams(searchParams),
+    [searchParams],
+  );
+
+  const setQuery = useCallback(
+    (next: OrganizationListQuery) => {
+      setSearchParams(serializeOrganizationListParams(next), { replace: true });
+    },
+    [setSearchParams],
+  );
+
+  const patchQuery = useCallback(
+    (patch: Partial<OrganizationListQuery>) => {
+      const next = { ...query, ...patch };
+      const shouldResetPage =
+        ("search" in patch ||
+          "status" in patch ||
+          "sortBy" in patch ||
+          "sortOrder" in patch ||
+          "pageSize" in patch) &&
+        !("page" in patch);
+
+      if (shouldResetPage) {
+        next.page = 1;
+      }
+
+      setQuery(next);
+    },
+    [query, setQuery],
+  );
+
+  const clearFilters = useCallback(() => {
+    setQuery(clearListFilters(query));
+  }, [query, setQuery]);
+
+  const refetch = useCallback(() => {
+    void dispatch(fetchOrganizations(query));
+  }, [dispatch, query]);
+
+  useEffect(() => {
+    void dispatch(fetchOrganizations(query));
+  }, [dispatch, query]);
+
+  return {
+    query,
+    setQuery,
+    patchQuery,
+    clearFilters,
+    refetch,
+    listSearch: searchParams.toString() ? `?${searchParams.toString()}` : "",
+  };
+};
