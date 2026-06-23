@@ -38,6 +38,18 @@ const RolesPage = lazy(() =>
   })),
 );
 
+const TeamsPage = lazy(() =>
+  import("@/features/teams/pages/TeamsPage").then((module) => ({
+    default: module.TeamsPage,
+  })),
+);
+
+const TeamDetailPage = lazy(() =>
+  import("@/features/teams/pages/TeamDetailPage").then((module) => ({
+    default: module.TeamDetailPage,
+  })),
+);
+
 const PlatformAdminLayout = ({ children }: { children: ReactNode }) => (
   <RequirePermission permissions={["platform:orgs:read"]}>
     <AppLayout>{children}</AppLayout>
@@ -69,6 +81,26 @@ export const AppRouter = () => {
                 <RequirePermission permissions={["roles:read"]}>
                   <AppLayout>
                     <RolesPage />
+                  </AppLayout>
+                </RequirePermission>
+              }
+            />
+            <Route
+              path="/teams"
+              element={
+                <RequirePermission permissions={["teams:read"]}>
+                  <AppLayout>
+                    <TeamsPage />
+                  </AppLayout>
+                </RequirePermission>
+              }
+            />
+            <Route
+              path="/teams/:id"
+              element={
+                <RequirePermission permissions={["teams:read"]}>
+                  <AppLayout>
+                    <TeamDetailPage />
                   </AppLayout>
                 </RequirePermission>
               }

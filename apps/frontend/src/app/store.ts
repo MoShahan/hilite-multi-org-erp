@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 
 import { authReducer } from "@/features/auth/authSlice";
 import { platformReducer } from "@/features/platform/platformSlice";
+import { teamsReducer } from "@/features/teams/teamsSlice";
 
 /**
  * Feature slice pattern (add per module under src/features/<feature>/):
@@ -18,6 +19,7 @@ export const store = configureStore({
   reducer: {
     auth: authReducer,
     platform: platformReducer,
+    teams: teamsReducer,
   },
 });
 

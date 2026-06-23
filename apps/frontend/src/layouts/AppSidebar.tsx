@@ -1,4 +1,4 @@
-import { Building2, LayoutDashboard, Shield, Sparkles } from "lucide-react";
+import { Building2, LayoutDashboard, Shield, Sparkles, UsersRound } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import { useAppSelector } from "@/app/hooks";
@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 export const AppSidebar = () => {
   const isPlatformAdmin = useAppSelector(selectIsPlatformAdmin);
   const canViewRoles = useAppSelector(selectHasPermission("roles:read"));
+  const canViewTeams = useAppSelector(selectHasPermission("teams:read"));
   const user = useAppSelector(selectAuthUser);
   const location = useLocation();
 
@@ -111,6 +112,21 @@ export const AppSidebar = () => {
                       <NavLink to="/roles">
                         <Shield />
                         <span>Roles</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ) : null}
+                {canViewTeams ? (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname.startsWith("/teams")}
+                      tooltip="Teams"
+                      className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                    >
+                      <NavLink to="/teams">
+                        <UsersRound />
+                        <span>Teams</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
