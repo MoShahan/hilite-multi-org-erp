@@ -2,17 +2,18 @@ import "dotenv/config";
 import "./types/express";
 import app from "./app";
 import { env } from "./config/env";
+import { logger } from "./lib/logger";
 import { connectPrisma, disconnectPrisma } from "./lib/prisma";
 
 const start = async () => {
   await connectPrisma();
 
   const server = app.listen(env.port, () => {
-    console.log(`Server running on port ${env.port}`);
+    logger.info("Server running", { port: env.port });
   });
 
   const shutdown = async (signal: string) => {
-    console.log(`${signal} received, shutting down...`);
+    logger.info("Shutting down", { signal });
     server.close();
     await disconnectPrisma();
     process.exit(0);
