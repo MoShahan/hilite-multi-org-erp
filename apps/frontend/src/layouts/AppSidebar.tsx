@@ -1,4 +1,4 @@
-import { Building2, LayoutDashboard, Shield, Sparkles, Users, UsersRound } from "lucide-react";
+import { Building2, Kanban, LayoutDashboard, Shield, Sparkles, Users, UsersRound } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import { useAppSelector } from "@/app/hooks";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/sidebar";
 import {
   selectAuthUser,
+  selectHasAnyPermission,
   selectHasPermission,
   selectIsPlatformAdmin,
 } from "@/features/auth/authSelectors";
@@ -30,6 +31,13 @@ export const AppSidebar = () => {
   const canViewRoles = useAppSelector(selectHasPermission("roles:read"));
   const canViewTeams = useAppSelector(selectHasPermission("teams:read"));
   const canViewUsers = useAppSelector(selectHasPermission("users:read"));
+  const canViewLeads = useAppSelector(
+    selectHasAnyPermission([
+      "leads:read",
+      "leads:read:team",
+      "leads:read:org",
+    ]),
+  );
   const user = useAppSelector(selectAuthUser);
   const location = useLocation();
 
@@ -95,24 +103,24 @@ export const AppSidebar = () => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        {canViewRoles || canViewUsers || canViewTeams ? (
+        {canViewRoles || canViewUsers || canViewTeams || canViewLeads ? (
           <SidebarGroup>
             <SidebarGroupLabel className="text-[11px] font-semibold tracking-wider uppercase text-sidebar-foreground/50">
               Organization
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {canViewRoles ? (
+                {canViewLeads ? (
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
-                      isActive={location.pathname.startsWith("/roles")}
-                      tooltip="Roles"
+                      isActive={location.pathname.startsWith("/leads")}
+                      tooltip="Leads"
                       className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
                     >
-                      <NavLink to="/roles">
-                        <Shield />
-                        <span>Roles</span>
+                      <NavLink to="/leads">
+                        <Kanban />
+                        <span>Leads</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -143,6 +151,21 @@ export const AppSidebar = () => {
                       <NavLink to="/teams">
                         <UsersRound />
                         <span>Teams</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ) : null}
+                {canViewRoles ? (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname.startsWith("/roles")}
+                      tooltip="Roles"
+                      className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                    >
+                      <NavLink to="/roles">
+                        <Shield />
+                        <span>Roles</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

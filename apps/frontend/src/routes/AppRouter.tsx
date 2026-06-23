@@ -56,6 +56,18 @@ const UsersPage = lazy(() =>
   })),
 );
 
+const LeadsPage = lazy(() =>
+  import("@/features/leads/pages/LeadsPage").then((module) => ({
+    default: module.LeadsPage,
+  })),
+);
+
+const LeadDetailPage = lazy(() =>
+  import("@/features/leads/pages/LeadDetailPage").then((module) => ({
+    default: module.LeadDetailPage,
+  })),
+);
+
 const PlatformAdminLayout = ({ children }: { children: ReactNode }) => (
   <RequirePermission permissions={["platform:orgs:read"]}>
     <AppLayout>{children}</AppLayout>
@@ -117,6 +129,40 @@ export const AppRouter = () => {
                 <RequirePermission permissions={["users:read"]}>
                   <AppLayout>
                     <UsersPage />
+                  </AppLayout>
+                </RequirePermission>
+              }
+            />
+            <Route
+              path="/leads"
+              element={
+                <RequirePermission
+                  permissions={[
+                    "leads:read",
+                    "leads:read:team",
+                    "leads:read:org",
+                  ]}
+                  mode="any"
+                >
+                  <AppLayout>
+                    <LeadsPage />
+                  </AppLayout>
+                </RequirePermission>
+              }
+            />
+            <Route
+              path="/leads/:id"
+              element={
+                <RequirePermission
+                  permissions={[
+                    "leads:read",
+                    "leads:read:team",
+                    "leads:read:org",
+                  ]}
+                  mode="any"
+                >
+                  <AppLayout>
+                    <LeadDetailPage />
                   </AppLayout>
                 </RequirePermission>
               }

@@ -1,6 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 
 import { authReducer } from "@/features/auth/authSlice";
+import { leadsReducer } from "@/features/leads/leadsSlice";
 import { platformReducer } from "@/features/platform/platformSlice";
 import { teamsReducer } from "@/features/teams/teamsSlice";
 import { usersReducer } from "@/features/users/usersSlice";
@@ -22,6 +23,7 @@ export const store = configureStore({
     platform: platformReducer,
     teams: teamsReducer,
     users: usersReducer,
+    leads: leadsReducer,
   },
 });
 
