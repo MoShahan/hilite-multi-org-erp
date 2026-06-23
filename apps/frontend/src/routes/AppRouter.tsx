@@ -38,6 +38,12 @@ const RolesPage = lazy(() =>
   })),
 );
 
+const UsersPage = lazy(() =>
+  import("@/features/users/pages/UsersPage").then((module) => ({
+    default: module.UsersPage,
+  })),
+);
+
 const TeamsPage = lazy(() =>
   import("@/features/teams/pages/TeamsPage").then((module) => ({
     default: module.TeamsPage,
@@ -47,12 +53,6 @@ const TeamsPage = lazy(() =>
 const TeamDetailPage = lazy(() =>
   import("@/features/teams/pages/TeamDetailPage").then((module) => ({
     default: module.TeamDetailPage,
-  })),
-);
-
-const UsersPage = lazy(() =>
-  import("@/features/users/pages/UsersPage").then((module) => ({
-    default: module.UsersPage,
   })),
 );
 
@@ -74,6 +74,18 @@ const NotificationsPage = lazy(() =>
   })),
 );
 
+const PrivacyPage = lazy(() =>
+  import("@/features/legal/pages/PrivacyPage").then((module) => ({
+    default: module.PrivacyPage,
+  })),
+);
+
+const TermsPage = lazy(() =>
+  import("@/features/legal/pages/TermsPage").then((module) => ({
+    default: module.TermsPage,
+  })),
+);
+
 const PlatformAdminLayout = ({ children }: { children: ReactNode }) => (
   <RequirePermission permissions={["platform:orgs:read"]}>
     <AppLayout>{children}</AppLayout>
@@ -89,6 +101,8 @@ export const AppRouter = () => {
           <Route element={<GuestRoute />}>
             <Route path="/login" element={<LoginPage />} />
           </Route>
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route
@@ -110,6 +124,16 @@ export const AppRouter = () => {
               }
             />
             <Route
+              path="/users"
+              element={
+                <RequirePermission permissions={["users:read"]}>
+                  <AppLayout>
+                    <UsersPage />
+                  </AppLayout>
+                </RequirePermission>
+              }
+            />
+            <Route
               path="/teams"
               element={
                 <RequirePermission permissions={["teams:read"]}>
@@ -125,16 +149,6 @@ export const AppRouter = () => {
                 <RequirePermission permissions={["teams:read"]}>
                   <AppLayout>
                     <TeamDetailPage />
-                  </AppLayout>
-                </RequirePermission>
-              }
-            />
-            <Route
-              path="/users"
-              element={
-                <RequirePermission permissions={["users:read"]}>
-                  <AppLayout>
-                    <UsersPage />
                   </AppLayout>
                 </RequirePermission>
               }
