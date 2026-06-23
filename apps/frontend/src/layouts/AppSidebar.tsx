@@ -1,4 +1,4 @@
-import { Building2, LayoutDashboard, Shield, Sparkles, UsersRound } from "lucide-react";
+import { Building2, LayoutDashboard, Shield, Sparkles, Users, UsersRound } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import { useAppSelector } from "@/app/hooks";
@@ -29,6 +29,7 @@ export const AppSidebar = () => {
   const isPlatformAdmin = useAppSelector(selectIsPlatformAdmin);
   const canViewRoles = useAppSelector(selectHasPermission("roles:read"));
   const canViewTeams = useAppSelector(selectHasPermission("teams:read"));
+  const canViewUsers = useAppSelector(selectHasPermission("users:read"));
   const user = useAppSelector(selectAuthUser);
   const location = useLocation();
 
@@ -94,7 +95,7 @@ export const AppSidebar = () => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        {canViewRoles ? (
+        {canViewRoles || canViewUsers || canViewTeams ? (
           <SidebarGroup>
             <SidebarGroupLabel className="text-[11px] font-semibold tracking-wider uppercase text-sidebar-foreground/50">
               Organization
@@ -112,6 +113,21 @@ export const AppSidebar = () => {
                       <NavLink to="/roles">
                         <Shield />
                         <span>Roles</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ) : null}
+                {canViewUsers ? (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname.startsWith("/users")}
+                      tooltip="Users"
+                      className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                    >
+                      <NavLink to="/users">
+                        <Users />
+                        <span>Users</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

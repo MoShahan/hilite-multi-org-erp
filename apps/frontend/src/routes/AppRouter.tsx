@@ -50,6 +50,12 @@ const TeamDetailPage = lazy(() =>
   })),
 );
 
+const UsersPage = lazy(() =>
+  import("@/features/users/pages/UsersPage").then((module) => ({
+    default: module.UsersPage,
+  })),
+);
+
 const PlatformAdminLayout = ({ children }: { children: ReactNode }) => (
   <RequirePermission permissions={["platform:orgs:read"]}>
     <AppLayout>{children}</AppLayout>
@@ -101,6 +107,16 @@ export const AppRouter = () => {
                 <RequirePermission permissions={["teams:read"]}>
                   <AppLayout>
                     <TeamDetailPage />
+                  </AppLayout>
+                </RequirePermission>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <RequirePermission permissions={["users:read"]}>
+                  <AppLayout>
+                    <UsersPage />
                   </AppLayout>
                 </RequirePermission>
               }
