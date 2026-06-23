@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 
 import { authReducer } from "@/features/auth/authSlice";
 import { leadsReducer } from "@/features/leads/leadsSlice";
+import { notificationsReducer } from "@/features/notifications/notificationsSlice";
 import { platformReducer } from "@/features/platform/platformSlice";
 import { teamsReducer } from "@/features/teams/teamsSlice";
 import { usersReducer } from "@/features/users/usersSlice";
@@ -24,6 +25,7 @@ export const store = configureStore({
     teams: teamsReducer,
     users: usersReducer,
     leads: leadsReducer,
+    notifications: notificationsReducer,
   },
 });
 

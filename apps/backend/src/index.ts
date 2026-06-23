@@ -4,9 +4,11 @@ import app from "./app";
 import { env } from "./config/env";
 import { logger } from "./lib/logger";
 import { connectPrisma, disconnectPrisma } from "./lib/prisma";
+import { registerHandlers } from "./lib/registerHandlers";
 
 const start = async () => {
   await connectPrisma();
+  registerHandlers();
 
   const server = app.listen(env.port, () => {
     logger.info("Server running", { port: env.port });

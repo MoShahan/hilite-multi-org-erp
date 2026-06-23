@@ -68,6 +68,12 @@ const LeadDetailPage = lazy(() =>
   })),
 );
 
+const NotificationsPage = lazy(() =>
+  import("@/features/notifications/pages/NotificationsPage").then((module) => ({
+    default: module.NotificationsPage,
+  })),
+);
+
 const PlatformAdminLayout = ({ children }: { children: ReactNode }) => (
   <RequirePermission permissions={["platform:orgs:read"]}>
     <AppLayout>{children}</AppLayout>
@@ -165,6 +171,14 @@ export const AppRouter = () => {
                     <LeadDetailPage />
                   </AppLayout>
                 </RequirePermission>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <AppLayout>
+                  <NotificationsPage />
+                </AppLayout>
               }
             />
             <Route
