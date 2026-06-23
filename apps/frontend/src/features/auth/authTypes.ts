@@ -1,10 +1,13 @@
-export type UserRole =
-  | "PLATFORM_ADMIN"
-  | "ORG_ADMIN"
-  | "EXECUTIVE"
-  | "TEAM_LEAD"
-  | "SALES_MANAGER"
-  | "DIRECTOR";
+export type AuthRole = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+export type AuthTeam = {
+  id: string;
+  name: string;
+};
 
 export type UserStatus = "ACTIVE" | "INACTIVE";
 
@@ -14,9 +17,11 @@ export type User = {
   id: string;
   email: string;
   name: string;
-  role: UserRole;
+  role: AuthRole | null;
+  permissions: string[];
   status: UserStatus;
   organizationId: string | null;
+  team: AuthTeam | null;
 };
 
 export type Organization = {

@@ -1,42 +1,18 @@
 import bcrypt from "bcrypt";
-import {
-  OrganizationStatus,
-  UserStatus,
-  type User,
-  type Organization,
-} from "../generated/prisma/client";
+import { OrganizationStatus, UserStatus } from "../generated/prisma/client";
 import { signAccessToken } from "../lib/jwt";
-import type { AuthContext, AuthMeResponse } from "../types/auth";
+import {
+  assertUserHasRole,
+  toAuthContext,
+  toAuthMeResponse,
+} from "../lib/authUserMapper";
+import type { AuthMeResponse } from "../types/auth";
 import { AppError } from "../utils/AppError";
-import { userRepository } from "../repositories/user.repository";
+import { authUserRepository } from "../repositories/user.repository";
 
-type UserWithOrganization = User & {
-  organization: Organization | null;
-};
-
-const toAuthUser = (user: UserWithOrganization) => ({
-  id: user.id,
-  email: user.email,
-  name: user.name,
-  role: user.role,
-  status: user.status,
-  organizationId: user.organizationId,
-});
-
-const toAuthOrganization = (organization: Organization | null) => {
-  if (!organization) {
-    return null;
-  }
-
-  return {
-    id: organization.id,
-    name: organization.name,
-    code: organization.code,
-    status: organization.status,
-  };
-};
-
-const assertActiveUser = (user: UserWithOrganization) => {
+const assertActiveUser = (
+  user: NonNullable<Awaited<ReturnType<typeof authUserRepository.findByEmail>>>,
+) => {
   if (user.status !== UserStatus.ACTIVE) {
     throw new AppError(403, "ACCOUNT_INACTIVE", "Your account is inactive");
   }
@@ -52,26 +28,18 @@ const assertActiveUser = (user: UserWithOrganization) => {
   }
 };
 
-const toAuthContext = (user: UserWithOrganization): AuthContext => {
-  assertActiveUser(user);
-
-  return {
-    user: toAuthUser(user),
-    organization: toAuthOrganization(user.organization),
-  };
-};
-
 export const authService = {
-  buildToken: (user: UserWithOrganization) => {
+  buildToken: (
+    user: NonNullable<Awaited<ReturnType<typeof authUserRepository.findByEmail>>>,
+  ) => {
     return signAccessToken({
       sub: user.id,
       orgId: user.organizationId,
-      role: user.role,
     });
   },
 
   login: async (email: string, password: string) => {
-    const user = await userRepository.findByEmail(email.trim().toLowerCase());
+    const user = await authUserRepository.findByEmail(email.trim().toLowerCase());
 
     if (!user) {
       throw AppError.unauthorized("Invalid email or password");
@@ -84,36 +52,35 @@ export const authService = {
     }
 
     assertActiveUser(user);
+    assertUserHasRole(user);
 
     return {
       token: authService.buildToken(user),
-      context: toAuthContext(user),
+      context: await toAuthContext(user),
     };
   },
 
   getMe: async (userId: string): Promise<AuthMeResponse> => {
-    const user = await userRepository.findById(userId);
+    const user = await authUserRepository.findById(userId);
 
     if (!user) {
       throw AppError.unauthorized();
     }
 
-    const context = toAuthContext(user);
+    assertActiveUser(user);
 
-    return {
-      user: context.user,
-      organization: context.organization,
-      modules: [],
-    };
+    return toAuthMeResponse(await toAuthContext(user));
   },
 
-  resolveAuthContext: async (userId: string): Promise<AuthContext> => {
-    const user = await userRepository.findById(userId);
+  resolveAuthContext: async (userId: string) => {
+    const user = await authUserRepository.findById(userId);
 
     if (!user) {
       throw AppError.unauthorized();
     }
 
-    return toAuthContext(user);
+    assertActiveUser(user);
+
+    return await toAuthContext(user);
   },
 };
