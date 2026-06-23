@@ -1,4 +1,4 @@
-import { Building2, LayoutDashboard, Sparkles } from "lucide-react";
+import { Building2, LayoutDashboard, Shield, Sparkles } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import { useAppSelector } from "@/app/hooks";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/sidebar";
 import {
   selectAuthUser,
+  selectHasPermission,
   selectIsPlatformAdmin,
 } from "@/features/auth/authSelectors";
 import { formatRoleLabel } from "@/lib/format";
@@ -26,6 +27,7 @@ import { cn } from "@/lib/utils";
 
 export const AppSidebar = () => {
   const isPlatformAdmin = useAppSelector(selectIsPlatformAdmin);
+  const canViewRoles = useAppSelector(selectHasPermission("roles:read"));
   const user = useAppSelector(selectAuthUser);
   const location = useLocation();
 
@@ -91,6 +93,32 @@ export const AppSidebar = () => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        {canViewRoles ? (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-[11px] font-semibold tracking-wider uppercase text-sidebar-foreground/50">
+              Organization
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {canViewRoles ? (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname.startsWith("/roles")}
+                      tooltip="Roles"
+                      className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                    >
+                      <NavLink to="/roles">
+                        <Shield />
+                        <span>Roles</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ) : null}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
       </SidebarContent>
       {user ? (
         <>

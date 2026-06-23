@@ -5,7 +5,7 @@ import { PageSkeleton } from "@/components/PageSkeleton";
 import { AuthBootstrap } from "@/features/auth/components/AuthBootstrap";
 import { GuestRoute } from "@/features/auth/components/GuestRoute";
 import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
-import { RequireRole } from "@/features/auth/components/RequireRole";
+import { RequirePermission } from "@/features/auth/components/RequirePermission";
 import { AppLayout } from "@/layouts/AppLayout";
 
 const LoginPage = lazy(() =>
@@ -32,10 +32,16 @@ const OrganizationDetailPage = lazy(() =>
   })),
 );
 
+const RolesPage = lazy(() =>
+  import("@/features/roles/pages/RolesPage").then((module) => ({
+    default: module.RolesPage,
+  })),
+);
+
 const PlatformAdminLayout = ({ children }: { children: ReactNode }) => (
-  <RequireRole roles={["PLATFORM_ADMIN"]}>
+  <RequirePermission permissions={["platform:orgs:read"]}>
     <AppLayout>{children}</AppLayout>
-  </RequireRole>
+  </RequirePermission>
 );
 
 export const AppRouter = () => {
@@ -55,6 +61,16 @@ export const AppRouter = () => {
                 <AppLayout>
                   <DashboardPage />
                 </AppLayout>
+              }
+            />
+            <Route
+              path="/roles"
+              element={
+                <RequirePermission permissions={["roles:read"]}>
+                  <AppLayout>
+                    <RolesPage />
+                  </AppLayout>
+                </RequirePermission>
               }
             />
             <Route
