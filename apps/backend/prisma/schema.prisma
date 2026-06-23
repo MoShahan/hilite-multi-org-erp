@@ -17,13 +17,48 @@ enum UserStatus {
   INACTIVE
 }
 
-enum UserRole {
-  PLATFORM_ADMIN
-  ORG_ADMIN
-  EXECUTIVE
-  TEAM_LEAD
-  SALES_MANAGER
-  DIRECTOR
+enum PermissionScope {
+  PLATFORM
+  ORGANIZATION
+}
+
+enum RoleMembershipScope {
+  TEAM
+  ORGANIZATION
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  NEGOTIATION
+  WON
+  LOST
+  SITE_VISIT_COMPLETED
+  VISIT_SCHEDULED
+}
+
+enum ActivityType {
+  CALL
+  EMAIL
+  OFFLINE_MEETING
+  NOTE
+  ONLINE_MEETING
+  SITE_VISIT
+  MESSAGE
+}
+
+enum NotificationType {
+  LEAD_CREATED
+  LEAD_ASSIGNED
+  LEAD_REASSIGNED
+  LEAD_STATUS_CHANGED
+  ACTIVITY_LOGGED
+}
+
+enum ModuleKey {
+  SALES_ERP
+  DASHBOARDS
+  NOTIFICATIONS
 }
 
 model Organization {
@@ -36,22 +71,177 @@ model Organization {
   createdAt   DateTime           @default(now()) @map("created_at")
   updatedAt   DateTime           @updatedAt @map("updated_at")
   users       User[]
+  roles       Role[]
+  teams       Team[]
+  leads           Lead[]
+  notifications   Notification[]
+  modules         OrganizationModule[]
 
   @@map("organizations")
 }
 
-model User {
-  id             String       @id @default(uuid())
-  email          String       @unique
-  name           String
-  passwordHash   String       @map("password_hash")
-  status         UserStatus   @default(ACTIVE)
-  role           UserRole
-  organizationId String?      @map("organization_id")
-  organization   Organization? @relation(fields: [organizationId], references: [id])
-  createdAt      DateTime     @default(now()) @map("created_at")
+model OrganizationModule {
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  moduleKey      ModuleKey    @map("module_key")
+  enabled        Boolean      @default(true)
   updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@id([organizationId, moduleKey])
+  @@map("organization_modules")
+}
+
+model User {
+  id             String              @id @default(uuid())
+  email          String              @unique
+  name           String
+  passwordHash   String              @map("password_hash")
+  status         UserStatus          @default(ACTIVE)
+  organizationId String?             @map("organization_id")
+  organization   Organization?       @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+  userRole       UserRoleAssignment?
+  teamMembers    TeamMember[]
+  createdLeads   Lead[]              @relation("LeadCreatedBy")
+  assignedLeads  Lead[]              @relation("LeadAssignedTo")
+  activities     Activity[]
+  notifications  Notification[]
 
   @@index([organizationId])
   @@map("users")
+}
+
+model Role {
+  id             String               @id @default(uuid())
+  organizationId String?              @map("organization_id")
+  organization   Organization?        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name            String
+  slug            String
+  membershipScope RoleMembershipScope @map("membership_scope")
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+  permissions    RolePermission[]
+  userRoles      UserRoleAssignment[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@map("roles")
+}
+
+model Permission {
+  key              String           @id
+  label            String
+  description      String?
+  scope            PermissionScope
+  rolePermissions  RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId        String     @map("role_id")
+  permissionKey String     @map("permission_key")
+  role          Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission    Permission @relation(fields: [permissionKey], references: [key], onDelete: Restrict)
+
+  @@id([roleId, permissionKey])
+  @@map("role_permissions")
+}
+
+model UserRoleAssignment {
+  userId String @map("user_id")
+  roleId String @map("role_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@unique([userId])
+  @@map("user_roles")
+}
+
+model Team {
+  id             String       @id @default(uuid())
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  members        TeamMember[]
+  leads          Lead[]
+
+  @@index([organizationId])
+  @@map("teams")
+}
+
+model TeamMember {
+  teamId String @map("team_id")
+  userId String @map("user_id")
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([teamId, userId])
+  @@index([userId])
+  @@map("team_members")
+}
+
+model Lead {
+  id             String     @id @default(uuid())
+  organizationId String     @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  teamId         String     @map("team_id")
+  team           Team       @relation(fields: [teamId], references: [id], onDelete: Restrict)
+  assignedToId   String?    @map("assigned_to_id")
+  assignedTo     User?      @relation("LeadAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  name           String
+  mobileNumber   String?    @map("mobile_number")
+  email          String?
+  source         String?
+  project        String?
+  status         LeadStatus @default(NEW)
+  createdById    String     @map("created_by_id")
+  createdBy      User       @relation("LeadCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+  activities     Activity[]
+
+  @@index([organizationId])
+  @@index([teamId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("leads")
+}
+
+model Activity {
+  id          String       @id @default(uuid())
+  leadId      String       @map("lead_id")
+  lead        Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  type        ActivityType
+  notes       String
+  createdById String       @map("created_by_id")
+  createdBy   User         @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  @@index([leadId, createdAt])
+  @@map("activities")
+}
+
+model Notification {
+  id             String           @id @default(uuid())
+  organizationId String           @map("organization_id")
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String           @map("user_id")
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type           NotificationType
+  title          String
+  body           String
+  entityType     String?          @map("entity_type")
+  entityId       String?          @map("entity_id")
+  readAt         DateTime?        @map("read_at")
+  createdAt      DateTime         @default(now()) @map("created_at")
+
+  @@index([userId, readAt])
+  @@index([organizationId])
+  @@map("notifications")
 }

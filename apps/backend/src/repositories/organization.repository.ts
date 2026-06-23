@@ -1,10 +1,14 @@
 import {
   OrganizationStatus,
-  UserRole,
   UserStatus,
   type Organization,
   type Prisma,
 } from "../generated/prisma/client";
+import {
+  assignRoleToUserBySlug,
+  seedDefaultRolesForOrg,
+} from "../lib/roleSeeding";
+import { seedDefaultModulesForOrg } from "../lib/seedOrganizationModules";
 import { prisma } from "../lib/prisma";
 import type {
   OrganizationListSortBy,
@@ -119,16 +123,25 @@ export const organizationRepository = {
         },
       });
 
-      await tx.user.create({
+      await seedDefaultRolesForOrg(tx, organization.id);
+      await seedDefaultModulesForOrg(tx, organization.id);
+
+      const orgAdminUser = await tx.user.create({
         data: {
           name: data.orgAdmin.name,
           email: data.orgAdmin.email,
           passwordHash: data.orgAdmin.passwordHash,
-          role: UserRole.ORG_ADMIN,
           status: UserStatus.ACTIVE,
           organizationId: organization.id,
         },
       });
+
+      await assignRoleToUserBySlug(
+        tx,
+        orgAdminUser.id,
+        organization.id,
+        "org_admin",
+      );
 
       return tx.organization.findUniqueOrThrow({
         where: { id: organization.id },

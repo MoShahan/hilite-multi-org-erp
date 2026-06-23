@@ -1,17 +1,21 @@
 import type { NextFunction, Request, Response } from "express";
-import type { UserRole } from "../generated/prisma/client";
 import "../types/express";
 import { AppError } from "../utils/AppError";
 
-export const requireRole =
-  (...roles: UserRole[]) =>
+export const requireAnyPermission =
+  (...permissions: string[]) =>
   (req: Request, _res: Response, next: NextFunction) => {
     if (!req.authUser) {
       next(AppError.unauthorized());
       return;
     }
 
-    if (!roles.includes(req.authUser.user.role)) {
+    const userPermissions = req.authUser.user.permissions;
+    const hasPermission = permissions.some((permission) =>
+      userPermissions.includes(permission),
+    );
+
+    if (!hasPermission) {
       next(AppError.forbidden("You do not have permission to access this resource"));
       return;
     }

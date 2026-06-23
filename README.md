@@ -63,3 +63,23 @@ After running `npm run db:seed`, these users are available for future auth testi
 The UI uses an Apple-inspired design with **light**, **dark**, and **system** modes. Use the toggle in the app header (or on the login page) to switch themes.
 
 ## Documentation
+
+To - Do
+
+- refresh token
+- forgot password
+- change password
+- change user name
+- new user reset password
+- auto log out?
+- frontend password validation
+- sales manager role
+- leads assign automatically
+- check all permissions for all roles
+- feature selection for each orgs
+- notifications page in leftbar
+- check seed file thoroughly
+
+Doubts
+
+We use domain events (LEAD_CREATED, LEAD_ASSIGNED, …) emitted from the lead and activity services. An in-process event bus implements a pub/sub pattern: services publish events without knowing subscribers; a notification handler subscribes and persists in-app notifications. We did not introduce an external message queue for the MVP because notification delivery is lightweight and runs in the same monolith; a queue can be added later for email or high-volume fan-out.

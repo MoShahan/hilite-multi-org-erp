@@ -1,16 +1,25 @@
-import type {
-  OrganizationStatus,
-  UserRole,
-  UserStatus,
-} from "../generated/prisma/client";
+import type { OrganizationStatus, UserStatus } from "../generated/prisma/client";
+
+export type AuthRole = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+export type AuthTeam = {
+  id: string;
+  name: string;
+};
 
 export type AuthUser = {
   id: string;
   email: string;
   name: string;
-  role: UserRole;
   status: UserStatus;
   organizationId: string | null;
+  role: AuthRole | null;
+  permissions: string[];
+  team: AuthTeam | null;
 };
 
 export type AuthOrganization = {
@@ -23,6 +32,7 @@ export type AuthOrganization = {
 export type AuthContext = {
   user: AuthUser;
   organization: AuthOrganization | null;
+  modules: string[];
 };
 
 export type AuthMeResponse = {

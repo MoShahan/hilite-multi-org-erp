@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { z } from "zod";
 
 import { toast } from "sonner";
@@ -262,19 +262,19 @@ export const LoginPage = () => {
 
         <p className="px-6 pb-6 text-center text-xs text-muted-foreground sm:px-10">
           By logging in, you agree to our{" "}
-          <button
-            type="button"
+          <Link
+            to="/privacy"
             className="underline underline-offset-4 transition-colors hover:text-foreground"
           >
             Privacy Policy
-          </button>{" "}
+          </Link>{" "}
           and{" "}
-          <button
-            type="button"
+          <Link
+            to="/terms"
             className="underline underline-offset-4 transition-colors hover:text-foreground"
           >
             Terms &amp; Conditions
-          </button>
+          </Link>
           .
         </p>
       </div>

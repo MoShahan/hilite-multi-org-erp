@@ -2,6 +2,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import { env } from "../config/env";
 import { PrismaClient } from "../generated/prisma/client";
+import { logger } from "./logger";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -31,7 +32,7 @@ if (process.env.NODE_ENV !== "production") {
 
 export const connectPrisma = async () => {
   await prisma.$connect();
-  console.log("Prisma connected to database");
+  logger.info("Prisma connected to database");
 };
 
 export const disconnectPrisma = async () => {

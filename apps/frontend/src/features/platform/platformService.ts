@@ -7,6 +7,8 @@ import type {
   ListOrganizationsResult,
   Organization,
   OrganizationListQuery,
+  OrganizationModulesMap,
+  OrganizationModulesResponse,
   UpdateOrganizationInput,
 } from "./platformTypes";
 
@@ -61,5 +63,25 @@ export const platformService = {
     );
     const data = unwrapResponse<{ organization: Organization }>(response);
     return data.organization;
+  },
+
+  getOrganizationModules: async (
+    id: string,
+  ): Promise<OrganizationModulesResponse> => {
+    const response = await apiClient.get(
+      `/api/v1/platform/organizations/${id}/modules`,
+    );
+    return unwrapResponse<OrganizationModulesResponse>(response);
+  },
+
+  updateOrganizationModules: async (
+    id: string,
+    modules: Partial<OrganizationModulesMap>,
+  ): Promise<OrganizationModulesResponse> => {
+    const response = await apiClient.patch(
+      `/api/v1/platform/organizations/${id}/modules`,
+      { modules },
+    );
+    return unwrapResponse<OrganizationModulesResponse>(response);
   },
 };

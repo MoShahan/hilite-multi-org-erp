@@ -1,0 +1,163 @@
+export type LeadStatus =
+  | "NEW"
+  | "CONTACTED"
+  | "NEGOTIATION"
+  | "WON"
+  | "LOST"
+  | "SITE_VISIT_COMPLETED"
+  | "VISIT_SCHEDULED";
+
+export type ActivityType =
+  | "CALL"
+  | "EMAIL"
+  | "OFFLINE_MEETING"
+  | "NOTE"
+  | "ONLINE_MEETING"
+  | "SITE_VISIT"
+  | "MESSAGE";
+
+export type LeadUserSummary = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+export type LeadTeamSummary = {
+  id: string;
+  name: string;
+};
+
+export type Lead = {
+  id: string;
+  name: string;
+  mobileNumber: string | null;
+  email: string | null;
+  source: string | null;
+  project: string | null;
+  status: LeadStatus;
+  team: LeadTeamSummary;
+  assignedTo: LeadUserSummary | null;
+  createdBy: LeadUserSummary;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Activity = {
+  id: string;
+  type: ActivityType;
+  notes: string;
+  createdBy: LeadUserSummary;
+  createdAt: string;
+};
+
+export type LeadListStatusFilter = LeadStatus | "ALL";
+
+export type LeadListSortBy =
+  | "name"
+  | "status"
+  | "team"
+  | "assignee"
+  | "createdAt";
+
+export type LeadListSortOrder = "asc" | "desc";
+
+export type LeadListQuery = {
+  search: string;
+  status: LeadListStatusFilter;
+  teamId: string;
+  assignedToId: string;
+  sortBy: LeadListSortBy;
+  sortOrder: LeadListSortOrder;
+  page: number;
+  pageSize: number;
+};
+
+export type LeadListMeta = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
+export type ListLeadsResult = {
+  leads: Lead[];
+  meta: LeadListMeta;
+};
+
+export type ActivityListMeta = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
+export type ListActivitiesResult = {
+  activities: Activity[];
+  meta: ActivityListMeta;
+};
+
+export type CreateLeadInput = {
+  name: string;
+  mobileNumber?: string;
+  email?: string;
+  source?: string;
+  project?: string;
+  teamId?: string;
+  assignedToId?: string | null;
+};
+
+export type UpdateLeadInput = {
+  name?: string;
+  mobileNumber?: string | null;
+  email?: string | null;
+  source?: string | null;
+  project?: string | null;
+  status?: LeadStatus;
+};
+
+export type AssignLeadInput = {
+  assignedToId: string | null;
+};
+
+export type CreateActivityInput = {
+  type: ActivityType;
+  notes: string;
+};
+
+export type TeamFilterOption = {
+  id: string;
+  name: string;
+};
+
+export type AssigneeOption = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+export type LeadsState = {
+  leads: Lead[];
+  listMeta: LeadListMeta | null;
+  listQuery: LeadListQuery | null;
+  listStatus: "idle" | "loading" | "success" | "error";
+  listError: string | null;
+  selectedLead: Lead | null;
+  detailStatus: "idle" | "loading" | "success" | "error";
+  detailError: string | null;
+  activities: Activity[];
+  activitiesMeta: ActivityListMeta | null;
+  activitiesStatus: "idle" | "loading" | "success" | "error";
+  mutationStatus: "idle" | "loading";
+};
+
+export { LEAD_STATUS_FILTER_OPTIONS } from "./leadStatusPipeline";
+
+export const ACTIVITY_TYPE_OPTIONS: { value: ActivityType; label: string }[] = [
+  { value: "CALL", label: "Call" },
+  { value: "EMAIL", label: "Email" },
+  { value: "OFFLINE_MEETING", label: "Offline meeting" },
+  { value: "NOTE", label: "Note" },
+  { value: "ONLINE_MEETING", label: "Online meeting" },
+  { value: "SITE_VISIT", label: "Site visit" },
+  { value: "MESSAGE", label: "Message" },
+];

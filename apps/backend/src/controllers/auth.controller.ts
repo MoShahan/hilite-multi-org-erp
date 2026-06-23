@@ -8,7 +8,11 @@ import { authService } from "../services/auth.service";
 import "../types/express";
 import { AppError } from "../utils/AppError";
 
-export const login = async (req: Request, res: Response, next: NextFunction) => {
+export const login = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { email, password } = req.body as {
       email?: string;
@@ -32,16 +36,14 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
   }
 };
 
-export const getMe = (req: Request, res: Response) => {
+export const getMe = async (req: Request, res: Response) => {
   if (!req.authUser) {
     throw AppError.unauthorized();
   }
 
-  return res.json({
-    user: req.authUser.user,
-    organization: req.authUser.organization,
-    modules: [],
-  });
+  const me = await authService.getMe(req.authUser.user.id);
+
+  return res.json(me);
 };
 
 export const logout = (_req: Request, res: Response) => {

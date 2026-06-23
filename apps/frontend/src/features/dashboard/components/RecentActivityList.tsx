@@ -1,0 +1,67 @@
+import { Link } from "react-router-dom";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+import { ACTIVITY_TYPE_LABELS } from "../dashboardTypes";
+
+import type { RecentActivityItem } from "../dashboardTypes";
+
+type RecentActivityListProps = {
+  activities: RecentActivityItem[];
+};
+
+const formatDateTime = (value: string) =>
+  new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+
+export const RecentActivityList = ({ activities }: RecentActivityListProps) => (
+  <Card className="shadow-sm">
+    <CardHeader>
+      <CardTitle>Recent activity</CardTitle>
+      <CardDescription>Latest interactions on in-scope leads</CardDescription>
+    </CardHeader>
+    <CardContent>
+      {activities.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No activities logged yet.</p>
+      ) : (
+        <div className="space-y-3">
+          {activities.map((activity) => (
+            <article
+              key={activity.id}
+              className="rounded-lg border bg-muted/20 p-3"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="text-sm font-medium">
+                  {ACTIVITY_TYPE_LABELS[activity.type]} ·{" "}
+                  <Link
+                    to={`/leads/${activity.leadId}`}
+                    className="text-primary hover:underline"
+                  >
+                    {activity.leadName}
+                  </Link>
+                </div>
+                <time className="text-xs text-muted-foreground">
+                  {formatDateTime(activity.createdAt)}
+                </time>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {activity.notes}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                by {activity.createdBy.name}
+              </p>
+            </article>
+          ))}
+        </div>
+      )}
+    </CardContent>
+  </Card>
+);

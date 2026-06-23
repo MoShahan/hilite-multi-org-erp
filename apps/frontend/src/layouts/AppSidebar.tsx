@@ -1,4 +1,4 @@
-import { Building2, LayoutDashboard, Sparkles } from "lucide-react";
+import { Building2, Kanban, LayoutDashboard, Shield, Sparkles, Users, UsersRound } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import { useAppSelector } from "@/app/hooks";
@@ -19,13 +19,33 @@ import {
 } from "@/components/ui/sidebar";
 import {
   selectAuthUser,
+  selectHasAnyPermission,
+  selectHasModule,
+  selectHasPermission,
   selectIsPlatformAdmin,
 } from "@/features/auth/authSelectors";
+import { ORG_MODULE_KEYS } from "@/constants/orgModules";
 import { formatRoleLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const AppSidebar = () => {
   const isPlatformAdmin = useAppSelector(selectIsPlatformAdmin);
+  const canViewRoles = useAppSelector(selectHasPermission("roles:read"));
+  const canViewUsers = useAppSelector(selectHasPermission("users:read"));
+  const canViewTeams = useAppSelector(selectHasPermission("teams:read"));
+  const canViewLeads = useAppSelector(
+    selectHasAnyPermission([
+      "leads:read",
+      "leads:read:team",
+      "leads:read:org",
+    ]),
+  );
+  const hasDashboardsModule = useAppSelector(
+    selectHasModule(ORG_MODULE_KEYS.DASHBOARDS),
+  );
+  const hasSalesErpModule = useAppSelector(
+    selectHasModule(ORG_MODULE_KEYS.SALES_ERP),
+  );
   const user = useAppSelector(selectAuthUser);
   const location = useLocation();
 
@@ -58,19 +78,21 @@ export const AppSidebar = () => {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={location.pathname === "/dashboard"}
-                  tooltip="Dashboard"
-                  className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
-                >
-                  <NavLink to="/dashboard">
-                    <LayoutDashboard />
-                    <span>Dashboard</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {hasDashboardsModule ? (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname === "/dashboard"}
+                    tooltip="Dashboard"
+                    className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                  >
+                    <NavLink to="/dashboard">
+                      <LayoutDashboard />
+                      <span>Dashboard</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ) : null}
               {isPlatformAdmin ? (
                 <SidebarMenuItem>
                   <SidebarMenuButton
@@ -91,6 +113,77 @@ export const AppSidebar = () => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        {canViewRoles || canViewUsers || canViewTeams || (hasSalesErpModule && canViewLeads) ? (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-[11px] font-semibold tracking-wider uppercase text-sidebar-foreground/50">
+              Organization
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {hasSalesErpModule && canViewLeads ? (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname.startsWith("/leads")}
+                      tooltip="Leads"
+                      className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                    >
+                      <NavLink to="/leads">
+                        <Kanban />
+                        <span>Leads</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ) : null}
+                {canViewUsers ? (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname.startsWith("/users")}
+                      tooltip="Users"
+                      className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                    >
+                      <NavLink to="/users">
+                        <Users />
+                        <span>Users</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ) : null}
+                {canViewTeams ? (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname.startsWith("/teams")}
+                      tooltip="Teams"
+                      className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                    >
+                      <NavLink to="/teams">
+                        <UsersRound />
+                        <span>Teams</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ) : null}
+                {canViewRoles ? (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname.startsWith("/roles")}
+                      tooltip="Roles"
+                      className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                    >
+                      <NavLink to="/roles">
+                        <Shield />
+                        <span>Roles</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ) : null}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
       </SidebarContent>
       {user ? (
         <>
