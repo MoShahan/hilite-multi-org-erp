@@ -7,6 +7,7 @@ import roleRoutes from "./role.routes";
 import teamRoutes from "./team.routes";
 import userRoutes from "./user.routes";
 import leadRoutes from "./lead.routes";
+import dashboardRoutes from "./dashboard.routes";
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use("/api/v1/roles", roleRoutes);
 router.use("/api/v1/teams", teamRoutes);
 router.use("/api/v1/users", userRoutes);
 router.use("/api/v1/leads", leadRoutes);
+router.use("/api/v1/dashboard", dashboardRoutes);
 
 export default router;
