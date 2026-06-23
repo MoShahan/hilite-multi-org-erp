@@ -1,49 +1,28 @@
-import bcrypt from "bcrypt";
+import { OrganizationStatus } from "../src/generated/prisma/client";
 import {
-  OrganizationStatus,
-  UserRole,
-  UserStatus,
-} from "../src/generated/prisma/client";
+  seedDefaultRolesForOrg,
+  seedPlatformRole,
+} from "../src/lib/roleSeeding";
+import { seedPermissions } from "../src/lib/seedPermissions";
 import { disconnectPrisma, prisma } from "../src/lib/prisma";
 
-const SALT_ROUNDS = 10;
-
 const main = async () => {
+  await prisma.$transaction(async (tx) => {
+    await seedPermissions(tx);
+    await seedPlatformRole(tx);
 
-  const organization = await prisma.organization.upsert({
-    where: { code: "hilite-builders" },
-    update: {},
-    create: {
-      name: "HiLite Builders",
-      code: "hilite-builders",
-      description: "Sample organization for development",
-      status: OrganizationStatus.ACTIVE,
-    },
-  });
+    const organization = await tx.organization.upsert({
+      where: { code: "hilite-builders" },
+      update: {},
+      create: {
+        name: "HiLite Builders",
+        code: "hilite-builders",
+        description: "Sample organization for development",
+        status: OrganizationStatus.ACTIVE,
+      },
+    });
 
-  await prisma.user.upsert({
-    where: { email: "admin@hilite.com" },
-    update: {},
-    create: {
-      email: "admin@hilite.com",
-      name: "Platform Admin",
-      passwordHash: await bcrypt.hash("Admin@123", SALT_ROUNDS),
-      role: UserRole.PLATFORM_ADMIN,
-      status: UserStatus.ACTIVE,
-    },
-  });
-
-  await prisma.user.upsert({
-    where: { email: "admin@hilitebuilders.com" },
-    update: {},
-    create: {
-      email: "admin@hilitebuilders.com",
-      name: "Organization Admin",
-      passwordHash: await bcrypt.hash("HBuilders@123", SALT_ROUNDS),
-      role: UserRole.ORG_ADMIN,
-      status: UserStatus.ACTIVE,
-      organizationId: organization.id,
-    },
+    await seedDefaultRolesForOrg(tx, organization.id);
   });
 
   console.log("Seed completed successfully");
