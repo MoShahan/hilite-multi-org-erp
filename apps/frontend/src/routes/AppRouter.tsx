@@ -7,6 +7,7 @@ import { GuestRoute } from "@/features/auth/components/GuestRoute";
 import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
 import { RequirePermission } from "@/features/auth/components/RequirePermission";
 import { AppLayout } from "@/layouts/AppLayout";
+import { DefaultLandingRedirect } from "@/routes/DefaultLandingRedirect";
 
 const LoginPage = lazy(() =>
   import("@/features/auth/pages/LoginPage").then((module) => ({
@@ -86,6 +87,12 @@ const TermsPage = lazy(() =>
   })),
 );
 
+const HomePage = lazy(() =>
+  import("@/pages/HomePage").then((module) => ({
+    default: module.HomePage,
+  })),
+);
+
 const PlatformAdminLayout = ({ children }: { children: ReactNode }) => (
   <RequirePermission permissions={["platform:orgs:read"]}>
     <AppLayout>{children}</AppLayout>
@@ -104,7 +111,15 @@ export const AppRouter = () => {
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<DefaultLandingRedirect />} />
+            <Route
+              path="/home"
+              element={
+                <AppLayout>
+                  <HomePage />
+                </AppLayout>
+              }
+            />
             <Route
               path="/dashboard"
               element={
