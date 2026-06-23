@@ -1,10 +1,12 @@
 import type { NextFunction, Request, Response } from "express";
+import { organizationModuleService } from "../services/organizationModule.service";
 import { organizationService } from "../services/organization.service";
 import type {
   CreateOrganizationInput,
   UpdateOrganizationInput,
   UpdateOrganizationStatusInput,
 } from "../types/organization";
+import type { UpdateOrgModulesInput } from "../types/organizationModule";
 import { AppError } from "../utils/AppError";
 
 export const listOrganizations = async (
@@ -87,6 +89,50 @@ export const updateOrganizationStatus = async (
       req.body as UpdateOrganizationStatusInput,
     );
     return res.json({ organization });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getOrganizationModules = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    await organizationService.getOrganization(organizationId);
+    const result =
+      await organizationModuleService.getModulesResponse(organizationId);
+    return res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateOrganizationModules = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const organizationId = getOrganizationId(req);
+    await organizationService.getOrganization(organizationId);
+
+    const body = req.body as UpdateOrgModulesInput;
+
+    if (!body?.modules || typeof body.modules !== "object") {
+      throw AppError.badRequest("modules object is required", [
+        { field: "modules", message: "modules object is required" },
+      ]);
+    }
+
+    const result = await organizationModuleService.updateModules(
+      organizationId,
+      body,
+    );
+
+    return res.json(result);
   } catch (error) {
     next(error);
   }

@@ -20,23 +20,31 @@ import {
 import {
   selectAuthUser,
   selectHasAnyPermission,
+  selectHasModule,
   selectHasPermission,
   selectIsPlatformAdmin,
 } from "@/features/auth/authSelectors";
+import { ORG_MODULE_KEYS } from "@/constants/orgModules";
 import { formatRoleLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const AppSidebar = () => {
   const isPlatformAdmin = useAppSelector(selectIsPlatformAdmin);
   const canViewRoles = useAppSelector(selectHasPermission("roles:read"));
-  const canViewTeams = useAppSelector(selectHasPermission("teams:read"));
   const canViewUsers = useAppSelector(selectHasPermission("users:read"));
+  const canViewTeams = useAppSelector(selectHasPermission("teams:read"));
   const canViewLeads = useAppSelector(
     selectHasAnyPermission([
       "leads:read",
       "leads:read:team",
       "leads:read:org",
     ]),
+  );
+  const hasDashboardsModule = useAppSelector(
+    selectHasModule(ORG_MODULE_KEYS.DASHBOARDS),
+  );
+  const hasSalesErpModule = useAppSelector(
+    selectHasModule(ORG_MODULE_KEYS.SALES_ERP),
   );
   const user = useAppSelector(selectAuthUser);
   const location = useLocation();
@@ -70,19 +78,21 @@ export const AppSidebar = () => {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={location.pathname === "/dashboard"}
-                  tooltip="Dashboard"
-                  className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
-                >
-                  <NavLink to="/dashboard">
-                    <LayoutDashboard />
-                    <span>Dashboard</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {hasDashboardsModule ? (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname === "/dashboard"}
+                    tooltip="Dashboard"
+                    className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                  >
+                    <NavLink to="/dashboard">
+                      <LayoutDashboard />
+                      <span>Dashboard</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ) : null}
               {isPlatformAdmin ? (
                 <SidebarMenuItem>
                   <SidebarMenuButton
@@ -103,14 +113,14 @@ export const AppSidebar = () => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        {canViewRoles || canViewUsers || canViewTeams || canViewLeads ? (
+        {canViewRoles || canViewUsers || canViewTeams || (hasSalesErpModule && canViewLeads) ? (
           <SidebarGroup>
             <SidebarGroupLabel className="text-[11px] font-semibold tracking-wider uppercase text-sidebar-foreground/50">
               Organization
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {canViewLeads ? (
+                {hasSalesErpModule && canViewLeads ? (
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild

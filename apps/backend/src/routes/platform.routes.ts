@@ -2,26 +2,42 @@ import { Router } from "express";
 import {
   createOrganization,
   getOrganization,
+  getOrganizationModules,
   listOrganizations,
   updateOrganization,
+  updateOrganizationModules,
   updateOrganizationStatus,
 } from "../controllers/organization.controller";
-import { UserRole } from "../generated/prisma/client";
+import { PERMISSIONS } from "../constants/permissions";
 import { authenticate } from "../middleware/authenticate";
-import { requireRole } from "../middleware/requireRole";
+import { requirePermission } from "../middleware/requirePermission";
 
 const router = Router();
 
-const platformAdmin = [authenticate, requireRole(UserRole.PLATFORM_ADMIN)];
+const platformRead = [authenticate, requirePermission(PERMISSIONS.PLATFORM_ORGS_READ)];
+const platformWrite = [
+  authenticate,
+  requirePermission(PERMISSIONS.PLATFORM_ORGS_READ, PERMISSIONS.PLATFORM_ORGS_WRITE),
+];
 
-router.get("/organizations", ...platformAdmin, listOrganizations);
-router.post("/organizations", ...platformAdmin, createOrganization);
-router.get("/organizations/:id", ...platformAdmin, getOrganization);
-router.patch("/organizations/:id", ...platformAdmin, updateOrganization);
+router.get("/organizations", ...platformRead, listOrganizations);
+router.post("/organizations", ...platformWrite, createOrganization);
+router.get("/organizations/:id", ...platformRead, getOrganization);
+router.patch("/organizations/:id", ...platformWrite, updateOrganization);
 router.patch(
   "/organizations/:id/status",
-  ...platformAdmin,
+  ...platformWrite,
   updateOrganizationStatus,
+);
+router.get(
+  "/organizations/:id/modules",
+  ...platformRead,
+  getOrganizationModules,
+);
+router.patch(
+  "/organizations/:id/modules",
+  ...platformWrite,
+  updateOrganizationModules,
 );
 
 export default router;

@@ -31,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ApiClientError } from "@/lib/api-client";
 
 import { OrganizationStatusBadge } from "../components/OrganizationStatusBadge";
+import { OrganizationModulesPanel } from "../components/OrganizationModulesPanel";
 import { SuspendOrganizationDialog } from "../components/SuspendOrganizationDialog";
 import {
   clearSelectedOrganization,
@@ -413,6 +414,20 @@ export const OrganizationDetailPage = () => {
               </p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-2xl shadow-sm">
+        <CardHeader>
+          <CardTitle>Product modules</CardTitle>
+          <CardDescription>
+            Enable or disable product modules for this organization. Changes
+            apply to all users; login is never blocked. Users may need to
+            refresh to see navigation updates.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <OrganizationModulesPanel organizationId={organization.id} />
         </CardContent>
       </Card>
 

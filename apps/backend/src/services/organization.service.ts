@@ -4,7 +4,7 @@ import {
   organizationRepository,
   type OrganizationWithUserCount,
 } from "../repositories/organization.repository";
-import { userRepository } from "../repositories/user.repository";
+import { authUserRepository } from "../repositories/user.repository";
 import type {
   CreateOrganizationInput,
   ListOrganizationsQuery,
@@ -185,7 +185,7 @@ const validateCreateInput = async (input: CreateOrganizationInput) => {
     ]);
   }
 
-  const existingUser = await userRepository.findByEmail(orgAdminEmail);
+  const existingUser = await authUserRepository.findByEmail(orgAdminEmail);
 
   if (existingUser) {
     throw new AppError(400, "EMAIL_EXISTS", "Email already exists", [

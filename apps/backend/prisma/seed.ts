@@ -5,6 +5,7 @@ import {
   seedDefaultRolesForOrg,
   seedPlatformRole,
 } from "../src/lib/roleSeeding";
+import { seedDefaultModulesForOrg } from "../src/lib/seedOrganizationModules";
 import { seedPermissions } from "../src/lib/seedPermissions";
 import { disconnectPrisma, prisma } from "../src/lib/prisma";
 
@@ -27,6 +28,7 @@ const main = async () => {
     });
 
     await seedDefaultRolesForOrg(tx, organization.id);
+    await seedDefaultModulesForOrg(tx, organization.id);
 
     const platformAdmin = await tx.user.upsert({
       where: { email: "admin@hilite.com" },

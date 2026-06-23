@@ -1,3 +1,5 @@
+import type { OrgModuleKey } from "@/constants/orgModules";
+
 export type OrganizationStatus = "ACTIVE" | "SUSPENDED";
 
 export type OrganizationListStatusFilter = OrganizationStatus | "ALL";
@@ -63,6 +65,20 @@ export type UpdateOrganizationInput = {
   code?: string;
   description?: string | null;
   logoUrl?: string | null;
+};
+
+export type OrgModuleCatalogItem = {
+  key: OrgModuleKey;
+  label: string;
+  description: string;
+  disableHint: string;
+};
+
+export type OrganizationModulesMap = Record<OrgModuleKey, boolean>;
+
+export type OrganizationModulesResponse = {
+  modules: OrganizationModulesMap;
+  catalog: OrgModuleCatalogItem[];
 };
 
 export type PlatformState = {
