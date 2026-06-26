@@ -8,11 +8,15 @@ import {
 } from "../controllers/role.controller";
 import { PERMISSIONS } from "../constants/permissions";
 import { authenticate } from "../middleware/authenticate";
+import { requireAnyPermission } from "../middleware/requireAnyPermission";
 import { requirePermission } from "../middleware/requirePermission";
 
 const router = Router();
 
-const rolesRead = [authenticate, requirePermission(PERMISSIONS.ROLES_READ)];
+const rolesRead = [
+  authenticate,
+  requireAnyPermission(PERMISSIONS.ROLES_READ, PERMISSIONS.ROLES_READ_TEAM),
+];
 const rolesWrite = [authenticate, requirePermission(PERMISSIONS.ROLES_WRITE)];
 
 router.get("/", ...rolesRead, listRoles);

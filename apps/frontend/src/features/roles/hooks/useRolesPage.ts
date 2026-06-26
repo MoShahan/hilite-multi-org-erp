@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { useAppSelector } from "@/app/hooks";
+import {
+  selectHasPermission,
+  selectHasAnyPermission,
+} from "@/features/auth/authSelectors";
 import { rolesService } from "../rolesService";
 
 import type { PermissionCatalogItem, Role } from "../rolesTypes";
@@ -14,6 +19,18 @@ const permissionsEqual = (left: string[], right: string[]) => {
 };
 
 export const useRolesPage = () => {
+  const canReadAllRoles = useAppSelector(selectHasPermission("roles:read"));
+  const canReadTeamRoles = useAppSelector(
+    selectHasAnyPermission(["roles:read:team"]),
+  );
+  const listRolesOptions = useMemo(
+    () =>
+      !canReadAllRoles && canReadTeamRoles
+        ? ({ assignableFrom: "team" } as const)
+        : undefined,
+    [canReadAllRoles, canReadTeamRoles],
+  );
+
   const [roles, setRoles] = useState<Role[]>([]);
   const [permissions, setPermissions] = useState<PermissionCatalogItem[]>([]);
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
@@ -43,7 +60,7 @@ export const useRolesPage = () => {
 
     try {
       const [rolesResult, permissionsResult] = await Promise.all([
-        rolesService.listRoles(),
+        rolesService.listRoles(listRolesOptions ?? {}),
         rolesService.listPermissions(),
       ]);
 
@@ -66,7 +83,7 @@ export const useRolesPage = () => {
           : "Failed to load roles",
       );
     }
-  }, []);
+  }, [listRolesOptions]);
 
   useEffect(() => {
     void load();
