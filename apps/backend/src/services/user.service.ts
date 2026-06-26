@@ -2,6 +2,8 @@ import bcrypt from "bcrypt";
 import { UserStatus } from "../generated/prisma/client";
 import type { RoleMembershipScopeValue } from "../constants/defaultRoles";
 import { PERMISSIONS } from "../constants/permissions";
+import { buildActorSnapshot } from "../lib/auditHelpers";
+import { assertPasswordStrength } from "../lib/password";
 import { parseRoleMembershipScopeQuery } from "../lib/roleMembershipScope";
 import {
   assertRoleAssignableFrom,
@@ -13,7 +15,9 @@ import {
   type UserListRecord,
 } from "../repositories/user.repository";
 import { getCallerTeamId } from "./leadAccess.service";
+import { auditService } from "./audit.service";
 import type { AuthUser } from "../types/auth";
+import type { AuditMutationContext } from "../types/audit";
 import type {
   CreateUserInput,
   ListUsersQuery,
@@ -247,6 +251,7 @@ export const orgUserService = {
   createUser: async (
     organizationId: string | null,
     input: CreateUserInput,
+    auditContext?: AuditMutationContext,
   ): Promise<UserResponse> => {
     const orgId = requireOrganizationId(organizationId);
 
@@ -267,14 +272,7 @@ export const orgUserService = {
       ]);
     }
 
-    if (!password || password.length < 8) {
-      throw AppError.badRequest("Password must be at least 8 characters", [
-        {
-          field: "password",
-          message: "Password must be at least 8 characters",
-        },
-      ]);
-    }
+    assertPasswordStrength(password ?? "", "password");
 
     if (!roleId) {
       throw AppError.badRequest("Role is required", [
@@ -334,6 +332,32 @@ export const orgUserService = {
       roleId,
     });
 
+    if (auditContext) {
+      auditService.log({
+        organizationId: orgId,
+        actorId: auditContext.authUser.id,
+        action: "USER_CREATED",
+        entityType: "user",
+        entityId: user.id,
+        metadata: {
+          summary: `User created: ${user.name}`,
+          actor: buildActorSnapshot(auditContext.authUser),
+          after: { name: user.name, email: user.email, status: user.status },
+          related: {
+            targetUser: { id: user.id, name: user.name, email: user.email },
+            role: user.userRole?.role
+              ? {
+                  id: user.userRole.role.id,
+                  name: user.userRole.role.name,
+                  slug: user.userRole.role.slug,
+                }
+              : undefined,
+          },
+        },
+        requestContext: auditContext.requestContext,
+      });
+    }
+
     return toUserResponse(user);
   },
 
@@ -342,6 +366,7 @@ export const orgUserService = {
     actorUserId: string,
     targetUserId: string,
     input: UpdateUserStatusInput,
+    auditContext?: AuditMutationContext,
   ): Promise<UserResponse> => {
     const orgId = requireOrganizationId(organizationId);
 
@@ -387,6 +412,33 @@ export const orgUserService = {
     }
 
     const user = await orgUserRepository.updateStatus(targetUserId, input.status);
+
+    if (auditContext) {
+      const action =
+        input.status === UserStatus.ACTIVE
+          ? "USER_ACTIVATED"
+          : "USER_DEACTIVATED";
+
+      auditService.log({
+        organizationId: orgId,
+        actorId: auditContext.authUser.id,
+        action,
+        entityType: "user",
+        entityId: user.id,
+        metadata: {
+          summary: `${action === "USER_ACTIVATED" ? "User activated" : "User deactivated"}: ${user.name}`,
+          actor: buildActorSnapshot(auditContext.authUser),
+          before: { status: existing.status },
+          after: { status: input.status },
+          changedFields: ["status"],
+          related: {
+            targetUser: { id: user.id, name: user.name, email: user.email },
+          },
+        },
+        requestContext: auditContext.requestContext,
+      });
+    }
+
     return toUserResponse(user);
   },
 };

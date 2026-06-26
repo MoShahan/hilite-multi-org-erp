@@ -5,7 +5,10 @@ import {
   ORG_MODULE_KEYS,
   type OrgModuleKey,
 } from "../constants/orgModules";
+import { buildActorSnapshot } from "../lib/auditHelpers";
 import { organizationModuleRepository } from "../repositories/organizationModule.repository";
+import { auditService } from "./audit.service";
+import type { AuditMutationContext } from "../types/audit";
 import type {
   OrgModulesMap,
   OrgModulesResponse,
@@ -65,6 +68,7 @@ export const organizationModuleService = {
   updateModules: async (
     organizationId: string,
     input: UpdateOrgModulesInput,
+    auditContext?: AuditMutationContext,
   ): Promise<OrgModulesResponse> => {
     const updates = input.modules ?? {};
     const invalidKeys = Object.keys(updates).filter(
@@ -86,7 +90,33 @@ export const organizationModuleService = {
       ]);
     }
 
+    const beforeModules = await organizationModuleService.getModulesMap(
+      organizationId,
+    );
+
     await organizationModuleRepository.upsertModules(organizationId, updates);
+
+    const afterModules = await organizationModuleService.getModulesMap(
+      organizationId,
+    );
+
+    if (auditContext) {
+      auditService.log({
+        organizationId,
+        actorId: auditContext.authUser.id,
+        action: "ORG_MODULES_UPDATED",
+        entityType: "organization",
+        entityId: organizationId,
+        metadata: {
+          summary: "Organization modules updated",
+          actor: buildActorSnapshot(auditContext.authUser),
+          before: { modules: beforeModules },
+          after: { modules: afterModules },
+          changedFields: ["modules"],
+        },
+        requestContext: auditContext.requestContext,
+      });
+    }
 
     return organizationModuleService.getModulesResponse(organizationId);
   },

@@ -1,10 +1,22 @@
 import type { NextFunction, Request, Response } from "express";
 import { orgUserService } from "../services/user.service";
+import { getAuditRequestContext } from "../lib/auditRequestContext";
 import type { CreateUserInput, UpdateUserStatusInput } from "../types/user";
 
 const getRouteId = (req: Request) => {
   const id = req.params.id;
   return Array.isArray(id) ? id[0] : id;
+};
+
+const getAuditContext = (req: Request) => {
+  if (!req.authUser) {
+    throw new Error("Auth context is required");
+  }
+
+  return {
+    authUser: req.authUser.user,
+    requestContext: getAuditRequestContext(req),
+  };
 };
 
 export const listUsers = async (
@@ -33,6 +45,7 @@ export const createUser = async (
     const user = await orgUserService.createUser(
       req.authUser?.organization?.id ?? null,
       req.body as CreateUserInput,
+      getAuditContext(req),
     );
     return res.status(201).json({ user });
   } catch (error) {
@@ -51,6 +64,7 @@ export const updateUserStatus = async (
       req.authUser?.user.id ?? "",
       getRouteId(req),
       req.body as UpdateUserStatusInput,
+      getAuditContext(req),
     );
     return res.json({ user });
   } catch (error) {
