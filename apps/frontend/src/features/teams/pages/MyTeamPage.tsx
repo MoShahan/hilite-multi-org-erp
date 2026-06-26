@@ -5,6 +5,7 @@ import { useAppSelector } from "@/app/hooks";
 import { ListPagination } from "@/components/ListPagination";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PERMISSIONS } from "@/constants/permissions";
 import {
   selectAuthUser,
   selectHasPermission,
@@ -28,7 +29,7 @@ import type { TeamMemberRoleOption } from "../teamsTypes";
 
 export const MyTeamPage = () => {
   const authUser = useAppSelector(selectAuthUser);
-  const canAddMember = useAppSelector(selectHasPermission("users:write:team"));
+  const canAddMember = useAppSelector(selectHasPermission(PERMISSIONS.USERS_WRITE_TEAM));
   const teamId = authUser?.team?.id;
   const teamName = authUser?.team?.name;
 
