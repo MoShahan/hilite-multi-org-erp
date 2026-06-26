@@ -87,6 +87,7 @@ The UI uses an Apple-inspired design with **light**, **dark**, and **system** mo
 
 ## Documentation
 
+- [API specification (OpenAPI)](docs/openapi.yaml) — import into [Swagger Editor](https://editor.swagger.io) to browse and try endpoints
 - [Architecture](docs/architecture.md) — system design, auth, tenancy, notifications, scaling
 - [Database schema](docs/database-schema.md)
 - [ER diagram](docs/er-diagram.md)
