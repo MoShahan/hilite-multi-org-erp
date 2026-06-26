@@ -18,7 +18,9 @@ copy apps\frontend\.env.example apps\frontend\.env
 npm run setup
 ```
 
-`npm run setup` installs app dependencies, starts PostgreSQL, runs migrations, and seeds development data.
+`npm run setup` runs `npm install` (workspace root), starts PostgreSQL, runs migrations, and seeds development data.
+
+This repo uses npm workspaces. Shared constants, types, and Zod schemas live in `packages/shared` (`@hilite/shared`) and are consumed by both apps.
 
 ## Environment Variables
 
@@ -33,6 +35,8 @@ npm run setup
 | `REFRESH_TOKEN_EXPIRES_IN` | Refresh token lifetime | `7d` |
 | `FRONTEND_URL` | Allowed frontend origin for CORS and cookies | `http://localhost:5173` |
 | `COOKIE_SECURE` | Set `Secure` flag on auth cookies | `true` |
+
+For local HTTP development (`http://localhost:5173`), set `COOKIE_SECURE=false` in `apps/backend/.env` so auth cookies are sent over plain HTTP.
 | `LOG_LEVEL` | Logging verbosity | `info` |
 
 ### Frontend (`apps/frontend/.env`)
