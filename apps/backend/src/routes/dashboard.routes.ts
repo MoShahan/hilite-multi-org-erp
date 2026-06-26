@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { getDashboardSummary } from "../controllers/dashboard.controller";
+import {
+  getDashboardLayout,
+  getDashboardSummary,
+  resetDashboardLayout,
+  updateDashboardLayout,
+} from "../controllers/dashboard.controller";
 import { PERMISSIONS } from "../constants/permissions";
 import { ORG_MODULE_KEYS } from "../constants/orgModules";
 import { authenticate } from "../middleware/authenticate";
@@ -19,5 +24,8 @@ const dashboardRead = [
 ];
 
 router.get("/summary", ...dashboardRead, getDashboardSummary);
+router.get("/layout", ...dashboardRead, getDashboardLayout);
+router.put("/layout", ...dashboardRead, updateDashboardLayout);
+router.post("/layout/reset", ...dashboardRead, resetDashboardLayout);
 
 export default router;
