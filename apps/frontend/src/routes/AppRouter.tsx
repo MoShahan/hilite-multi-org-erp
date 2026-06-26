@@ -105,6 +105,12 @@ const HomePage = lazy(() =>
   })),
 );
 
+const AccountPage = lazy(() =>
+  import("@/features/account/pages/AccountPage").then((module) => ({
+    default: module.AccountPage,
+  })),
+);
+
 const PlatformAdminLayout = ({ children }: { children: ReactNode }) => (
   <RequirePermission permissions={["platform:orgs:read"]}>
     <AppLayout>{children}</AppLayout>
@@ -235,6 +241,14 @@ export const AppRouter = () => {
               element={
                 <AppLayout>
                   <NotificationsPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/account"
+              element={
+                <AppLayout>
+                  <AccountPage />
                 </AppLayout>
               }
             />
