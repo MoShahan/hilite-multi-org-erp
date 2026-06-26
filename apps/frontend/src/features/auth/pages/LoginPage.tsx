@@ -1,9 +1,9 @@
+import { loginSchema, type LoginInput } from "@hilite/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { z } from "zod";
 
 import { toast } from "sonner";
 
@@ -32,12 +32,7 @@ import { selectAuthUser } from "@/features/auth/authSelectors";
 import { login } from "@/features/auth/authSlice";
 import { ApiClientError } from "@/lib/api-client";
 
-const loginSchema = z.object({
-  email: z.email("Enter a valid email address"),
-  password: z.string().min(1, "Password is required"),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
+type LoginFormValues = LoginInput;
 
 const LoginHeroGraphic = () => (
   <div className="relative mx-auto size-56">

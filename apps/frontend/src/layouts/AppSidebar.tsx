@@ -26,27 +26,28 @@ import {
   selectIsPlatformAdmin,
 } from "@/features/auth/authSelectors";
 import { ORG_MODULE_KEYS } from "@/constants/orgModules";
+import {
+  LEADS_READ_PERMISSIONS,
+  PERMISSIONS,
+} from "@/constants/permissions";
 import { formatRoleLabel } from "@/lib/format";
 
 export const AppSidebar = () => {
   const isPlatformAdmin = useAppSelector(selectIsPlatformAdmin);
-  const canViewAudit = useAppSelector(selectHasPermission("audit:read"));
+  const canViewAudit = useAppSelector(selectHasPermission(PERMISSIONS.AUDIT_READ));
   const canViewPlatformAudit = useAppSelector(
-    selectHasPermission("platform:audit:read"),
+    selectHasPermission(PERMISSIONS.PLATFORM_AUDIT_READ),
   );
   const canViewRoles = useAppSelector(
-    selectHasAnyPermission(["roles:read", "roles:read:team"]),
+    selectHasAnyPermission([PERMISSIONS.ROLES_READ, PERMISSIONS.ROLES_READ_TEAM]),
   );
-  const canViewUsers = useAppSelector(selectHasPermission("users:read"));
-  const canViewTeams = useAppSelector(selectHasPermission("teams:read"));
+  const canViewUsers = useAppSelector(selectHasPermission(PERMISSIONS.USERS_READ));
+  const canViewTeams = useAppSelector(selectHasPermission(PERMISSIONS.TEAMS_READ));
   const canViewMyTeam =
-    useAppSelector(selectHasPermission("users:read:team")) && !canViewTeams;
+    useAppSelector(selectHasPermission(PERMISSIONS.USERS_READ_TEAM)) &&
+    !canViewTeams;
   const canViewLeads = useAppSelector(
-    selectHasAnyPermission([
-      "leads:read",
-      "leads:read:team",
-      "leads:read:org",
-    ]),
+    selectHasAnyPermission([...LEADS_READ_PERMISSIONS]),
   );
   const hasDashboardsModule = useAppSelector(
     selectHasModule(ORG_MODULE_KEYS.DASHBOARDS),

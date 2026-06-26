@@ -6,18 +6,11 @@ import {
   selectHasModule,
 } from "@/features/auth/authSelectors";
 import { ORG_MODULE_KEYS } from "@/constants/orgModules";
-
-const DASHBOARD_PERMISSIONS = [
-  "dashboard:me",
-  "dashboard:team",
-  "dashboard:org",
-] as const;
-
-const LEADS_READ_PERMISSIONS = [
-  "leads:read",
-  "leads:read:team",
-  "leads:read:org",
-] as const;
+import {
+  DASHBOARD_PERMISSIONS,
+  LEADS_READ_PERMISSIONS,
+  PERMISSIONS,
+} from "@/constants/permissions";
 
 export const DefaultLandingRedirect = () => {
   const hasDashboardsModule = useAppSelector(
@@ -32,10 +25,17 @@ export const DefaultLandingRedirect = () => {
   const canViewLeads = useAppSelector(
     selectHasAnyPermission([...LEADS_READ_PERMISSIONS]),
   );
-  const canViewUsers = useAppSelector(selectHasAnyPermission(["users:read"]));
-  const canViewTeams = useAppSelector(selectHasAnyPermission(["teams:read"]));
+  const canViewUsers = useAppSelector(
+    selectHasAnyPermission([PERMISSIONS.USERS_READ]),
+  );
+  const canViewTeams = useAppSelector(
+    selectHasAnyPermission([PERMISSIONS.TEAMS_READ]),
+  );
   const canViewRoles = useAppSelector(
-    selectHasAnyPermission(["roles:read", "roles:read:team"]),
+    selectHasAnyPermission([
+      PERMISSIONS.ROLES_READ,
+      PERMISSIONS.ROLES_READ_TEAM,
+    ]),
   );
 
   if (hasDashboardsModule && hasDashboardPermission) {
