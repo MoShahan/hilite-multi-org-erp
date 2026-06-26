@@ -27,8 +27,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 import { ApiClientError } from "@/lib/api-client";
+import { formatDateTime } from "@/lib/format";
+import { Textarea } from "@/components/ui/textarea";
 
 import { OrganizationStatusBadge } from "../components/OrganizationStatusBadge";
 import { OrganizationModulesPanel } from "../components/OrganizationModulesPanel";
@@ -79,13 +80,6 @@ const isApiRejection = (value: unknown): value is ApiRejection => {
     "message" in value &&
     typeof value.message === "string"
   );
-};
-
-const formatDateTime = (value: string) => {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
 };
 
 export const OrganizationDetailPage = () => {

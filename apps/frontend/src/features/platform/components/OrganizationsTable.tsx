@@ -24,6 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import { OrganizationStatusBadge } from "./OrganizationStatusBadge";
@@ -44,12 +45,6 @@ type OrganizationsTableProps = {
     sortOrder: OrganizationListSortOrder,
   ) => void;
   onStatusAction: (organization: Organization) => void;
-};
-
-const formatDate = (value: string) => {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-  }).format(new Date(value));
 };
 
 type SortableHeaderProps = {
