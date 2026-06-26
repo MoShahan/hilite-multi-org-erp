@@ -329,7 +329,10 @@ export const logout = async (req: Request, res: Response) => {
       action: "AUTH_LOGOUT",
       entityType: "auth",
       entityId: context.user.id,
-      metadata: buildAuthAuditMetadata(context, "Logged out"),
+      metadata: buildAuthAuditMetadata(
+        context,
+        `Logged out: ${context.user.email}`,
+      ),
       requestContext,
     });
   }
