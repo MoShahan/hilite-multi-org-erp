@@ -12,7 +12,8 @@
     "db:migrate": "npm run db:migrate --prefix apps/backend",
     "db:seed": "npm run db:seed --prefix apps/backend",
     "db:studio": "npm run db:studio --prefix apps/backend",
-    "setup": "npm install --prefix apps/backend && npm install --prefix apps/frontend && npm run db:up && npm run db:migrate && npm run db:seed"
+    "setup": "npm install --prefix apps/backend && npm install --prefix apps/frontend && npm run db:up && npm run db:migrate && npm run db:seed",
+    "test:frontend": "npm run test:run --prefix apps/frontend"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
