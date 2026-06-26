@@ -1,17 +1,20 @@
+import type { DashboardView } from "../services/dashboardAccess.service";
 import type {
   DashboardLayoutItem,
+  DashboardLayoutResponse,
   DashboardWidgetDefinition,
-} from "../constants/dashboardWidgets";
-import type { DashboardView } from "../services/dashboardAccess.service";
+  DashboardWidgetKey,
+  DashboardWidgetWidth,
+  UpdateDashboardLayoutInput,
+} from "@hilite/shared";
 
-export type DashboardLayoutResponse = {
-  view: DashboardView;
-  widgets: DashboardLayoutItem[];
-  catalog: DashboardWidgetDefinition[];
+export type {
+  DashboardLayoutItem,
+  DashboardLayoutResponse,
+  DashboardWidgetDefinition,
+  DashboardWidgetKey,
+  DashboardWidgetWidth,
+  UpdateDashboardLayoutInput,
 };
 
-export type UpdateDashboardLayoutInput = {
-  widgets: DashboardLayoutItem[];
-};
-
-export type { DashboardLayoutItem, DashboardWidgetDefinition };
+export type { DashboardView };
