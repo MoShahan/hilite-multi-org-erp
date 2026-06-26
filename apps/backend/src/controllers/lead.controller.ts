@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { activityService } from "../services/activity.service";
 import { leadService } from "../services/lead.service";
+import { getAuditRequestContext } from "../lib/auditRequestContext";
 import type { AssignLeadInput, CreateLeadInput, UpdateLeadInput } from "../types/lead";
 import type { CreateActivityInput } from "../types/activity";
 
@@ -16,6 +17,11 @@ const getAuthUser = (req: Request) => {
 
   return req.authUser.user;
 };
+
+const getAuditContext = (req: Request) => ({
+  authUser: getAuthUser(req),
+  requestContext: getAuditRequestContext(req),
+});
 
 export const listLeads = async (
   req: Request,
@@ -61,6 +67,7 @@ export const createLead = async (
       req.authUser?.organization?.id ?? null,
       getAuthUser(req),
       req.body as CreateLeadInput,
+      getAuditContext(req),
     );
     return res.status(201).json(result);
   } catch (error) {
@@ -79,6 +86,7 @@ export const updateLead = async (
       getAuthUser(req),
       getRouteId(req),
       req.body as UpdateLeadInput,
+      getAuditContext(req),
     );
     return res.json(result);
   } catch (error) {
@@ -97,6 +105,7 @@ export const assignLead = async (
       getAuthUser(req),
       getRouteId(req),
       req.body as AssignLeadInput,
+      getAuditContext(req),
     );
     return res.json(result);
   } catch (error) {
@@ -122,6 +131,23 @@ export const listActivities = async (
   }
 };
 
+export const listStatusHistory = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const result = await leadService.listStatusHistory(
+      req.authUser?.organization?.id ?? null,
+      getAuthUser(req),
+      getRouteId(req),
+    );
+    return res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const createActivity = async (
   req: Request,
   res: Response,
@@ -133,6 +159,7 @@ export const createActivity = async (
       getAuthUser(req),
       getRouteId(req),
       req.body as CreateActivityInput,
+      getAuditContext(req),
     );
     return res.status(201).json(result);
   } catch (error) {

@@ -1,10 +1,13 @@
 import { ActivityType } from "../generated/prisma/client";
 import { eventBus } from "../lib/eventBus";
+import { buildActorSnapshot } from "../lib/auditHelpers";
 import {
   activityRepository,
   type ActivityRecord,
 } from "../repositories/activity.repository";
 import { leadRepository } from "../repositories/lead.repository";
+import { auditService } from "../services/audit.service";
+import type { AuditMutationContext } from "../types/audit";
 import type {
   ActivityResponse,
   CreateActivityInput,
@@ -114,6 +117,7 @@ export const activityService = {
     authUser: AuthUser,
     leadId: string,
     input: CreateActivityInput,
+    auditContext?: AuditMutationContext,
   ): Promise<ActivityResponse> => {
     const orgId = requireOrganizationId(organizationId);
     const lead = await leadRepository.findByIdForOrganization(leadId, orgId);
@@ -154,6 +158,24 @@ export const activityService = {
       actorId: authUser.id,
       actorName: authUser.name,
       activityType: input.type,
+    });
+
+    auditService.log({
+      organizationId: orgId,
+      actorId: authUser.id,
+      action: "ACTIVITY_LOGGED",
+      entityType: "activity",
+      entityId: activity.id,
+      metadata: {
+        summary: `Activity logged (${input.type}) on ${lead.name}`,
+        actor: buildActorSnapshot(auditContext?.authUser ?? authUser),
+        after: { type: input.type, notes },
+        related: {
+          lead: { id: lead.id, name: lead.name },
+          team: { id: lead.team.id, name: lead.team.name },
+        },
+      },
+      requestContext: auditContext?.requestContext,
     });
 
     return toActivityResponse(activity);
