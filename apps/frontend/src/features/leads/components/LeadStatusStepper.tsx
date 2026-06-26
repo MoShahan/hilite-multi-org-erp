@@ -8,7 +8,7 @@ import {
   isTerminalLeadStatus,
   LEAD_STATUS_LABELS,
   LINEAR_LEAD_STAGES,
-  TERMINAL_LEAD_STAGES,
+  // TERMINAL_LEAD_STAGES,
 } from "../leadStatusPipeline";
 
 import type { LeadStatus } from "../leadsTypes";
@@ -52,7 +52,7 @@ export const LeadStatusStepper = ({ status }: LeadStatusStepperProps) => {
         })}
       </div>
 
-      {(status === "NEGOTIATION" || isTerminal) && (
+      {/* {(status === "NEGOTIATION" || isTerminal) && (
         <div className="flex flex-wrap items-center gap-2 pl-1">
           <span className="text-xs text-muted-foreground">Outcome</span>
           {TERMINAL_LEAD_STAGES.map((terminal) => {
@@ -73,7 +73,7 @@ export const LeadStatusStepper = ({ status }: LeadStatusStepperProps) => {
             );
           })}
         </div>
-      )}
+      )} */}
     </div>
   );
 };

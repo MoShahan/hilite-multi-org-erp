@@ -1,0 +1,55 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { formatRelativeTime, formatRoleLabel } from "./format";
+
+describe("formatRoleLabel", () => {
+  it("returns No role when role is null or undefined", () => {
+    expect(formatRoleLabel(null)).toBe("No role");
+    expect(formatRoleLabel(undefined)).toBe("No role");
+  });
+
+  it("returns the role name when present", () => {
+    expect(
+      formatRoleLabel({ id: "1", name: "Org Admin", slug: "org_admin" }),
+    ).toBe("Org Admin");
+  });
+
+  it("returns Team Leader for the team_lead slug", () => {
+    expect(
+      formatRoleLabel({ id: "1", name: "Team Lead", slug: "team_lead" }),
+    ).toBe("Team Leader");
+  });
+});
+
+describe("formatRelativeTime", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-24T12:00:00.000Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("returns Just now for times under one minute ago", () => {
+    expect(formatRelativeTime("2026-06-24T11:59:30.000Z")).toBe("Just now");
+  });
+
+  it("returns minutes ago for times under one hour", () => {
+    expect(formatRelativeTime("2026-06-24T11:30:00.000Z")).toBe("30m ago");
+  });
+
+  it("returns hours ago for times under one day", () => {
+    expect(formatRelativeTime("2026-06-24T09:00:00.000Z")).toBe("3h ago");
+  });
+
+  it("returns days ago for times under one week", () => {
+    expect(formatRelativeTime("2026-06-22T12:00:00.000Z")).toBe("2d ago");
+  });
+
+  it("returns a locale date string for older times", () => {
+    expect(formatRelativeTime("2026-06-01T12:00:00.000Z")).toBe(
+      new Date("2026-06-01T12:00:00.000Z").toLocaleDateString(),
+    );
+  });
+});

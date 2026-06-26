@@ -1,5 +1,13 @@
 import type { OrgModuleKey } from "@/constants/orgModules";
 
+import type {
+  AuditListMeta,
+  AuditLog,
+  PlatformAuditListQuery,
+} from "@/features/audit/auditTypes";
+
+export type { PlatformAuditListQuery };
+
 export type OrganizationStatus = "ACTIVE" | "SUSPENDED";
 
 export type OrganizationListStatusFilter = OrganizationStatus | "ALL";
@@ -91,4 +99,9 @@ export type PlatformState = {
   detailStatus: "idle" | "loading" | "success" | "error";
   detailError: string | null;
   mutationStatus: "idle" | "loading";
+  auditLogs: AuditLog[];
+  auditListMeta: AuditListMeta | null;
+  auditListQuery: PlatformAuditListQuery | null;
+  auditListStatus: "idle" | "loading" | "success" | "error";
+  auditListError: string | null;
 };

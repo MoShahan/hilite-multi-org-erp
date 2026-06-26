@@ -4,11 +4,11 @@ import type {
   AssigneeLeadStats,
   ConversionMetrics,
   DashboardSummaryResponse,
-  ExecutiveDashboardSummary,
-  DirectorDashboardSummary,
+  MeDashboardSummary,
+  OrgDashboardSummary,
   RecentActivityItem,
   StatusBreakdownItem,
-  TeamLeadDashboardSummary,
+  TeamDashboardSummary,
   TeamLeadStats,
 } from "../types/dashboard";
 import type { AuthUser } from "../types/auth";
@@ -264,13 +264,13 @@ export const dashboardService = {
       recentActivities: recentActivityItems,
     };
 
-    if (view === "executive") {
+    if (view === "me") {
       const needsAttentionCount = statusBreakdown
         .filter((item) => isNeedsAttentionStatus(item.status))
         .reduce((sum, item) => sum + item.count, 0);
 
-      const summary: ExecutiveDashboardSummary = {
-        view: "executive",
+      const summary: MeDashboardSummary = {
+        view: "me",
         needsAttentionCount,
         ...base,
       };
@@ -278,7 +278,7 @@ export const dashboardService = {
       return summary;
     }
 
-    if (view === "team_lead") {
+    if (view === "team") {
       const assigneeGroups =
         await dashboardRepository.groupLeadsByAssigneeAndStatus(leadScope);
       const assigneeStats = await buildAssigneeStats(
@@ -286,8 +286,8 @@ export const dashboardService = {
         true,
       );
 
-      const summary: TeamLeadDashboardSummary = {
-        view: "team_lead",
+      const summary: TeamDashboardSummary = {
+        view: "team",
         assigneeStats,
         ...base,
       };
@@ -308,8 +308,8 @@ export const dashboardService = {
       await buildAssigneeStats(aggregateByAssignee(assigneeGroups), false)
     ).slice(0, 10);
 
-    const summary: DirectorDashboardSummary = {
-      view: "director",
+    const summary: OrgDashboardSummary = {
+      view: "org",
       topTeams,
       topExecutives,
       ...base,

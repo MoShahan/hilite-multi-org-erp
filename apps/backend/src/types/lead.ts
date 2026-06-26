@@ -74,7 +74,7 @@ export type PaginatedLeadsResponse = {
 
 export type CreateLeadInput = {
   name: string;
-  mobileNumber?: string;
+  mobileNumber: string;
   email?: string;
   source?: string;
   project?: string;
@@ -93,4 +93,34 @@ export type UpdateLeadInput = {
 
 export type AssignLeadInput = {
   assignedToId: string | null;
+};
+
+export type LeadStatusHistoryActor = {
+  id: string;
+  name: string;
+};
+
+export type LeadStatusHistoryCreatedEntry = {
+  kind: "created";
+  id: string;
+  toStatus: LeadStatus;
+  changedBy: LeadStatusHistoryActor;
+  changedAt: string;
+};
+
+export type LeadStatusHistoryTransitionEntry = {
+  kind: "transition";
+  id: string;
+  fromStatus: LeadStatus;
+  toStatus: LeadStatus;
+  changedBy: LeadStatusHistoryActor | null;
+  changedAt: string;
+};
+
+export type LeadStatusHistoryEntry =
+  | LeadStatusHistoryCreatedEntry
+  | LeadStatusHistoryTransitionEntry;
+
+export type LeadStatusHistoryResponse = {
+  entries: LeadStatusHistoryEntry[];
 };

@@ -1,6 +1,7 @@
 import { PermissionScope, RoleMembershipScope } from "../generated/prisma/client";
 import { isOrgWidePermission } from "../constants/permissionMembership";
 import { PROTECTED_ROLE_SLUGS } from "../constants/defaultRoles";
+import { buildActorSnapshot, buildChangeSet } from "../lib/auditHelpers";
 import { permissionRepository } from "../repositories/permission.repository";
 import {
   roleRepository,
@@ -12,6 +13,13 @@ import {
   toPrismaRoleMembershipScope,
 } from "../lib/roleMembershipScope";
 import { getRoleAssignmentRules } from "../lib/roleAssignmentRules";
+import {
+  authorizeRoleDetailAccess,
+  authorizeRoleListAccess,
+} from "../lib/roleAccess";
+import { auditService } from "./audit.service";
+import type { AuditMutationContext } from "../types/audit";
+import type { AuthUser } from "../types/auth";
 import type { RoleMembershipScopeValue } from "../constants/defaultRoles";
 import type {
   CreateRoleInput,
@@ -113,20 +121,22 @@ export const roleService = {
   listRoles: async (
     organizationId: string | null,
     query: ListRolesQuery = {},
+    authUser: AuthUser,
   ): Promise<ListRolesResponse> => {
     const orgId = requireOrganizationId(organizationId);
-    const membershipScope = query.membershipScope
-      ? toPrismaRoleMembershipScope(query.membershipScope)
+    const scopedQuery = authorizeRoleListAccess(authUser, query);
+    const membershipScope = scopedQuery.membershipScope
+      ? toPrismaRoleMembershipScope(scopedQuery.membershipScope)
       : undefined;
 
     const roles = await roleRepository.findManyByOrganization(orgId, {
       membershipScope,
     });
 
-    const filteredRoles = query.assignableFrom
+    const filteredRoles = scopedQuery.assignableFrom
       ? roles.filter((role) =>
           getRoleAssignmentRules(role).assignableFrom.includes(
-            query.assignableFrom!,
+            scopedQuery.assignableFrom!,
           ),
         )
       : roles;
@@ -139,6 +149,7 @@ export const roleService = {
   getRole: async (
     organizationId: string | null,
     roleId: string,
+    authUser: AuthUser,
   ): Promise<RoleDetailResponse> => {
     const orgId = requireOrganizationId(organizationId);
     const role = await roleRepository.findByIdForOrganization(roleId, orgId);
@@ -147,12 +158,15 @@ export const roleService = {
       throw AppError.notFound("Role not found");
     }
 
+    authorizeRoleDetailAccess(authUser, role);
+
     return { role: toRoleResponse(role) };
   },
 
   createRole: async (
     organizationId: string | null,
     input: CreateRoleInput,
+    auditContext?: AuditMutationContext,
   ): Promise<RoleDetailResponse> => {
     const orgId = requireOrganizationId(organizationId);
 
@@ -191,6 +205,27 @@ export const roleService = {
       permissionKeys,
     });
 
+    if (auditContext) {
+      auditService.log({
+        organizationId: orgId,
+        actorId: auditContext.authUser.id,
+        action: "ROLE_CREATED",
+        entityType: "role",
+        entityId: role.id,
+        metadata: {
+          summary: `Role created: ${role.name}`,
+          actor: buildActorSnapshot(auditContext.authUser),
+          after: {
+            name: role.name,
+            slug: role.slug,
+            membershipScope: toApiRoleMembershipScope(role.membershipScope),
+            permissions: permissionKeys,
+          },
+        },
+        requestContext: auditContext.requestContext,
+      });
+    }
+
     return { role: toRoleResponse(role) };
   },
 
@@ -198,6 +233,7 @@ export const roleService = {
     organizationId: string | null,
     roleId: string,
     input: UpdateRoleInput,
+    auditContext?: AuditMutationContext,
   ): Promise<RoleDetailResponse> => {
     const orgId = requireOrganizationId(organizationId);
     const role = await roleRepository.findByIdForOrganization(roleId, orgId);
@@ -221,12 +257,61 @@ export const roleService = {
       permissionKeys,
     });
 
+    if (auditContext) {
+      const beforePermissions = role.permissions.map((p) => p.permissionKey);
+      const afterPermissions = updated.permissions.map((p) => p.permissionKey);
+      const permissionsAdded = afterPermissions.filter(
+        (key) => !beforePermissions.includes(key),
+      );
+      const permissionsRemoved = beforePermissions.filter(
+        (key) => !afterPermissions.includes(key),
+      );
+      const nameChanges = buildChangeSet(
+        { name: role.name },
+        { name: updated.name },
+        ["name"],
+      );
+
+      auditService.log({
+        organizationId: orgId,
+        actorId: auditContext.authUser.id,
+        action: "ROLE_UPDATED",
+        entityType: "role",
+        entityId: roleId,
+        metadata: {
+          summary: `Role updated: ${updated.name}`,
+          actor: buildActorSnapshot(auditContext.authUser),
+          before: {
+            ...nameChanges.before,
+            permissions: beforePermissions,
+          },
+          after: {
+            ...nameChanges.after,
+            permissions: afterPermissions,
+          },
+          changedFields: [
+            ...nameChanges.changedFields,
+            ...(permissionsAdded.length || permissionsRemoved.length
+              ? ["permissions"]
+              : []),
+          ],
+          permissionsAdded,
+          permissionsRemoved,
+          related: {
+            role: { id: updated.id, name: updated.name, slug: updated.slug },
+          },
+        },
+        requestContext: auditContext.requestContext,
+      });
+    }
+
     return { role: toRoleResponse(updated) };
   },
 
   deleteRole: async (
     organizationId: string | null,
     roleId: string,
+    auditContext?: AuditMutationContext,
   ): Promise<void> => {
     const orgId = requireOrganizationId(organizationId);
     const role = await roleRepository.findByIdForOrganization(roleId, orgId);
@@ -241,6 +326,30 @@ export const roleService = {
 
     if (role._count.userRoles > 0) {
       throw AppError.badRequest("Cannot delete a role that is assigned to users");
+    }
+
+    if (auditContext) {
+      auditService.log({
+        organizationId: orgId,
+        actorId: auditContext.authUser.id,
+        action: "ROLE_DELETED",
+        entityType: "role",
+        entityId: roleId,
+        metadata: {
+          summary: `Role deleted: ${role.name}`,
+          actor: buildActorSnapshot(auditContext.authUser),
+          before: {
+            name: role.name,
+            slug: role.slug,
+            membershipScope: toApiRoleMembershipScope(role.membershipScope),
+            permissions: role.permissions.map((p) => p.permissionKey),
+          },
+          related: {
+            role: { id: role.id, name: role.name, slug: role.slug },
+          },
+        },
+        requestContext: auditContext.requestContext,
+      });
     }
 
     await roleRepository.delete(roleId);

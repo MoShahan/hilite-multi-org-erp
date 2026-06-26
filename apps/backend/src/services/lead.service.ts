@@ -1,7 +1,14 @@
 import { LeadStatus } from "../generated/prisma/client";
 import { assertValidStatusTransition } from "../constants/leadStatusPipeline";
 import { eventBus } from "../lib/eventBus";
+import { buildActorSnapshot, buildChangeSet } from "../lib/auditHelpers";
+import { buildLeadStatusHistory } from "../lib/leadStatusHistory";
+import { parseOptionalEmail } from "../lib/email";
+import { parseRequiredPhoneNumber } from "../lib/phoneNumber";
 import { leadRepository, type LeadRecord } from "../repositories/lead.repository";
+import { auditRepository } from "../repositories/audit.repository";
+import { auditService } from "../services/audit.service";
+import type { AuditMutationContext } from "../types/audit";
 import type {
   AssignLeadInput,
   CreateLeadInput,
@@ -12,6 +19,7 @@ import type {
   LeadListSortOrder,
   LeadListStatusFilter,
   LeadResponse,
+  LeadStatusHistoryResponse,
   UpdateLeadInput,
 } from "../types/lead";
 import { AppError } from "../utils/AppError";
@@ -156,6 +164,20 @@ const optionalString = (value: string | undefined) => {
   return trimmed ? trimmed : null;
 };
 
+const leadSnapshot = (lead: LeadRecord) => ({
+  name: lead.name,
+  mobileNumber: lead.mobileNumber,
+  email: lead.email,
+  source: lead.source,
+  project: lead.project,
+  status: lead.status,
+});
+
+const toAssigneeRef = (user: LeadRecord["assignedTo"]) =>
+  user
+    ? { id: user.id, name: user.name, email: user.email }
+    : undefined;
+
 export const leadService = {
   listLeads: async (
     organizationId: string | null,
@@ -203,6 +225,7 @@ export const leadService = {
     organizationId: string | null,
     authUser: AuthUser,
     input: CreateLeadInput,
+    auditContext?: AuditMutationContext,
   ): Promise<LeadResponse> => {
     const orgId = requireOrganizationId(organizationId);
     const name = input.name?.trim();
@@ -231,8 +254,8 @@ export const leadService = {
       teamId,
       assignedToId: input.assignedToId ?? null,
       name,
-      mobileNumber: optionalString(input.mobileNumber),
-      email: optionalString(input.email),
+      mobileNumber: parseRequiredPhoneNumber(input.mobileNumber),
+      email: parseOptionalEmail(input.email),
       source: optionalString(input.source),
       project: optionalString(input.project),
       createdById: authUser.id,
@@ -259,6 +282,47 @@ export const leadService = {
       });
     }
 
+    const actor = buildActorSnapshot(auditContext?.authUser ?? authUser);
+
+    auditService.log({
+      organizationId: orgId,
+      actorId: authUser.id,
+      action: "LEAD_CREATED",
+      entityType: "lead",
+      entityId: lead.id,
+      metadata: {
+        summary: `Lead created: ${lead.name}`,
+        actor,
+        after: leadSnapshot(lead),
+        related: {
+          lead: { id: lead.id, name: lead.name },
+          team: { id: lead.team.id, name: lead.team.name },
+          assignee: toAssigneeRef(lead.assignedTo),
+        },
+      },
+      requestContext: auditContext?.requestContext,
+    });
+
+    if (assignedToId && lead.assignedTo) {
+      auditService.log({
+        organizationId: orgId,
+        actorId: authUser.id,
+        action: "LEAD_ASSIGNED",
+        entityType: "lead",
+        entityId: lead.id,
+        metadata: {
+          summary: `Lead assigned to ${lead.assignedTo.name}: ${lead.name}`,
+          actor,
+          related: {
+            lead: { id: lead.id, name: lead.name },
+            team: { id: lead.team.id, name: lead.team.name },
+            assignee: toAssigneeRef(lead.assignedTo),
+          },
+        },
+        requestContext: auditContext?.requestContext,
+      });
+    }
+
     return toLeadResponse(lead);
   },
 
@@ -267,6 +331,7 @@ export const leadService = {
     authUser: AuthUser,
     leadId: string,
     input: UpdateLeadInput,
+    auditContext?: AuditMutationContext,
   ): Promise<LeadResponse> => {
     const orgId = requireOrganizationId(organizationId);
     const existing = await leadRepository.findByIdForOrganization(leadId, orgId);
@@ -316,10 +381,10 @@ export const leadService = {
     const lead = await leadRepository.update(leadId, {
       ...(name !== undefined ? { name } : {}),
       ...(input.mobileNumber !== undefined
-        ? { mobileNumber: optionalString(input.mobileNumber ?? undefined) }
+        ? { mobileNumber: parseRequiredPhoneNumber(input.mobileNumber) }
         : {}),
       ...(input.email !== undefined
-        ? { email: optionalString(input.email ?? undefined) }
+        ? { email: parseOptionalEmail(input.email) }
         : {}),
       ...(input.source !== undefined
         ? { source: optionalString(input.source ?? undefined) }
@@ -347,7 +412,87 @@ export const leadService = {
       });
     }
 
+    const actor = buildActorSnapshot(auditContext?.authUser ?? authUser);
+    const before = leadSnapshot(existing);
+    const after = leadSnapshot(lead);
+    const fieldChanges = buildChangeSet(before, after, [
+      "name",
+      "mobileNumber",
+      "email",
+      "source",
+      "project",
+    ]);
+
+    if (fieldChanges.changedFields.length > 0) {
+      auditService.log({
+        organizationId: orgId,
+        actorId: authUser.id,
+        action: "LEAD_UPDATED",
+        entityType: "lead",
+        entityId: lead.id,
+        metadata: {
+          summary: `Lead updated: ${lead.name}`,
+          actor,
+          before: fieldChanges.before,
+          after: fieldChanges.after,
+          changedFields: fieldChanges.changedFields,
+          related: {
+            lead: { id: lead.id, name: lead.name },
+            team: { id: lead.team.id, name: lead.team.name },
+            assignee: toAssigneeRef(lead.assignedTo),
+          },
+        },
+        requestContext: auditContext?.requestContext,
+      });
+    }
+
+    if (input.status !== undefined && input.status !== existing.status) {
+      auditService.log({
+        organizationId: orgId,
+        actorId: authUser.id,
+        action: "LEAD_STATUS_CHANGED",
+        entityType: "lead",
+        entityId: lead.id,
+        metadata: {
+          summary: `Lead status changed from ${existing.status} to ${input.status}: ${lead.name}`,
+          actor,
+          before: { status: existing.status },
+          after: { status: input.status },
+          changedFields: ["status"],
+          related: {
+            lead: { id: lead.id, name: lead.name },
+            assignee: toAssigneeRef(lead.assignedTo),
+          },
+        },
+        requestContext: auditContext?.requestContext,
+      });
+    }
+
     return toLeadResponse(lead);
+  },
+
+  listStatusHistory: async (
+    organizationId: string | null,
+    authUser: AuthUser,
+    leadId: string,
+  ): Promise<LeadStatusHistoryResponse> => {
+    const orgId = requireOrganizationId(organizationId);
+    const lead = await leadRepository.findByIdForOrganization(leadId, orgId);
+
+    if (!lead) {
+      throw AppError.notFound("Lead not found");
+    }
+
+    assertCanReadLead(lead, authUser, orgId);
+
+    const auditLogs = await auditRepository.findForEntityActions(
+      orgId,
+      "lead",
+      leadId,
+      ["LEAD_CREATED", "LEAD_STATUS_CHANGED"],
+    );
+
+    return buildLeadStatusHistory(lead, auditLogs);
   },
 
   assignLead: async (
@@ -355,6 +500,7 @@ export const leadService = {
     authUser: AuthUser,
     leadId: string,
     input: AssignLeadInput,
+    auditContext?: AuditMutationContext,
   ): Promise<LeadResponse> => {
     const orgId = requireOrganizationId(organizationId);
     const existing = await leadRepository.findByIdForOrganization(leadId, orgId);
@@ -405,6 +551,69 @@ export const leadService = {
         teamId: existing.teamId,
         actorId: authUser.id,
         assigneeId: newAssigneeId,
+      });
+    }
+
+    const actor = buildActorSnapshot(auditContext?.authUser ?? authUser);
+
+    if (!newAssigneeId && previousAssigneeId) {
+      auditService.log({
+        organizationId: orgId,
+        actorId: authUser.id,
+        action: "LEAD_UNASSIGNED",
+        entityType: "lead",
+        entityId: lead.id,
+        metadata: {
+          summary: `Lead unassigned: ${lead.name}`,
+          actor,
+          related: {
+            lead: { id: lead.id, name: lead.name },
+            previousAssignee: toAssigneeRef(existing.assignedTo),
+            team: { id: lead.team.id, name: lead.team.name },
+          },
+        },
+        requestContext: auditContext?.requestContext,
+      });
+    } else if (
+      previousAssigneeId &&
+      newAssigneeId &&
+      previousAssigneeId !== newAssigneeId
+    ) {
+      auditService.log({
+        organizationId: orgId,
+        actorId: authUser.id,
+        action: "LEAD_REASSIGNED",
+        entityType: "lead",
+        entityId: lead.id,
+        metadata: {
+          summary: `Lead reassigned to ${lead.assignedTo?.name ?? "user"}: ${lead.name}`,
+          actor,
+          related: {
+            lead: { id: lead.id, name: lead.name },
+            previousAssignee: toAssigneeRef(existing.assignedTo),
+            assignee: toAssigneeRef(lead.assignedTo),
+            team: { id: lead.team.id, name: lead.team.name },
+          },
+        },
+        requestContext: auditContext?.requestContext,
+      });
+    } else if (newAssigneeId && !previousAssigneeId) {
+      auditService.log({
+        organizationId: orgId,
+        actorId: authUser.id,
+        action: "LEAD_ASSIGNED",
+        entityType: "lead",
+        entityId: lead.id,
+        metadata: {
+          summary: `Lead assigned to ${lead.assignedTo?.name ?? "user"}: ${lead.name}`,
+          actor,
+          related: {
+            lead: { id: lead.id, name: lead.name },
+            assignee: toAssigneeRef(lead.assignedTo),
+            team: { id: lead.team.id, name: lead.team.name },
+          },
+        },
+        requestContext: auditContext?.requestContext,
       });
     }
 

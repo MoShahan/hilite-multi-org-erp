@@ -25,6 +25,8 @@ const initialState: LeadsState = {
   activities: [],
   activitiesMeta: null,
   activitiesStatus: "idle",
+  statusHistory: [],
+  statusHistoryStatus: "idle",
   mutationStatus: "idle",
 };
 
@@ -103,6 +105,11 @@ export const fetchActivities = createAsyncThunk(
   async (leadId: string) => leadsService.listActivities(leadId),
 );
 
+export const fetchStatusHistory = createAsyncThunk(
+  "leads/fetchStatusHistory",
+  async (leadId: string) => leadsService.listStatusHistory(leadId),
+);
+
 export const createActivity = createAsyncThunk(
   "leads/createActivity",
   async (
@@ -135,6 +142,8 @@ const leadsSlice = createSlice({
       state.activities = [];
       state.activitiesMeta = null;
       state.activitiesStatus = "idle";
+      state.statusHistory = [];
+      state.statusHistoryStatus = "idle";
     },
   },
   extraReducers: (builder) => {
@@ -216,6 +225,16 @@ const leadsSlice = createSlice({
       })
       .addCase(fetchActivities.rejected, (state) => {
         state.activitiesStatus = "error";
+      })
+      .addCase(fetchStatusHistory.pending, (state) => {
+        state.statusHistoryStatus = "loading";
+      })
+      .addCase(fetchStatusHistory.fulfilled, (state, action) => {
+        state.statusHistory = action.payload.entries;
+        state.statusHistoryStatus = "success";
+      })
+      .addCase(fetchStatusHistory.rejected, (state) => {
+        state.statusHistoryStatus = "error";
       })
       .addCase(createActivity.pending, (state) => {
         state.mutationStatus = "loading";

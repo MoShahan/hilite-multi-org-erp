@@ -1,4 +1,4 @@
-import { Building2, Kanban, LayoutDashboard, Shield, Sparkles, Users, UsersRound } from "lucide-react";
+import { Building2, History, Kanban, LayoutDashboard, ScrollText, Shield, Sparkles, Users, UsersRound } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import { useAppSelector } from "@/app/hooks";
@@ -30,9 +30,17 @@ import { cn } from "@/lib/utils";
 
 export const AppSidebar = () => {
   const isPlatformAdmin = useAppSelector(selectIsPlatformAdmin);
-  const canViewRoles = useAppSelector(selectHasPermission("roles:read"));
+  const canViewAudit = useAppSelector(selectHasPermission("audit:read"));
+  const canViewPlatformAudit = useAppSelector(
+    selectHasPermission("platform:audit:read"),
+  );
+  const canViewRoles = useAppSelector(
+    selectHasAnyPermission(["roles:read", "roles:read:team"]),
+  );
   const canViewUsers = useAppSelector(selectHasPermission("users:read"));
   const canViewTeams = useAppSelector(selectHasPermission("teams:read"));
+  const canViewMyTeam =
+    useAppSelector(selectHasPermission("users:read:team")) && !canViewTeams;
   const canViewLeads = useAppSelector(
     selectHasAnyPermission([
       "leads:read",
@@ -93,6 +101,21 @@ export const AppSidebar = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ) : null}
+              {canViewPlatformAudit ? (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname.startsWith("/platform/audit")}
+                    tooltip="Platform audit"
+                    className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                  >
+                    <NavLink to="/platform/audit">
+                      <History />
+                      <span>Platform audit</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ) : null}
               {isPlatformAdmin ? (
                 <SidebarMenuItem>
                   <SidebarMenuButton
@@ -113,7 +136,7 @@ export const AppSidebar = () => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        {canViewRoles || canViewUsers || canViewTeams || (hasSalesErpModule && canViewLeads) ? (
+        {canViewRoles || canViewUsers || canViewTeams || canViewMyTeam || canViewAudit || (hasSalesErpModule && canViewLeads) ? (
           <SidebarGroup>
             <SidebarGroupLabel className="text-[11px] font-semibold tracking-wider uppercase text-sidebar-foreground/50">
               Organization
@@ -131,6 +154,21 @@ export const AppSidebar = () => {
                       <NavLink to="/leads">
                         <Kanban />
                         <span>Leads</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ) : null}
+                {canViewMyTeam ? (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname.startsWith("/my-team")}
+                      tooltip="My team"
+                      className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                    >
+                      <NavLink to="/my-team">
+                        <UsersRound />
+                        <span>My team</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -161,6 +199,21 @@ export const AppSidebar = () => {
                       <NavLink to="/teams">
                         <UsersRound />
                         <span>Teams</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ) : null}
+                {canViewAudit ? (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname.startsWith("/audit")}
+                      tooltip="Audit trail"
+                      className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                    >
+                      <NavLink to="/audit">
+                        <ScrollText />
+                        <span>Audit trail</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

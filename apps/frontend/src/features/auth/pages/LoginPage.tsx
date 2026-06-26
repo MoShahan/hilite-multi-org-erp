@@ -244,16 +244,6 @@ export const LoginPage = () => {
                   >
                     {form.formState.isSubmitting ? "Signing in..." : "Log in"}
                   </Button>
-
-                  <p className="text-center text-sm text-muted-foreground">
-                    Forgot password?{" "}
-                    <button
-                      type="button"
-                      className="font-medium text-foreground underline underline-offset-4 transition-colors hover:text-primary"
-                    >
-                      Reset it
-                    </button>
-                  </p>
                 </form>
               </Form>
             </CardContent>

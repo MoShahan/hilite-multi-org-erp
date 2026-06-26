@@ -28,7 +28,7 @@ export const resolveLeadListScope = (
   if (hasPermission(user, PERMISSIONS.LEADS_READ_TEAM)) {
     const teamId = getCallerTeamId(user);
     if (!teamId) {
-      throw AppError.forbidden("Team context is required to view team leads");
+      throw AppError.forbidden("Team context is required to view leads in team");
     }
 
     return { organizationId, teamId };
@@ -115,7 +115,7 @@ export const assertCanUpdateLeadStatus = (
   if (hasPermission(user, PERMISSIONS.LEADS_STATUS_WRITE_TEAM)) {
     const teamId = getCallerTeamId(user);
     if (!teamId) {
-      throw AppError.forbidden("Team context is required to update team lead status");
+      throw AppError.forbidden("Team context is required to update leads in team");
     }
 
     if (lead.teamId === teamId) {

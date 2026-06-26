@@ -22,6 +22,7 @@ export const PLATFORM_ROLE: DefaultRoleDefinition = {
   permissions: [
     PERMISSIONS.PLATFORM_ORGS_READ,
     PERMISSIONS.PLATFORM_ORGS_WRITE,
+    PERMISSIONS.PLATFORM_AUDIT_READ,
   ],
 };
 
@@ -40,6 +41,7 @@ export const DEFAULT_ORG_ROLES: DefaultRoleDefinition[] = [
       PERMISSIONS.ROLES_READ,
       PERMISSIONS.ROLES_WRITE,
       PERMISSIONS.LEADS_READ_ORG,
+      PERMISSIONS.AUDIT_READ,
     ],
   },
   {
@@ -53,21 +55,23 @@ export const DEFAULT_ORG_ROLES: DefaultRoleDefinition[] = [
       PERMISSIONS.LEADS_ASSIGNABLE,
       PERMISSIONS.LEADS_STATUS_WRITE,
       PERMISSIONS.ACTIVITIES_WRITE,
-      PERMISSIONS.DASHBOARD_EXECUTIVE,
+      PERMISSIONS.DASHBOARD_ME,
     ],
   },
   {
     slug: "team_lead",
-    name: "Team Lead",
+    name: "Team Leader",
     membershipScope: "team",
     requiresTeamMembership: true,
     assignableFrom: ["team"],
     permissions: [
       PERMISSIONS.USERS_READ_TEAM,
+      PERMISSIONS.USERS_WRITE_TEAM,
+      PERMISSIONS.ROLES_READ_TEAM,
       PERMISSIONS.LEADS_READ_TEAM,
       PERMISSIONS.LEADS_WRITE,
       PERMISSIONS.LEADS_STATUS_WRITE_TEAM,
-      PERMISSIONS.DASHBOARD_TEAM_LEAD,
+      PERMISSIONS.DASHBOARD_TEAM,
     ],
   },
   {
@@ -90,7 +94,7 @@ export const DEFAULT_ORG_ROLES: DefaultRoleDefinition[] = [
     permissions: [
       PERMISSIONS.LEADS_READ_ORG,
       PERMISSIONS.LEADS_WRITE,
-      PERMISSIONS.DASHBOARD_DIRECTOR,
+      PERMISSIONS.DASHBOARD_ORG,
     ],
   },
 ];

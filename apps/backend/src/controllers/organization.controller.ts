@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { organizationModuleService } from "../services/organizationModule.service";
 import { organizationService } from "../services/organization.service";
+import { getAuditRequestContext } from "../lib/auditRequestContext";
 import type {
   CreateOrganizationInput,
   UpdateOrganizationInput,
@@ -8,6 +9,17 @@ import type {
 } from "../types/organization";
 import type { UpdateOrgModulesInput } from "../types/organizationModule";
 import { AppError } from "../utils/AppError";
+
+const getAuditContext = (req: Request) => {
+  if (!req.authUser) {
+    throw new Error("Auth context is required");
+  }
+
+  return {
+    authUser: req.authUser.user,
+    requestContext: getAuditRequestContext(req),
+  };
+};
 
 export const listOrganizations = async (
   req: Request,
@@ -55,6 +67,7 @@ export const createOrganization = async (
   try {
     const organization = await organizationService.createOrganization(
       req.body as CreateOrganizationInput,
+      getAuditContext(req),
     );
     return res.status(201).json({ organization });
   } catch (error) {
@@ -71,6 +84,7 @@ export const updateOrganization = async (
     const organization = await organizationService.updateOrganization(
       getOrganizationId(req),
       req.body as UpdateOrganizationInput,
+      getAuditContext(req),
     );
     return res.json({ organization });
   } catch (error) {
@@ -87,6 +101,7 @@ export const updateOrganizationStatus = async (
     const organization = await organizationService.updateOrganizationStatus(
       getOrganizationId(req),
       req.body as UpdateOrganizationStatusInput,
+      getAuditContext(req),
     );
     return res.json({ organization });
   } catch (error) {
@@ -130,6 +145,7 @@ export const updateOrganizationModules = async (
     const result = await organizationModuleService.updateModules(
       organizationId,
       body,
+      getAuditContext(req),
     );
 
     return res.json(result);

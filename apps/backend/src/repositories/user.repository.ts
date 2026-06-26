@@ -228,4 +228,25 @@ export const authUserRepository = {
       select: { id: true },
     });
   },
+
+  updateProfile: (
+    userId: string,
+    data: { name: string; phoneNumber: string | null },
+  ) => {
+    return prisma.user.update({
+      where: { id: userId },
+      data: {
+        name: data.name,
+        phoneNumber: data.phoneNumber,
+      },
+      include: userWithAuthInclude,
+    });
+  },
+
+  updatePasswordHash: (userId: string, passwordHash: string) => {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+  },
 };

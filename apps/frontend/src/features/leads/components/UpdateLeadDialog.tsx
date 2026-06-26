@@ -41,7 +41,11 @@ const isApiRejection = (value: unknown): value is ApiRejection =>
 
 const updateLeadSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  mobileNumber: z.string().optional(),
+  mobileNumber: z
+    .string()
+    .trim()
+    .min(1, "Mobile number is required")
+    .regex(/^\d{10}$/, "Mobile number must be exactly 10 digits"),
   email: z.union([z.literal(""), z.email("Enter a valid email address")]),
   source: z.string().optional(),
   project: z.string().optional(),
@@ -97,7 +101,7 @@ export const UpdateLeadDialog = ({
           leadId: lead.id,
           input: {
             name: values.name.trim(),
-            mobileNumber: values.mobileNumber?.trim() || null,
+            mobileNumber: values.mobileNumber.trim(),
             email: values.email?.trim() || null,
             source: values.source?.trim() || null,
             project: values.project?.trim() || null,
@@ -154,7 +158,12 @@ export const UpdateLeadDialog = ({
                   <FormItem>
                     <FormLabel>Mobile number</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input
+                        placeholder="9876543210"
+                        inputMode="numeric"
+                        maxLength={10}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

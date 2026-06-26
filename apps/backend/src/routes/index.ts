@@ -9,6 +9,7 @@ import userRoutes from "./user.routes";
 import leadRoutes from "./lead.routes";
 import notificationRoutes from "./notification.routes";
 import dashboardRoutes from "./dashboard.routes";
+import auditRoutes from "./audit.routes";
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.use("/api/v1/users", userRoutes);
 router.use("/api/v1/leads", leadRoutes);
 router.use("/api/v1/notifications", notificationRoutes);
 router.use("/api/v1/dashboard", dashboardRoutes);
+router.use("/api/v1/audit", auditRoutes);
 
 export default router;

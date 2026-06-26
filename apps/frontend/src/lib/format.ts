@@ -5,6 +5,10 @@ export const formatRoleLabel = (role: AuthRole | null | undefined) => {
     return "No role";
   }
 
+  if (role.slug === "team_lead") {
+    return "Team Leader";
+  }
+
   return role.name;
 };
 

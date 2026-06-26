@@ -1,5 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 
+import { auditReducer } from "@/features/audit/auditSlice";
 import { authReducer } from "@/features/auth/authSlice";
 import { leadsReducer } from "@/features/leads/leadsSlice";
 import { notificationsReducer } from "@/features/notifications/notificationsSlice";
@@ -26,6 +27,7 @@ export const store = configureStore({
     users: usersReducer,
     leads: leadsReducer,
     notifications: notificationsReducer,
+    audit: auditReducer,
   },
 });
 

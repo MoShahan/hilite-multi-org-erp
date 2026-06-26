@@ -13,6 +13,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 import { updateLead } from "../leadsSlice";
 import {
@@ -39,6 +40,26 @@ type LeadStatusAdvanceProps = {
   lead: Lead;
   disabled?: boolean;
   onAdvanced?: () => void;
+};
+
+const ADVANCE_BUTTON_STYLES: Partial<
+  Record<LeadStatus, { variant: "default" | "outline"; className: string }>
+> = {
+  WON: {
+    variant: "default",
+    className:
+      "border-emerald-600 bg-emerald-600 text-white hover:border-emerald-700 hover:bg-emerald-700 focus-visible:ring-emerald-500/40 dark:border-emerald-600 dark:bg-emerald-600 dark:hover:border-emerald-500 dark:hover:bg-emerald-500",
+  },
+  LOST: {
+    variant: "outline",
+    className:
+      "border-rose-300 bg-background text-rose-700 hover:border-rose-400 hover:bg-rose-50 hover:text-rose-800 focus-visible:ring-rose-500/40 dark:border-rose-800 dark:bg-transparent dark:text-rose-300 dark:hover:border-rose-700 dark:hover:bg-rose-950/60 dark:hover:text-rose-200",
+  },
+};
+
+const CONFIRM_ACTION_STYLES: Partial<Record<LeadStatus, string>> = {
+  WON: "bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500",
+  LOST: "bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-600 dark:hover:bg-rose-500",
 };
 
 export const LeadStatusAdvance = ({
@@ -98,17 +119,22 @@ export const LeadStatusAdvance = ({
   return (
     <>
       <div className="flex flex-wrap gap-2">
-        {allowedNext.map((nextStatus) => (
-          <Button
-            key={nextStatus}
-            type="button"
-            variant={nextStatus === "LOST" ? "outline" : "default"}
-            disabled={disabled || isSubmitting}
-            onClick={() => setPendingStatus(nextStatus)}
-          >
-            {getAdvanceActionLabel(nextStatus)}
-          </Button>
-        ))}
+        {allowedNext.map((nextStatus) => {
+          const buttonStyles = ADVANCE_BUTTON_STYLES[nextStatus];
+
+          return (
+            <Button
+              key={nextStatus}
+              type="button"
+              variant={buttonStyles?.variant ?? "default"}
+              className={buttonStyles?.className}
+              disabled={disabled || isSubmitting}
+              onClick={() => setPendingStatus(nextStatus)}
+            >
+              {getAdvanceActionLabel(nextStatus)}
+            </Button>
+          );
+        })}
       </div>
 
       <AlertDialog
@@ -135,11 +161,9 @@ export const LeadStatusAdvance = ({
             <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               disabled={isSubmitting}
-              className={
-                pendingStatus === "LOST"
-                  ? "bg-destructive text-white hover:bg-destructive/90"
-                  : undefined
-              }
+              className={cn(
+                pendingStatus ? CONFIRM_ACTION_STYLES[pendingStatus] : undefined,
+              )}
               onClick={(event) => {
                 event.preventDefault();
                 void handleConfirm();

@@ -3,12 +3,18 @@ import {
   assertRoleAssignableFrom,
   getRoleAssignmentRules,
 } from "../lib/roleAssignmentRules";
+import { buildActorSnapshot } from "../lib/auditHelpers";
 import {
   teamRepository,
   type TeamMemberRecord,
   type TeamWithMemberCount,
 } from "../repositories/team.repository";
 import { authUserRepository } from "../repositories/user.repository";
+import { auditService } from "./audit.service";
+import { assertPasswordStrength } from "../lib/password";
+import { authorizeTeamMemberAccess } from "../lib/teamAccess";
+import type { AuditMutationContext } from "../types/audit";
+import type { AuthUser } from "../types/auth";
 import type {
   CreateTeamInput,
   CreateTeamMemberInput,
@@ -228,6 +234,7 @@ export const teamService = {
   createTeam: async (
     organizationId: string | null,
     input: CreateTeamInput,
+    auditContext?: AuditMutationContext,
   ): Promise<TeamDetailResponse> => {
     const orgId = requireOrganizationId(organizationId);
     const name = input.name?.trim();
@@ -240,6 +247,23 @@ export const teamService = {
 
     try {
       const team = await teamRepository.create(orgId, name);
+
+      if (auditContext) {
+        auditService.log({
+          organizationId: orgId,
+          actorId: auditContext.authUser.id,
+          action: "TEAM_CREATED",
+          entityType: "team",
+          entityId: team.id,
+          metadata: {
+            summary: `Team created: ${team.name}`,
+            actor: buildActorSnapshot(auditContext.authUser),
+            after: { name: team.name },
+          },
+          requestContext: auditContext.requestContext,
+        });
+      }
+
       return { team: toTeamSummary(team) };
     } catch (error) {
       if (
@@ -261,8 +285,10 @@ export const teamService = {
     organizationId: string | null,
     teamId: string,
     rawQuery: Record<string, unknown>,
+    authUser: AuthUser,
   ): Promise<PaginatedTeamMembersResponse> => {
     const orgId = requireOrganizationId(organizationId);
+    authorizeTeamMemberAccess(authUser, teamId, "read");
     const team = await teamRepository.findByIdForOrganization(teamId, orgId);
 
     if (!team) {
@@ -293,8 +319,15 @@ export const teamService = {
     organizationId: string | null,
     teamId: string,
     input: CreateTeamMemberInput,
+    auditContext?: AuditMutationContext,
   ): Promise<{ member: TeamMember }> => {
     const orgId = requireOrganizationId(organizationId);
+
+    if (!auditContext) {
+      throw AppError.forbidden("Auth context is required");
+    }
+
+    authorizeTeamMemberAccess(auditContext.authUser, teamId, "write");
 
     const team = await teamRepository.findByIdForOrganization(teamId, orgId);
     if (!team) {
@@ -318,14 +351,7 @@ export const teamService = {
       ]);
     }
 
-    if (!password || password.length < 8) {
-      throw AppError.badRequest("Password must be at least 8 characters", [
-        {
-          field: "password",
-          message: "Password must be at least 8 characters",
-        },
-      ]);
-    }
+    assertPasswordStrength(password ?? "", "password");
 
     if (!roleId) {
       throw AppError.badRequest("Role is required", [
@@ -386,6 +412,35 @@ export const teamService = {
         passwordHash,
         roleId,
       });
+
+      if (auditContext) {
+        auditService.log({
+          organizationId: orgId,
+          actorId: auditContext.authUser.id,
+          action: "TEAM_MEMBER_ADDED",
+          entityType: "team",
+          entityId: teamId,
+          metadata: {
+            summary: `Team member added: ${member.user.name}`,
+            actor: buildActorSnapshot(auditContext.authUser),
+            after: { name: member.user.name, email: member.user.email },
+            related: {
+              team: { id: team.id, name: team.name },
+              targetUser: {
+                id: member.user.id,
+                name: member.user.name,
+                email: member.user.email,
+              },
+              role: {
+                id: role.id,
+                name: role.name,
+                slug: role.slug,
+              },
+            },
+          },
+          requestContext: auditContext.requestContext,
+        });
+      }
 
       return { member: toTeamMember(member) };
     } catch (error) {

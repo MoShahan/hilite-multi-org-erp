@@ -1,7 +1,9 @@
 import { apiClient, unwrapResponse } from "@/lib/api-client";
 
 import { toOrganizationListApiParams } from "./organizationListParams";
+import { toPlatformAuditListApiParams } from "@/features/audit/auditListParams";
 
+import type { ListAuditLogsResult } from "@/features/audit/auditTypes";
 import type {
   CreateOrganizationInput,
   ListOrganizationsResult,
@@ -9,6 +11,7 @@ import type {
   OrganizationListQuery,
   OrganizationModulesMap,
   OrganizationModulesResponse,
+  PlatformAuditListQuery,
   UpdateOrganizationInput,
 } from "./platformTypes";
 
@@ -83,5 +86,14 @@ export const platformService = {
       { modules },
     );
     return unwrapResponse<OrganizationModulesResponse>(response);
+  },
+
+  listAuditLogs: async (
+    query: PlatformAuditListQuery,
+  ): Promise<ListAuditLogsResult> => {
+    const response = await apiClient.get("/api/v1/platform/audit", {
+      params: toPlatformAuditListApiParams(query),
+    });
+    return unwrapResponse<ListAuditLogsResult>(response);
   },
 };

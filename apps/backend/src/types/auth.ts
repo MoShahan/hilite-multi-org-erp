@@ -15,6 +15,7 @@ export type AuthUser = {
   id: string;
   email: string;
   name: string;
+  phoneNumber: string | null;
   status: UserStatus;
   organizationId: string | null;
   role: AuthRole | null;
@@ -39,4 +40,14 @@ export type AuthMeResponse = {
   user: AuthUser;
   organization: AuthOrganization | null;
   modules: string[];
+};
+
+export type UpdateProfileInput = {
+  name: string;
+  phoneNumber?: string | null;
+};
+
+export type ChangePasswordInput = {
+  currentPassword: string;
+  newPassword: string;
 };

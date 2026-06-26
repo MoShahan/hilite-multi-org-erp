@@ -15,15 +15,17 @@ import { ORG_MODULE_KEYS } from "@/constants/orgModules";
 
 import { ActivityTimeline } from "../components/ActivityTimeline";
 import { AssignLeadDialog } from "../components/AssignLeadDialog";
-import { CreateActivityForm } from "../components/CreateActivityForm";
+import { LogActivityDialog } from "../components/LogActivityDialog";
 import { LeadStatusAdvance } from "../components/LeadStatusAdvance";
 import { LeadStatusBadge } from "../components/LeadStatusBadge";
+import { LeadStatusHistory } from "../components/LeadStatusHistory";
 import { LeadStatusStepper } from "../components/LeadStatusStepper";
 import { UpdateLeadDialog } from "../components/UpdateLeadDialog";
 import {
   clearSelectedLead,
   fetchActivities,
   fetchLead,
+  fetchStatusHistory,
 } from "../leadsSlice";
 import {
   selectActivities,
@@ -32,6 +34,8 @@ import {
   selectLeadDetailError,
   selectLeadDetailStatus,
   selectSelectedLead,
+  selectStatusHistory,
+  selectStatusHistoryStatus,
 } from "../leadsSelectors";
 
 export const LeadDetailPage = () => {
@@ -48,6 +52,8 @@ export const LeadDetailPage = () => {
   const detailError = useAppSelector(selectLeadDetailError);
   const activities = useAppSelector(selectActivities);
   const activitiesStatus = useAppSelector(selectActivitiesStatus);
+  const statusHistory = useAppSelector(selectStatusHistory);
+  const statusHistoryStatus = useAppSelector(selectStatusHistoryStatus);
   const isMutating = useAppSelector(selectIsLeadsMutating);
   const canEditLead = useAppSelector(selectHasPermission("leads:write"));
   const canUpdateStatusOnly = useAppSelector(
@@ -65,6 +71,7 @@ export const LeadDetailPage = () => {
 
   const [editOpen, setEditOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
+  const [logActivityOpen, setLogActivityOpen] = useState(false);
 
   const listSearch =
     typeof location.state === "object" &&
@@ -79,6 +86,7 @@ export const LeadDetailPage = () => {
 
     void dispatch(fetchLead(id));
     void dispatch(fetchActivities(id));
+    void dispatch(fetchStatusHistory(id));
 
     return () => {
       dispatch(clearSelectedLead());
@@ -170,7 +178,13 @@ export const LeadDetailPage = () => {
               </div>
               <LeadStatusStepper status={lead.status} />
               {canAdvanceStatus ? (
-                <LeadStatusAdvance lead={lead} disabled={isMutating} />
+                <LeadStatusAdvance
+                  lead={lead}
+                  disabled={isMutating}
+                  onAdvanced={() => {
+                    void dispatch(fetchStatusHistory(lead.id));
+                  }}
+                />
               ) : null}
             </div>
 
@@ -191,22 +205,36 @@ export const LeadDetailPage = () => {
 
             <section className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold">Activity timeline</h2>
+                <h2 className="text-lg font-semibold">Status history</h2>
                 <p className="text-sm text-muted-foreground">
-                  Newest interactions appear first.
+                  Newest changes appear first.
                 </p>
               </div>
 
-              {canLogActivity && isCurrentAssignee ? (
-                <div className="rounded-xl border bg-muted/20 p-4">
-                  <CreateActivityForm
-                    leadId={lead.id}
-                    onCreated={() => {
-                      void dispatch(fetchActivities(lead.id));
-                    }}
-                  />
+              <LeadStatusHistory
+                entries={statusHistory}
+                isLoading={statusHistoryStatus === "loading"}
+              />
+            </section>
+
+            <section className="space-y-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold">Activity timeline</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Newest interactions appear first.
+                  </p>
                 </div>
-              ) : null}
+                {canLogActivity && isCurrentAssignee ? (
+                  <Button
+                    className="shrink-0"
+                    onClick={() => setLogActivityOpen(true)}
+                    disabled={isMutating}
+                  >
+                    Log activity
+                  </Button>
+                ) : null}
+              </div>
 
               <ActivityTimeline
                 activities={activities}
@@ -223,6 +251,14 @@ export const LeadDetailPage = () => {
               lead={lead}
               open={assignOpen}
               onOpenChange={setAssignOpen}
+            />
+            <LogActivityDialog
+              leadId={lead.id}
+              open={logActivityOpen}
+              onOpenChange={setLogActivityOpen}
+              onCreated={() => {
+                void dispatch(fetchActivities(lead.id));
+              }}
             />
           </>
         ) : (

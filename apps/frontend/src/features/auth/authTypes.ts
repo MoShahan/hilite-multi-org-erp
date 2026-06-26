@@ -17,6 +17,7 @@ export type User = {
   id: string;
   email: string;
   name: string;
+  phoneNumber: string | null;
   role: AuthRole | null;
   permissions: string[];
   status: UserStatus;

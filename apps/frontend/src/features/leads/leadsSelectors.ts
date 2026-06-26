@@ -21,5 +21,11 @@ export const selectActivities = (state: RootState) => state.leads.activities;
 export const selectActivitiesStatus = (state: RootState) =>
   state.leads.activitiesStatus;
 
+export const selectStatusHistory = (state: RootState) =>
+  state.leads.statusHistory;
+
+export const selectStatusHistoryStatus = (state: RootState) =>
+  state.leads.statusHistoryStatus;
+
 export const selectIsLeadsMutating = (state: RootState) =>
   state.leads.mutationStatus === "loading";

@@ -1,10 +1,14 @@
 import bcrypt from "bcrypt";
 import { OrganizationStatus } from "../generated/prisma/client";
+import { buildActorSnapshot, buildChangeSet } from "../lib/auditHelpers";
+import { assertPasswordStrength } from "../lib/password";
 import {
   organizationRepository,
   type OrganizationWithUserCount,
 } from "../repositories/organization.repository";
 import { authUserRepository } from "../repositories/user.repository";
+import { auditService } from "./audit.service";
+import type { AuditMutationContext } from "../types/audit";
 import type {
   CreateOrganizationInput,
   ListOrganizationsQuery,
@@ -122,6 +126,14 @@ const toOrganizationResponse = (
   updatedAt: organization.updatedAt.toISOString(),
 });
 
+const orgSnapshot = (organization: OrganizationWithUserCount) => ({
+  name: organization.name,
+  code: organization.code,
+  description: organization.description,
+  logoUrl: organization.logoUrl,
+  status: organization.status,
+});
+
 const normalizeCode = (code: string) => code.trim().toLowerCase();
 
 const validateCode = (code: string) => {
@@ -168,14 +180,7 @@ const validateCreateInput = async (input: CreateOrganizationInput) => {
     ]);
   }
 
-  if (!orgAdminPassword || orgAdminPassword.length < 8) {
-    throw AppError.badRequest("Org admin password must be at least 8 characters", [
-      {
-        field: "orgAdmin.password",
-        message: "Password must be at least 8 characters",
-      },
-    ]);
-  }
+  assertPasswordStrength(orgAdminPassword ?? "", "orgAdmin.password");
 
   const existingOrg = await organizationRepository.findByCode(code);
 
@@ -241,6 +246,7 @@ export const organizationService = {
 
   createOrganization: async (
     input: CreateOrganizationInput,
+    auditContext?: AuditMutationContext,
   ): Promise<OrganizationResponse> => {
     const validated = await validateCreateInput(input);
     const passwordHash = await bcrypt.hash(validated.orgAdmin.password, SALT_ROUNDS);
@@ -259,12 +265,41 @@ export const organizationService = {
       },
     });
 
+    if (auditContext) {
+      auditService.log({
+        organizationId: organization.id,
+        actorId: auditContext.authUser.id,
+        action: "ORG_CREATED",
+        entityType: "organization",
+        entityId: organization.id,
+        metadata: {
+          summary: `Organization created: ${organization.name}`,
+          actor: buildActorSnapshot(auditContext.authUser),
+          after: orgSnapshot(organization),
+          organization: {
+            id: organization.id,
+            name: organization.name,
+            code: organization.code,
+          },
+          related: {
+            orgAdmin: {
+              id: "created",
+              name: validated.orgAdmin.name,
+              email: validated.orgAdmin.email,
+            },
+          },
+        },
+        requestContext: auditContext.requestContext,
+      });
+    }
+
     return toOrganizationResponse(organization);
   },
 
   updateOrganization: async (
     id: string,
     input: UpdateOrganizationInput,
+    auditContext?: AuditMutationContext,
   ): Promise<OrganizationResponse> => {
     const existing = await organizationRepository.findById(id);
 
@@ -327,12 +362,44 @@ export const organizationService = {
     }
 
     const organization = await organizationRepository.update(id, updateData);
+
+    if (auditContext && Object.keys(updateData).length > 0) {
+      const changes = buildChangeSet(orgSnapshot(existing), orgSnapshot(organization), [
+        "name",
+        "code",
+        "description",
+        "logoUrl",
+      ]);
+
+      auditService.log({
+        organizationId: organization.id,
+        actorId: auditContext.authUser.id,
+        action: "ORG_UPDATED",
+        entityType: "organization",
+        entityId: organization.id,
+        metadata: {
+          summary: `Organization updated: ${organization.name}`,
+          actor: buildActorSnapshot(auditContext.authUser),
+          before: changes.before,
+          after: changes.after,
+          changedFields: changes.changedFields,
+          organization: {
+            id: organization.id,
+            name: organization.name,
+            code: organization.code,
+          },
+        },
+        requestContext: auditContext.requestContext,
+      });
+    }
+
     return toOrganizationResponse(organization);
   },
 
   updateOrganizationStatus: async (
     id: string,
     input: UpdateOrganizationStatusInput,
+    auditContext?: AuditMutationContext,
   ): Promise<OrganizationResponse> => {
     const existing = await organizationRepository.findById(id);
 
@@ -355,6 +422,29 @@ export const organizationService = {
       id,
       input.status,
     );
+
+    if (auditContext) {
+      auditService.log({
+        organizationId: organization.id,
+        actorId: auditContext.authUser.id,
+        action: "ORG_STATUS_CHANGED",
+        entityType: "organization",
+        entityId: organization.id,
+        metadata: {
+          summary: `Organization status changed from ${existing.status} to ${input.status}: ${organization.name}`,
+          actor: buildActorSnapshot(auditContext.authUser),
+          before: { status: existing.status },
+          after: { status: input.status },
+          changedFields: ["status"],
+          organization: {
+            id: organization.id,
+            name: organization.name,
+            code: organization.code,
+          },
+        },
+        requestContext: auditContext.requestContext,
+      });
+    }
 
     return toOrganizationResponse(organization);
   },

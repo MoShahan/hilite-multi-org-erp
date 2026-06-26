@@ -20,6 +20,7 @@ import { rolesService } from "../rolesService";
 
 export const RolesPage = () => {
   const canWrite = useAppSelector(selectHasPermission("roles:write"));
+  const canReadAllRoles = useAppSelector(selectHasPermission("roles:read"));
   const {
     roles,
     permissions,
@@ -93,7 +94,9 @@ export const RolesPage = () => {
               Roles & permissions
             </h1>
             <p className="text-sm text-muted-foreground">
-              Define what each role can do in your organization.
+              {canReadAllRoles
+                ? "Define what each role can do in your organization."
+                : "View team roles and what they can do in your organization."}
             </p>
           </div>
         </div>

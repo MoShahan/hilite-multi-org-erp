@@ -29,3 +29,15 @@ export const selectPlatformMutationStatus = (state: RootState) =>
 
 export const selectIsPlatformMutating = (state: RootState) =>
   state.platform.mutationStatus === "loading";
+
+export const selectPlatformAuditLogs = (state: RootState) =>
+  state.platform.auditLogs;
+
+export const selectPlatformAuditListMeta = (state: RootState) =>
+  state.platform.auditListMeta;
+
+export const selectPlatformAuditListStatus = (state: RootState) =>
+  state.platform.auditListStatus;
+
+export const selectPlatformAuditListError = (state: RootState) =>
+  state.platform.auditListError;

@@ -9,7 +9,7 @@ PostgreSQL schema for Hilite ERP, managed with Prisma.
 | Domain             | Tables                                                            | Purpose                               |
 | ------------------ | ----------------------------------------------------------------- | ------------------------------------- |
 | Platform / Tenancy | `organizations`, `organization_modules`                           | Multi-tenant orgs and feature toggles |
-| Auth & RBAC        | `users`, `roles`, `permissions`, `role_permissions`, `user_roles` | Users, roles, and permission grants   |
+| Auth & RBAC        | `users`, `roles`, `permissions`, `role_permissions`, `user_roles`, `refresh_tokens` | Users, roles, permission grants, and refresh sessions |
 | Teams              | `teams`, `team_members`                                           | Org teams and membership              |
 | Sales CRM          | `leads`, `activities`                                             | Lead pipeline and activity log        |
 | Notifications      | `notifications`                                                   | In-app alerts tied to lead events     |
@@ -149,6 +149,28 @@ Per-organization feature flags.
 
 ---
 
+### `refresh_tokens`
+
+Server-side refresh sessions. Only the SHA-256 hash of the opaque token is stored.
+
+| Column       | Type        | Constraints                              |
+| ------------ | ----------- | ---------------------------------------- |
+| `id`         | UUID        | PK                                       |
+| `user_id`    | UUID        | NOT NULL, FK → `users.id` ON DELETE CASCADE |
+| `token_hash` | TEXT        | NOT NULL, UNIQUE                         |
+| `family_id`  | UUID        | NOT NULL                                 |
+| `expires_at` | TIMESTAMPTZ | NOT NULL                                 |
+| `revoked_at` | TIMESTAMPTZ | NULL                                     |
+| `user_agent` | TEXT        | NULL                                     |
+| `ip`         | TEXT        | NULL                                     |
+| `created_at` | TIMESTAMPTZ | NOT NULL                                 |
+
+**Indexes:** `user_id`, `family_id`
+
+**Notes:** Tokens rotate on each refresh; reuse of a revoked token revokes the entire `family_id`.
+
+---
+
 ### `roles`
 
 | Column             | Type                  | Constraints                                     |
@@ -200,9 +222,9 @@ Global permission catalog (seeded at startup, not org-specific).
 | `leads:status:write:team` | ORGANIZATION |
 | `leads:assignable`        | ORGANIZATION |
 | `activities:write`        | ORGANIZATION |
-| `dashboard:executive`     | ORGANIZATION |
-| `dashboard:team_lead`     | ORGANIZATION |
-| `dashboard:director`      | ORGANIZATION |
+| `dashboard:me`            | ORGANIZATION |
+| `dashboard:team`          | ORGANIZATION |
+| `dashboard:org`           | ORGANIZATION |
 
 ---
 
@@ -336,10 +358,10 @@ Defined in application code, not as separate DB tables.
 | ---------------- | ------------ | -------------------------------------------- |
 | `platform_admin` | Platform     | `platform:orgs:read`, `platform:orgs:write`  |
 | `org_admin`      | Organization | users, teams, roles, all org leads           |
-| `executive`      | Team         | own leads, activities, executive dashboard   |
-| `team_lead`      | Team         | team leads/users, lead write, team dashboard |
+| `executive`      | Team         | own leads, activities, `dashboard:me`        |
+| `team_lead`      | Team         | Team Leader — team users / leads in team, lead write, `dashboard:team` |
 | `sales_manager`  | Organization | all org leads (read/write)                   |
-| `director`       | Organization | all org leads, director dashboard            |
+| `director`       | Organization | all org leads, `dashboard:org`               |
 
 ---
 

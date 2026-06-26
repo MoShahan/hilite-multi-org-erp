@@ -7,6 +7,7 @@ import { platformService } from "./platformService";
 import type {
   CreateOrganizationInput,
   OrganizationListQuery,
+  PlatformAuditListQuery,
   PlatformState,
   UpdateOrganizationInput,
 } from "./platformTypes";
@@ -21,6 +22,11 @@ const initialState: PlatformState = {
   detailStatus: "idle",
   detailError: null,
   mutationStatus: "idle",
+  auditLogs: [],
+  auditListMeta: null,
+  auditListQuery: null,
+  auditListStatus: "idle",
+  auditListError: null,
 };
 
 export const fetchOrganizations = createAsyncThunk(
@@ -88,6 +94,12 @@ export const updateOrganizationStatus = createAsyncThunk(
     id: string;
     status: "ACTIVE" | "SUSPENDED";
   }) => platformService.updateOrganizationStatus(id, status),
+);
+
+export const fetchPlatformAuditLogs = createAsyncThunk(
+  "platform/fetchPlatformAuditLogs",
+  async (query: PlatformAuditListQuery) =>
+    platformService.listAuditLogs(query),
 );
 
 const platformSlice = createSlice({
@@ -165,6 +177,21 @@ const platformSlice = createSlice({
       })
       .addCase(updateOrganizationStatus.rejected, (state) => {
         state.mutationStatus = "idle";
+      })
+      .addCase(fetchPlatformAuditLogs.pending, (state, action) => {
+        state.auditListStatus = "loading";
+        state.auditListError = null;
+        state.auditListQuery = action.meta.arg;
+      })
+      .addCase(fetchPlatformAuditLogs.fulfilled, (state, action) => {
+        state.auditLogs = action.payload.auditLogs;
+        state.auditListMeta = action.payload.meta;
+        state.auditListStatus = "success";
+      })
+      .addCase(fetchPlatformAuditLogs.rejected, (state, action) => {
+        state.auditListStatus = "error";
+        state.auditListError =
+          action.error.message ?? "Failed to load platform audit trail";
       });
   },
 });

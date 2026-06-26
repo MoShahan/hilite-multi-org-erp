@@ -54,23 +54,23 @@ export type DashboardSummaryBase = {
   recentActivities: RecentActivityItem[];
 };
 
-export type ExecutiveDashboardSummary = DashboardSummaryBase & {
-  view: "executive";
+export type MeDashboardSummary = DashboardSummaryBase & {
+  view: "me";
   needsAttentionCount: number;
 };
 
-export type TeamLeadDashboardSummary = DashboardSummaryBase & {
-  view: "team_lead";
+export type TeamDashboardSummary = DashboardSummaryBase & {
+  view: "team";
   assigneeStats: AssigneeLeadStats[];
 };
 
-export type DirectorDashboardSummary = DashboardSummaryBase & {
-  view: "director";
+export type OrgDashboardSummary = DashboardSummaryBase & {
+  view: "org";
   topTeams: TeamLeadStats[];
   topExecutives: AssigneeLeadStats[];
 };
 
 export type DashboardSummaryResponse =
-  | ExecutiveDashboardSummary
-  | TeamLeadDashboardSummary
-  | DirectorDashboardSummary;
+  | MeDashboardSummary
+  | TeamDashboardSummary
+  | OrgDashboardSummary;

@@ -33,6 +33,18 @@ const OrganizationDetailPage = lazy(() =>
   })),
 );
 
+const PlatformAuditPage = lazy(() =>
+  import("@/features/platform/pages/PlatformAuditPage").then((module) => ({
+    default: module.PlatformAuditPage,
+  })),
+);
+
+const AuditPage = lazy(() =>
+  import("@/features/audit/pages/AuditPage").then((module) => ({
+    default: module.AuditPage,
+  })),
+);
+
 const RolesPage = lazy(() =>
   import("@/features/roles/pages/RolesPage").then((module) => ({
     default: module.RolesPage,
@@ -54,6 +66,12 @@ const TeamsPage = lazy(() =>
 const TeamDetailPage = lazy(() =>
   import("@/features/teams/pages/TeamDetailPage").then((module) => ({
     default: module.TeamDetailPage,
+  })),
+);
+
+const MyTeamPage = lazy(() =>
+  import("@/features/teams/pages/MyTeamPage").then((module) => ({
+    default: module.MyTeamPage,
   })),
 );
 
@@ -93,8 +111,20 @@ const HomePage = lazy(() =>
   })),
 );
 
+const AccountPage = lazy(() =>
+  import("@/features/account/pages/AccountPage").then((module) => ({
+    default: module.AccountPage,
+  })),
+);
+
 const PlatformAdminLayout = ({ children }: { children: ReactNode }) => (
   <RequirePermission permissions={["platform:orgs:read"]}>
+    <AppLayout>{children}</AppLayout>
+  </RequirePermission>
+);
+
+const PlatformAuditLayout = ({ children }: { children: ReactNode }) => (
+  <RequirePermission permissions={["platform:audit:read"]}>
     <AppLayout>{children}</AppLayout>
   </RequirePermission>
 );
@@ -129,9 +159,22 @@ export const AppRouter = () => {
               }
             />
             <Route
+              path="/audit"
+              element={
+                <RequirePermission permissions={["audit:read"]}>
+                  <AppLayout>
+                    <AuditPage />
+                  </AppLayout>
+                </RequirePermission>
+              }
+            />
+            <Route
               path="/roles"
               element={
-                <RequirePermission permissions={["roles:read"]}>
+                <RequirePermission
+                  permissions={["roles:read", "roles:read:team"]}
+                  mode="any"
+                >
                   <AppLayout>
                     <RolesPage />
                   </AppLayout>
@@ -144,6 +187,16 @@ export const AppRouter = () => {
                 <RequirePermission permissions={["users:read"]}>
                   <AppLayout>
                     <UsersPage />
+                  </AppLayout>
+                </RequirePermission>
+              }
+            />
+            <Route
+              path="/my-team"
+              element={
+                <RequirePermission permissions={["users:read:team"]}>
+                  <AppLayout>
+                    <MyTeamPage />
                   </AppLayout>
                 </RequirePermission>
               }
@@ -208,6 +261,22 @@ export const AppRouter = () => {
                 <AppLayout>
                   <NotificationsPage />
                 </AppLayout>
+              }
+            />
+            <Route
+              path="/account"
+              element={
+                <AppLayout>
+                  <AccountPage />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/platform/audit"
+              element={
+                <PlatformAuditLayout>
+                  <PlatformAuditPage />
+                </PlatformAuditLayout>
               }
             />
             <Route

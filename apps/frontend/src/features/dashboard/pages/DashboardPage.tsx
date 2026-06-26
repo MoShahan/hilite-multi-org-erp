@@ -13,18 +13,18 @@ import {
 import { ORG_MODULE_KEYS } from "@/constants/orgModules";
 import { formatRoleLabel } from "@/lib/format";
 
+import { CustomizeDashboardSheet } from "../components/CustomizeDashboardSheet";
+import { DashboardGrid } from "../components/DashboardGrid";
 import { DashboardNoAccess } from "../components/DashboardNoAccess";
-import { DirectorDashboard } from "../components/DirectorDashboard";
-import { ExecutiveDashboard } from "../components/ExecutiveDashboard";
-import { TeamLeadDashboard } from "../components/TeamLeadDashboard";
 import { dashboardService } from "../dashboardService";
 
+import type { DashboardLayoutResponse } from "../dashboardLayoutTypes";
 import type { DashboardSummaryResponse } from "../dashboardTypes";
 
 const DASHBOARD_PERMISSIONS = [
-  "dashboard:executive",
-  "dashboard:team_lead",
-  "dashboard:director",
+  "dashboard:me",
+  "dashboard:team",
+  "dashboard:org",
 ] as const;
 
 const LEADS_READ_PERMISSIONS = [
@@ -34,9 +34,9 @@ const LEADS_READ_PERMISSIONS = [
 ] as const;
 
 const viewTitle: Record<DashboardSummaryResponse["view"], string> = {
-  executive: "Executive dashboard",
-  team_lead: "Team lead dashboard",
-  director: "Director dashboard",
+  me: "My dashboard",
+  team: "Team dashboard",
+  org: "Organization dashboard",
 };
 
 export const DashboardPage = () => {
@@ -55,6 +55,7 @@ export const DashboardPage = () => {
   );
 
   const [summary, setSummary] = useState<DashboardSummaryResponse | null>(null);
+  const [layout, setLayout] = useState<DashboardLayoutResponse | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
     "idle",
   );
@@ -69,11 +70,14 @@ export const DashboardPage = () => {
     setStatus("loading");
     setError(null);
 
-    void dashboardService
-      .getSummary()
-      .then((data) => {
+    void Promise.all([
+      dashboardService.getSummary(),
+      dashboardService.getLayout(),
+    ])
+      .then(([summaryData, layoutData]) => {
         if (!cancelled) {
-          setSummary(data);
+          setSummary(summaryData);
+          setLayout(layoutData);
           setStatus("success");
         }
       })
@@ -121,11 +125,19 @@ export const DashboardPage = () => {
             </div>
           </div>
         </div>
-        {hasSalesErpModule && canViewLeads ? (
-          <Button variant="outline" asChild>
-            <Link to="/leads">View leads</Link>
-          </Button>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {layout ? (
+            <CustomizeDashboardSheet
+              layout={layout}
+              onLayoutSaved={setLayout}
+            />
+          ) : null}
+          {hasSalesErpModule && canViewLeads ? (
+            <Button variant="outline" asChild>
+              <Link to="/leads">View leads</Link>
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       {error ? (
@@ -144,12 +156,8 @@ export const DashboardPage = () => {
           </div>
           <Skeleton className="h-64 w-full" />
         </div>
-      ) : summary?.view === "executive" ? (
-        <ExecutiveDashboard summary={summary} />
-      ) : summary?.view === "team_lead" ? (
-        <TeamLeadDashboard summary={summary} />
-      ) : summary?.view === "director" ? (
-        <DirectorDashboard summary={summary} />
+      ) : summary && layout ? (
+        <DashboardGrid layout={layout} summary={summary} />
       ) : null}
     </div>
   );
