@@ -8,7 +8,7 @@ import {
 import { PERMISSIONS } from "../constants/permissions";
 import { ORG_MODULE_KEYS } from "../constants/orgModules";
 import { authenticate } from "../middleware/authenticate";
-import { requireAnyPermission } from "../middleware/requirePermission";
+import { requireAnyPermission } from "../middleware/requireAnyPermission";
 import { requireOrgModule } from "../middleware/requireOrgModule";
 
 const router = Router();
