@@ -3,32 +3,32 @@ import { PERMISSIONS } from "../constants/permissions";
 import type { AuthUser } from "../types/auth";
 import { AppError } from "../utils/AppError";
 
-export type DashboardView = "executive" | "team_lead" | "director";
+export type DashboardView = "me" | "team" | "org";
 
 const hasPermission = (user: AuthUser, permission: string) =>
   user.permissions.includes(permission);
 
 export const assertHasDashboardAccess = (user: AuthUser) => {
   if (
-    !hasPermission(user, PERMISSIONS.DASHBOARD_EXECUTIVE) &&
-    !hasPermission(user, PERMISSIONS.DASHBOARD_TEAM_LEAD) &&
-    !hasPermission(user, PERMISSIONS.DASHBOARD_DIRECTOR)
+    !hasPermission(user, PERMISSIONS.DASHBOARD_ME) &&
+    !hasPermission(user, PERMISSIONS.DASHBOARD_TEAM) &&
+    !hasPermission(user, PERMISSIONS.DASHBOARD_ORG)
   ) {
     throw AppError.forbidden("You do not have permission to access the dashboard");
   }
 };
 
 export const resolveDashboardView = (user: AuthUser): DashboardView => {
-  if (hasPermission(user, PERMISSIONS.DASHBOARD_DIRECTOR)) {
-    return "director";
+  if (hasPermission(user, PERMISSIONS.DASHBOARD_ORG)) {
+    return "org";
   }
 
-  if (hasPermission(user, PERMISSIONS.DASHBOARD_TEAM_LEAD)) {
-    return "team_lead";
+  if (hasPermission(user, PERMISSIONS.DASHBOARD_TEAM)) {
+    return "team";
   }
 
-  if (hasPermission(user, PERMISSIONS.DASHBOARD_EXECUTIVE)) {
-    return "executive";
+  if (hasPermission(user, PERMISSIONS.DASHBOARD_ME)) {
+    return "me";
   }
 
   throw AppError.forbidden("You do not have permission to access the dashboard");
@@ -41,11 +41,11 @@ export const resolveDashboardLeadScope = (
 ): Prisma.LeadWhereInput => {
   const base = { organizationId };
 
-  if (view === "director") {
+  if (view === "org") {
     return base;
   }
 
-  if (view === "team_lead") {
+  if (view === "team") {
     const teamId = user.team?.id;
     if (!teamId) {
       throw AppError.forbidden("Team context is required for the team dashboard");

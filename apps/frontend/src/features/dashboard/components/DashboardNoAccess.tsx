@@ -34,8 +34,8 @@ export const DashboardNoAccess = () => {
       <CardHeader>
         <CardTitle>Dashboard</CardTitle>
         <CardDescription>
-          Sales analytics are available for executive, team lead, and director
-          roles.
+          Sales analytics are available for users with personal, team, or
+          organization dashboard access.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
