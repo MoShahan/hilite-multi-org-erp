@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { dashboardLayoutUpdateSchema } from "@hilite/shared";
 import {
   getDashboardLayout,
   getDashboardSummary,
@@ -10,6 +11,7 @@ import { ORG_MODULE_KEYS } from "../constants/orgModules";
 import { authenticate } from "../middleware/authenticate";
 import { requireAnyPermission } from "../middleware/requireAnyPermission";
 import { requireOrgModule } from "../middleware/requireOrgModule";
+import { validateBody } from "../middleware/validateBody";
 
 const router = Router();
 
@@ -25,7 +27,12 @@ const dashboardRead = [
 
 router.get("/summary", ...dashboardRead, getDashboardSummary);
 router.get("/layout", ...dashboardRead, getDashboardLayout);
-router.put("/layout", ...dashboardRead, updateDashboardLayout);
+router.put(
+  "/layout",
+  ...dashboardRead,
+  validateBody(dashboardLayoutUpdateSchema),
+  updateDashboardLayout,
+);
 router.post("/layout/reset", ...dashboardRead, resetDashboardLayout);
 
 export default router;
