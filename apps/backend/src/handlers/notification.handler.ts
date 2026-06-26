@@ -3,6 +3,10 @@ import {
   LeadStatus,
   NotificationType,
 } from "../generated/prisma/client";
+import {
+  ACTIVITY_TYPE_NOTIFY_LABELS,
+  LEAD_STATUS_LABELS,
+} from "@hilite/shared";
 import type {
   ActivityLoggedEvent,
   LeadAssignedEvent,
@@ -18,26 +22,6 @@ import { organizationModuleService } from "../services/organizationModule.servic
 import type { CreateNotificationInput } from "../types/notification";
 
 const LEAD_ENTITY_TYPE = "lead";
-
-const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
-  [LeadStatus.NEW]: "New",
-  [LeadStatus.CONTACTED]: "Contacted",
-  [LeadStatus.VISIT_SCHEDULED]: "Visit scheduled",
-  [LeadStatus.SITE_VISIT_COMPLETED]: "Site visit completed",
-  [LeadStatus.NEGOTIATION]: "Negotiation",
-  [LeadStatus.WON]: "Won",
-  [LeadStatus.LOST]: "Lost",
-};
-
-const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
-  [ActivityType.CALL]: "call",
-  [ActivityType.EMAIL]: "email",
-  [ActivityType.OFFLINE_MEETING]: "offline meeting",
-  [ActivityType.NOTE]: "note",
-  [ActivityType.ONLINE_MEETING]: "online meeting",
-  [ActivityType.SITE_VISIT]: "site visit",
-  [ActivityType.MESSAGE]: "message",
-};
 
 const excludeActor = (userIds: string[], actorId: string): string[] =>
   userIds.filter((id) => id !== actorId);
@@ -163,7 +147,7 @@ const handleActivityLogged = async (
   }
 
   const recipients = excludeActor(teamLeadIds, event.actorId);
-  const activityLabel = ACTIVITY_TYPE_LABELS[event.activityType];
+  const activityLabel = ACTIVITY_TYPE_NOTIFY_LABELS[event.activityType];
 
   await notifyUsers(
     event.organizationId,
