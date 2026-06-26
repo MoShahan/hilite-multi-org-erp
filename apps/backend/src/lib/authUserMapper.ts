@@ -6,6 +6,7 @@ type UserWithAuthRelations = {
   id: string;
   email: string;
   name: string;
+  phoneNumber: string | null;
   status: AuthUser["status"];
   organizationId: string | null;
   organization: AuthContext["organization"];
@@ -64,6 +65,7 @@ const toAuthUser = (user: UserWithAuthRelations): AuthUser => {
     id: user.id,
     email: user.email,
     name: user.name,
+    phoneNumber: user.phoneNumber,
     status: user.status,
     organizationId: user.organizationId,
     role: roleRecord ? toAuthRole(roleRecord) : null,
