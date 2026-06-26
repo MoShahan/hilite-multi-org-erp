@@ -11,6 +11,7 @@ import type {
   LeadListQuery,
   ListActivitiesResult,
   ListLeadsResult,
+  LeadStatusHistoryResponse,
   UpdateLeadInput,
 } from "./leadsTypes";
 import type { ListUsersResult } from "@/features/users/usersTypes";
@@ -61,6 +62,15 @@ export const leadsService = {
       params: { page, pageSize },
     });
     return unwrapResponse<ListActivitiesResult>(response);
+  },
+
+  listStatusHistory: async (
+    leadId: string,
+  ): Promise<LeadStatusHistoryResponse> => {
+    const response = await apiClient.get(
+      `/api/v1/leads/${leadId}/status-history`,
+    );
+    return unwrapResponse<LeadStatusHistoryResponse>(response);
   },
 
   createActivity: async (

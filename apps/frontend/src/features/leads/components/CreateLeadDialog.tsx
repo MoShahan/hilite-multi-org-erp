@@ -55,7 +55,11 @@ const isApiRejection = (value: unknown): value is ApiRejection =>
 
 const createLeadSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  mobileNumber: z.string().optional(),
+  mobileNumber: z
+    .string()
+    .trim()
+    .min(1, "Mobile number is required")
+    .regex(/^\d{10}$/, "Mobile number must be exactly 10 digits"),
   email: z.union([z.literal(""), z.email("Enter a valid email address")]),
   source: z.string().optional(),
   project: z.string().optional(),
@@ -179,7 +183,7 @@ export const CreateLeadDialog = ({
       await dispatch(
         createLead({
           name: values.name.trim(),
-          mobileNumber: values.mobileNumber?.trim() || undefined,
+          mobileNumber: values.mobileNumber.trim(),
           email: values.email?.trim() || undefined,
           source: values.source?.trim() || undefined,
           project: values.project?.trim() || undefined,
@@ -242,7 +246,12 @@ export const CreateLeadDialog = ({
                   <FormItem>
                     <FormLabel>Mobile number</FormLabel>
                     <FormControl>
-                      <Input placeholder="+91..." {...field} />
+                      <Input
+                        placeholder="9876543210"
+                        inputMode="numeric"
+                        maxLength={10}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
