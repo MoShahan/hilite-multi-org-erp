@@ -8,7 +8,6 @@ import {
   isTerminalLeadStatus,
   LEAD_STATUS_LABELS,
   LINEAR_LEAD_STAGES,
-  // TERMINAL_LEAD_STAGES,
 } from "../leadStatusPipeline";
 
 import type { LeadStatus } from "../leadsTypes";
@@ -51,29 +50,6 @@ export const LeadStatusStepper = ({ status }: LeadStatusStepperProps) => {
           );
         })}
       </div>
-
-      {/* {(status === "NEGOTIATION" || isTerminal) && (
-        <div className="flex flex-wrap items-center gap-2 pl-1">
-          <span className="text-xs text-muted-foreground">Outcome</span>
-          {TERMINAL_LEAD_STAGES.map((terminal) => {
-            const isCurrent = status === terminal;
-
-            return (
-              <div
-                key={terminal}
-                className={cn(
-                  "inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium",
-                  isCurrent
-                    ? LEAD_STATUS_BADGE_STYLES[terminal]
-                    : "border-dashed border-muted-foreground/25 text-muted-foreground/60",
-                )}
-              >
-                {LEAD_STATUS_LABELS[terminal]}
-              </div>
-            );
-          })}
-        </div>
-      )} */}
     </div>
   );
 };
