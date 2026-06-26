@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 import { useAppDispatch } from "@/app/hooks";
 import { store } from "@/app/store";
+import { HiliteLogo } from "@/components/HiliteLogo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,7 +31,6 @@ import { Input } from "@/components/ui/input";
 import { selectAuthUser } from "@/features/auth/authSelectors";
 import { login } from "@/features/auth/authSlice";
 import { ApiClientError } from "@/lib/api-client";
-import { cn } from "@/lib/utils";
 
 const loginSchema = z.object({
   email: z.email("Enter a valid email address"),
@@ -39,28 +39,13 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-const HiliteLogo = ({ className }: { className?: string }) => (
-  <div
-    className={cn(
-      "flex size-10 items-center justify-center rounded-lg bg-foreground text-background shadow-sm",
-      className,
-    )}
-  >
-    <span className="text-lg font-bold tracking-tight">H</span>
-  </div>
-);
-
 const LoginHeroGraphic = () => (
   <div className="relative mx-auto size-56">
     <div className="absolute inset-0 rounded-full bg-primary/20 blur-3xl" />
     <div className="relative flex size-full items-center justify-center">
       <div className="absolute inset-4 rounded-[2rem] border border-white/10 bg-white/5 backdrop-blur-sm" />
       <div className="absolute inset-8 rounded-[1.5rem] border border-white/15 bg-gradient-to-br from-white/15 to-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]" />
-      <div className="relative flex size-24 items-center justify-center rounded-2xl border border-primary/30 bg-primary/20 shadow-[0_0_60px_rgba(0,0,0,0.35)]">
-        <span className="text-5xl font-bold tracking-tight text-primary-foreground">
-          H
-        </span>
-      </div>
+      <HiliteLogo className="relative size-24 rounded-2xl border border-primary/30 shadow-[0_0_60px_rgba(0,0,0,0.35)]" />
     </div>
   </div>
 );
