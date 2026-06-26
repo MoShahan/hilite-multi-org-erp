@@ -22,7 +22,27 @@ export type PerformanceStatRow = {
   total: number;
   won: number;
   lost: number;
+  winRate?: number | null;
 };
+
+export const toPerformanceRows = (
+  rows: Array<{
+    userId?: string | null;
+    teamId?: string;
+    name?: string;
+    teamName?: string;
+    total: number;
+    won: number;
+    lost: number;
+  }>,
+): PerformanceStatRow[] =>
+  rows.map((row) => ({
+    id: row.teamId ?? row.userId ?? "unassigned",
+    name: row.teamName ?? row.name ?? "Unknown",
+    total: row.total,
+    won: row.won,
+    lost: row.lost,
+  }));
 
 type PerformanceBarChartProps = {
   title: string;

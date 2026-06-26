@@ -1,6 +1,6 @@
 import {
   PerformanceBarChart,
-  type PerformanceStatRow,
+  toPerformanceRows,
 } from "../charts/PerformanceBarChart";
 
 import type { TeamDashboardSummary } from "../../dashboardTypes";
@@ -8,17 +8,6 @@ import type { TeamDashboardSummary } from "../../dashboardTypes";
 type AssigneePerformanceChartWidgetProps = {
   summary: TeamDashboardSummary;
 };
-
-const toPerformanceRows = (
-  stats: TeamDashboardSummary["assigneeStats"],
-): PerformanceStatRow[] =>
-  stats.map((row) => ({
-    id: row.userId ?? "unassigned",
-    name: row.name,
-    total: row.total,
-    won: row.won,
-    lost: row.lost,
-  }));
 
 export const AssigneePerformanceChartWidget = ({
   summary,

@@ -19,6 +19,7 @@ import { GripVertical, Settings2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -33,7 +34,11 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
-import { dashboardService } from "../dashboardService";
+import { selectDashboardLayoutMutationStatus } from "../dashboardSelectors";
+import {
+  resetDashboardLayout,
+  updateDashboardLayout,
+} from "../dashboardSlice";
 
 import type {
   DashboardLayoutItem,
@@ -42,7 +47,6 @@ import type {
 
 type CustomizeDashboardSheetProps = {
   layout: DashboardLayoutResponse;
-  onLayoutSaved: (layout: DashboardLayoutResponse) => void;
 };
 
 type SortableWidgetRowProps = {
@@ -112,12 +116,16 @@ const SortableWidgetRow = ({
 
 export const CustomizeDashboardSheet = ({
   layout,
-  onLayoutSaved,
 }: CustomizeDashboardSheetProps) => {
+  const dispatch = useAppDispatch();
+  const layoutMutationStatus = useAppSelector(
+    selectDashboardLayoutMutationStatus,
+  );
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<DashboardLayoutItem[]>(layout.widgets);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
+
+  const isSaving = layoutMutationStatus === "loading";
+  const isResetting = layoutMutationStatus === "loading";
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -178,39 +186,30 @@ export const CustomizeDashboardSheet = ({
       return;
     }
 
-    setIsSaving(true);
+    const normalized = [...draft]
+      .sort((a, b) => a.order - b.order)
+      .map((item, order) => ({ ...item, order }));
 
     try {
-      const normalized = [...draft]
-        .sort((a, b) => a.order - b.order)
-        .map((item, order) => ({ ...item, order }));
-      const saved = await dashboardService.updateLayout(normalized);
-      onLayoutSaved(saved);
+      await dispatch(updateDashboardLayout(normalized)).unwrap();
       setOpen(false);
       toast.success("Dashboard layout saved");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to save layout",
       );
-    } finally {
-      setIsSaving(false);
     }
   };
 
   const handleReset = async () => {
-    setIsResetting(true);
-
     try {
-      const saved = await dashboardService.resetLayout();
+      const saved = await dispatch(resetDashboardLayout()).unwrap();
       setDraft(saved.widgets);
-      onLayoutSaved(saved);
       toast.success("Dashboard reset to default");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to reset layout",
       );
-    } finally {
-      setIsResetting(false);
     }
   };
 

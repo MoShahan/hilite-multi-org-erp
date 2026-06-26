@@ -79,12 +79,9 @@ export const WinRatePieChart = ({ conversion }: WinRatePieChartProps) => {
                 <ChartTooltipContent
                   hideLabel
                   formatter={(value, _name, item) => {
-                    const pct =
-                      closedCount === 0
-                        ? 0
-                        : Math.round(
-                            ((item.payload.count as number) / closedCount) * 100,
-                          );
+                    const pct = Math.round(
+                      ((item.payload.count as number) / closedCount) * 100,
+                    );
                     return `${value} (${pct}%)`;
                   }}
                 />
