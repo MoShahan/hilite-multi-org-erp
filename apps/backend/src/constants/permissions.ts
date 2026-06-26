@@ -5,11 +5,13 @@ export const PERMISSIONS = {
   USERS_READ: "users:read",
   USERS_READ_TEAM: "users:read:team",
   USERS_WRITE: "users:write",
+  USERS_WRITE_TEAM: "users:write:team",
 
   TEAMS_READ: "teams:read",
   TEAMS_WRITE: "teams:write",
 
   ROLES_READ: "roles:read",
+  ROLES_READ_TEAM: "roles:read:team",
   ROLES_WRITE: "roles:write",
 
   LEADS_READ: "leads:read",
@@ -22,9 +24,12 @@ export const PERMISSIONS = {
 
   ACTIVITIES_WRITE: "activities:write",
 
-  DASHBOARD_EXECUTIVE: "dashboard:executive",
-  DASHBOARD_TEAM_LEAD: "dashboard:team_lead",
-  DASHBOARD_DIRECTOR: "dashboard:director",
+  DASHBOARD_ME: "dashboard:me",
+  DASHBOARD_TEAM: "dashboard:team",
+  DASHBOARD_ORG: "dashboard:org",
+
+  AUDIT_READ: "audit:read",
+  PLATFORM_AUDIT_READ: "platform:audit:read",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

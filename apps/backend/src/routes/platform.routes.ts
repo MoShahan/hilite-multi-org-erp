@@ -8,6 +8,7 @@ import {
   updateOrganizationModules,
   updateOrganizationStatus,
 } from "../controllers/organization.controller";
+import { listPlatformAuditLogs } from "../controllers/audit.controller";
 import { PERMISSIONS } from "../constants/permissions";
 import { authenticate } from "../middleware/authenticate";
 import { requirePermission } from "../middleware/requirePermission";
@@ -18,6 +19,11 @@ const platformRead = [authenticate, requirePermission(PERMISSIONS.PLATFORM_ORGS_
 const platformWrite = [
   authenticate,
   requirePermission(PERMISSIONS.PLATFORM_ORGS_READ, PERMISSIONS.PLATFORM_ORGS_WRITE),
+];
+
+const platformAuditRead = [
+  authenticate,
+  requirePermission(PERMISSIONS.PLATFORM_AUDIT_READ),
 ];
 
 router.get("/organizations", ...platformRead, listOrganizations);
@@ -39,5 +45,7 @@ router.patch(
   ...platformWrite,
   updateOrganizationModules,
 );
+
+router.get("/audit", ...platformAuditRead, listPlatformAuditLogs);
 
 export default router;

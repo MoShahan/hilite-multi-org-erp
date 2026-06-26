@@ -37,6 +37,13 @@ export const PERMISSION_CATALOG: PermissionCatalogEntry[] = [
     grantScope: "team",
   },
   {
+    key: PERMISSIONS.USERS_WRITE_TEAM,
+    label: "Manage team users",
+    description: "Create users on the caller's team",
+    scope: "ORGANIZATION",
+    grantScope: "team",
+  },
+  {
     key: PERMISSIONS.USERS_WRITE,
     label: "Manage users",
     description: "Create, update, and deactivate users",
@@ -61,6 +68,13 @@ export const PERMISSION_CATALOG: PermissionCatalogEntry[] = [
     scope: "ORGANIZATION",
   },
   {
+    key: PERMISSIONS.ROLES_READ_TEAM,
+    label: "View team roles",
+    description: "View team-assignable roles and their permissions",
+    scope: "ORGANIZATION",
+    grantScope: "team",
+  },
+  {
     key: PERMISSIONS.ROLES_WRITE,
     label: "Manage roles",
     description: "Create and update roles and permissions",
@@ -74,7 +88,7 @@ export const PERMISSION_CATALOG: PermissionCatalogEntry[] = [
   },
   {
     key: PERMISSIONS.LEADS_READ_TEAM,
-    label: "View team leads",
+    label: "View leads in team",
     description: "View leads assigned to team members",
     scope: "ORGANIZATION",
     grantScope: "team",
@@ -100,7 +114,7 @@ export const PERMISSION_CATALOG: PermissionCatalogEntry[] = [
   },
   {
     key: PERMISSIONS.LEADS_STATUS_WRITE_TEAM,
-    label: "Update team lead status",
+    label: "Update leads in team",
     description: "Change status on leads belonging to the caller's team",
     scope: "ORGANIZATION",
     grantScope: "team",
@@ -118,24 +132,36 @@ export const PERMISSION_CATALOG: PermissionCatalogEntry[] = [
     scope: "ORGANIZATION",
   },
   {
-    key: PERMISSIONS.DASHBOARD_EXECUTIVE,
-    label: "Executive dashboard",
-    description: "Access the executive dashboard",
+    key: PERMISSIONS.DASHBOARD_ME,
+    label: "My dashboard",
+    description: "Access personal sales analytics",
     scope: "ORGANIZATION",
   },
   {
-    key: PERMISSIONS.DASHBOARD_TEAM_LEAD,
-    label: "Team lead dashboard",
-    description: "Access the team lead dashboard",
+    key: PERMISSIONS.DASHBOARD_TEAM,
+    label: "Team dashboard",
+    description: "Access team sales analytics",
     scope: "ORGANIZATION",
     grantScope: "team",
   },
   {
-    key: PERMISSIONS.DASHBOARD_DIRECTOR,
-    label: "Director dashboard",
-    description: "Access the director dashboard",
+    key: PERMISSIONS.DASHBOARD_ORG,
+    label: "Organization dashboard",
+    description: "Access organization-wide sales analytics",
     scope: "ORGANIZATION",
     grantScope: "org_wide",
+  },
+  {
+    key: PERMISSIONS.AUDIT_READ,
+    label: "View audit trail",
+    description: "View the organization audit trail",
+    scope: "ORGANIZATION",
+  },
+  {
+    key: PERMISSIONS.PLATFORM_AUDIT_READ,
+    label: "View platform audit trail",
+    description: "View audit events across all organizations",
+    scope: "PLATFORM",
   },
 ];
 
