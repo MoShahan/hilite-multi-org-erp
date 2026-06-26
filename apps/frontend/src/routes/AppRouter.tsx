@@ -69,6 +69,12 @@ const TeamDetailPage = lazy(() =>
   })),
 );
 
+const MyTeamPage = lazy(() =>
+  import("@/features/teams/pages/MyTeamPage").then((module) => ({
+    default: module.MyTeamPage,
+  })),
+);
+
 const LeadsPage = lazy(() =>
   import("@/features/leads/pages/LeadsPage").then((module) => ({
     default: module.LeadsPage,
@@ -165,7 +171,10 @@ export const AppRouter = () => {
             <Route
               path="/roles"
               element={
-                <RequirePermission permissions={["roles:read"]}>
+                <RequirePermission
+                  permissions={["roles:read", "roles:read:team"]}
+                  mode="any"
+                >
                   <AppLayout>
                     <RolesPage />
                   </AppLayout>
@@ -178,6 +187,16 @@ export const AppRouter = () => {
                 <RequirePermission permissions={["users:read"]}>
                   <AppLayout>
                     <UsersPage />
+                  </AppLayout>
+                </RequirePermission>
+              }
+            />
+            <Route
+              path="/my-team"
+              element={
+                <RequirePermission permissions={["users:read:team"]}>
+                  <AppLayout>
+                    <MyTeamPage />
                   </AppLayout>
                 </RequirePermission>
               }

@@ -8,9 +8,9 @@ import {
 import { ORG_MODULE_KEYS } from "@/constants/orgModules";
 
 const DASHBOARD_PERMISSIONS = [
-  "dashboard:executive",
-  "dashboard:team_lead",
-  "dashboard:director",
+  "dashboard:me",
+  "dashboard:team",
+  "dashboard:org",
 ] as const;
 
 const LEADS_READ_PERMISSIONS = [
@@ -34,7 +34,9 @@ export const DefaultLandingRedirect = () => {
   );
   const canViewUsers = useAppSelector(selectHasAnyPermission(["users:read"]));
   const canViewTeams = useAppSelector(selectHasAnyPermission(["teams:read"]));
-  const canViewRoles = useAppSelector(selectHasAnyPermission(["roles:read"]));
+  const canViewRoles = useAppSelector(
+    selectHasAnyPermission(["roles:read", "roles:read:team"]),
+  );
 
   if (hasDashboardsModule && hasDashboardPermission) {
     return <Navigate to="/dashboard" replace />;

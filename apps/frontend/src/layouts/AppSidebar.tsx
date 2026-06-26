@@ -34,9 +34,13 @@ export const AppSidebar = () => {
   const canViewPlatformAudit = useAppSelector(
     selectHasPermission("platform:audit:read"),
   );
-  const canViewRoles = useAppSelector(selectHasPermission("roles:read"));
+  const canViewRoles = useAppSelector(
+    selectHasAnyPermission(["roles:read", "roles:read:team"]),
+  );
   const canViewUsers = useAppSelector(selectHasPermission("users:read"));
   const canViewTeams = useAppSelector(selectHasPermission("teams:read"));
+  const canViewMyTeam =
+    useAppSelector(selectHasPermission("users:read:team")) && !canViewTeams;
   const canViewLeads = useAppSelector(
     selectHasAnyPermission([
       "leads:read",
@@ -132,7 +136,7 @@ export const AppSidebar = () => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        {canViewRoles || canViewUsers || canViewTeams || canViewAudit || (hasSalesErpModule && canViewLeads) ? (
+        {canViewRoles || canViewUsers || canViewTeams || canViewMyTeam || canViewAudit || (hasSalesErpModule && canViewLeads) ? (
           <SidebarGroup>
             <SidebarGroupLabel className="text-[11px] font-semibold tracking-wider uppercase text-sidebar-foreground/50">
               Organization
@@ -150,6 +154,21 @@ export const AppSidebar = () => {
                       <NavLink to="/leads">
                         <Kanban />
                         <span>Leads</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ) : null}
+                {canViewMyTeam ? (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname.startsWith("/my-team")}
+                      tooltip="My team"
+                      className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                    >
+                      <NavLink to="/my-team">
+                        <UsersRound />
+                        <span>My team</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
