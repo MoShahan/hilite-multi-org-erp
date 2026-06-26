@@ -1,0 +1,3093 @@
+openapi: 3.0.3
+info:
+  title: HiLite ERP API
+  version: 1.0.0
+  license:
+    name: ISC
+  description: |
+    REST API for **HiLite Sales OS** — a multi-tenant Sales ERP platform with organization isolation,
+    role-based access control (RBAC), module toggles, and event-driven notifications.
+
+    ## Base URL
+
+    All versioned routes are prefixed with `/api/v1`.
+
+    ## Authentication
+
+    The API uses **HTTP-only cookie sessions** (not Bearer tokens):
+
+    | Cookie | Purpose |
+    |--------|---------|
+    | `access_token` | Short-lived JWT for authenticated requests |
+    | `refresh_token` | Long-lived token for `POST /api/v1/auth/refresh` |
+
+    1. Call `POST /api/v1/auth/login` with email and password — cookies are set automatically.
+    2. Send cookies on subsequent requests (browser or client with cookie jar).
+    3. Call `POST /api/v1/auth/refresh` when the access token expires.
+    4. Call `POST /api/v1/auth/logout` to revoke the session.
+
+    ## Response envelope
+
+    Successful JSON responses are wrapped by the API middleware:
+
+    ```json
+    { "success": true, "message": "", "data": { ... } }
+    ```
+
+    Errors return:
+
+    ```json
+    { "success": false, "message": "Human-readable message", "data": { "code": "ERROR_CODE", "details": [] } }
+    ```
+
+    ## Multi-tenancy
+
+    Organization users never pass a tenant ID in URLs — the tenant is derived from the authenticated session.
+    Platform administrators (`organizationId: null`) access cross-tenant APIs under `/api/v1/platform/*`.
+
+    ## Org modules
+
+    Some routes require an organization module to be enabled:
+
+    | Module key | Routes |
+    |------------|--------|
+    | `sales_erp` | `/api/v1/leads/*` |
+    | `dashboards` | `/api/v1/dashboard/*` |
+    | `notifications` | `/api/v1/notifications/*` |
+
+    Platform admins toggle modules per org via `PATCH /api/v1/platform/organizations/{id}/modules`.
+
+    ## Permissions
+
+    Protected routes enforce granular permissions (e.g. `leads:read`, `users:write`).
+    Missing permission returns **403 Forbidden**. Missing or invalid session returns **401 Unauthorized**.
+
+servers:
+  - url: http://localhost:3000
+    description: Local development
+
+tags:
+  - name: Auth
+    description: Session management and profile
+  - name: Permissions
+    description: Permission catalog for role management UI
+  - name: Users
+    description: Organization user management
+  - name: Teams
+    description: Team and team member management
+  - name: Roles
+    description: Role and permission grant management
+  - name: Leads
+    description: CRM pipeline (requires `sales_erp` module)
+  - name: Dashboard
+    description: Analytics and customizable layout (requires `dashboards` module)
+  - name: Notifications
+    description: In-app alerts (requires `notifications` module)
+  - name: Audit
+    description: Organization audit trail
+  - name: Platform
+    description: Cross-tenant platform administration
+
+paths:
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in
+      description: |
+        Authenticates with email and password. On success, sets `access_token` and `refresh_token`
+        HTTP-only cookies. Returns a confirmation message in the response body.
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            example:
+              email: admin@hilitebuilders.com
+              password: HBuilders@123
+      responses:
+        "200":
+          description: Login successful; session cookies set
+          headers:
+            Set-Cookie:
+              description: "Sets access_token and refresh_token HTTP-only cookies"
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/MessageResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh session
+      description: |
+        Rotates the refresh token and issues a new access token. Requires the `refresh_token` cookie.
+        On success, both cookies are updated.
+      operationId: refreshSession
+      security:
+        - refreshTokenCookie: []
+      responses:
+        "200":
+          description: Token refreshed; session cookies updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/MessageResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Log out
+      description: Revokes the refresh token, clears session cookies, and logs an audit event. Does not require a valid access token.
+      operationId: logout
+      security: []
+      responses:
+        "200":
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/MessageResponse"
+
+  /api/v1/auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current user
+      description: Returns the authenticated user's profile, organization context, enabled modules, role, and permissions.
+      operationId: getMe
+      security:
+        - accessTokenCookie: []
+      responses:
+        "200":
+          description: Current auth context
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/AuthMeResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    patch:
+      tags: [Auth]
+      summary: Update profile
+      description: Updates the authenticated user's name and optional phone number.
+      operationId: updateMe
+      security:
+        - accessTokenCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileRequest"
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/AuthMeResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/v1/auth/change-password:
+    post:
+      tags: [Auth]
+      summary: Change password
+      description: Changes the authenticated user's password after verifying the current password.
+      operationId: changePassword
+      security:
+        - accessTokenCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+      responses:
+        "200":
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/MessageResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/v1/permissions:
+    get:
+      tags: [Permissions]
+      summary: List permissions
+      description: |
+        Returns the permission catalog for role management UI.
+        Requires `roles:read` or `roles:read:team`.
+      operationId: listPermissions
+      security:
+        - accessTokenCookie: []
+      responses:
+        "200":
+          description: Permission catalog
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ListPermissionsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/users:
+    get:
+      tags: [Users]
+      summary: List users
+      description: |
+        Returns a paginated list of organization users.
+        Requires one of `users:read`, `users:read:team`, or `leads:write` (for lead assignment picker).
+      operationId: listUsers
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/search"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/UserStatusFilter"
+        - name: roleId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: membershipScope
+          in: query
+          schema:
+            $ref: "#/components/schemas/RoleMembershipScope"
+        - name: teamId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: for
+          in: query
+          description: When set to `lead-assignment`, scopes results for assignee pickers
+          schema:
+            type: string
+            enum: [lead-assignment]
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [name, email, status, role, team, createdAt]
+            default: createdAt
+        - $ref: "#/components/parameters/sortOrder"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/pageSize"
+      responses:
+        "200":
+          description: Paginated user list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/PaginatedUsersResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Users]
+      summary: Create user
+      description: Creates a new organization user. Requires `users:write`.
+      operationId: createUser
+      security:
+        - accessTokenCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [user]
+                        properties:
+                          user:
+                            $ref: "#/components/schemas/UserResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/users/{id}/status:
+    patch:
+      tags: [Users]
+      summary: Update user status
+      description: Activates or deactivates a user. Requires `users:write`.
+      operationId: updateUserStatus
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/idPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserStatusRequest"
+      responses:
+        "200":
+          description: User status updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [user]
+                        properties:
+                          user:
+                            $ref: "#/components/schemas/UserResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/teams:
+    get:
+      tags: [Teams]
+      summary: List teams
+      description: Returns a paginated list of teams. Requires `teams:read`.
+      operationId: listTeams
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/search"
+        - name: membership
+          in: query
+          schema:
+            type: string
+            enum: [ALL, WITH_MEMBERS, EMPTY]
+            default: ALL
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [name, memberCount, createdAt]
+            default: createdAt
+        - $ref: "#/components/parameters/sortOrder"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/pageSize"
+      responses:
+        "200":
+          description: Paginated team list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/PaginatedTeamsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Teams]
+      summary: Create team
+      description: Creates a new team. Requires `teams:write`.
+      operationId: createTeam
+      security:
+        - accessTokenCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTeamRequest"
+      responses:
+        "201":
+          description: Team created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/TeamDetailResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/teams/{id}:
+    get:
+      tags: [Teams]
+      summary: Get team
+      description: Returns team details. Requires `teams:read`.
+      operationId: getTeam
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/idPath"
+      responses:
+        "200":
+          description: Team details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/TeamDetailResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/teams/{id}/members:
+    get:
+      tags: [Teams]
+      summary: List team members
+      description: Returns a paginated list of team members. Requires `teams:read` or `users:read:team`.
+      operationId: listTeamMembers
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/idPath"
+        - $ref: "#/components/parameters/search"
+        - name: roleId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [name, email, role, createdAt]
+            default: createdAt
+        - $ref: "#/components/parameters/sortOrder"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/pageSize"
+      responses:
+        "200":
+          description: Paginated team members
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/PaginatedTeamMembersResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      tags: [Teams]
+      summary: Add team member
+      description: Creates a user and adds them to the team. Requires `teams:write` or `users:write:team`.
+      operationId: createTeamMember
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/idPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTeamMemberRequest"
+      responses:
+        "201":
+          description: Team member created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          member:
+                            $ref: "#/components/schemas/TeamMember"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/roles:
+    get:
+      tags: [Roles]
+      summary: List roles
+      description: Returns all roles in the organization. Requires `roles:read` or `roles:read:team`.
+      operationId: listRoles
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - name: membershipScope
+          in: query
+          schema:
+            $ref: "#/components/schemas/RoleMembershipScope"
+        - name: assignableFrom
+          in: query
+          schema:
+            type: string
+            enum: [users, team]
+      responses:
+        "200":
+          description: Role list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ListRolesResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Roles]
+      summary: Create role
+      description: Creates a custom role with permission grants. Requires `roles:write`.
+      operationId: createRole
+      security:
+        - accessTokenCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoleRequest"
+      responses:
+        "201":
+          description: Role created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RoleDetailResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/roles/{id}:
+    get:
+      tags: [Roles]
+      summary: Get role
+      description: Returns role details including permissions. Requires `roles:read` or `roles:read:team`.
+      operationId: getRole
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/idPath"
+      responses:
+        "200":
+          description: Role details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RoleDetailResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Roles]
+      summary: Update role
+      description: Updates role name and/or permissions. Requires `roles:write`. Protected system roles cannot be modified.
+      operationId: updateRole
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/idPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRoleRequest"
+      responses:
+        "200":
+          description: Role updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RoleDetailResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Roles]
+      summary: Delete role
+      description: Deletes a custom role. Requires `roles:write`. Protected roles and roles with assigned users cannot be deleted.
+      operationId: deleteRole
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/idPath"
+      responses:
+        "204":
+          description: Role deleted (no response body)
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/leads:
+    get:
+      tags: [Leads]
+      summary: List leads
+      description: |
+        Returns a paginated list of leads scoped by the caller's permissions.
+        Requires `sales_erp` module and one of `leads:read`, `leads:read:team`, or `leads:read:org`.
+      operationId: listLeads
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/search"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/LeadStatusFilter"
+        - name: teamId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: assignedToId
+          in: query
+          description: Filter by assignee user ID. Use the literal value `unassigned` for unassigned leads.
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [name, status, team, assignee, createdAt]
+            default: createdAt
+        - $ref: "#/components/parameters/sortOrder"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/pageSize"
+      responses:
+        "200":
+          description: Paginated lead list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/PaginatedLeadsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Leads]
+      summary: Create lead
+      description: Creates a new lead. Requires `sales_erp` module and `leads:write`.
+      operationId: createLead
+      security:
+        - accessTokenCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLeadRequest"
+      responses:
+        "201":
+          description: Lead created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [lead]
+                        properties:
+                          lead:
+                            $ref: "#/components/schemas/LeadResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/leads/{id}:
+    get:
+      tags: [Leads]
+      summary: Get lead
+      description: Returns lead details. Requires `sales_erp` module and lead read permission.
+      operationId: getLead
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/idPath"
+      responses:
+        "200":
+          description: Lead details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [lead]
+                        properties:
+                          lead:
+                            $ref: "#/components/schemas/LeadResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Leads]
+      summary: Update lead
+      description: |
+        Updates lead fields and/or status. Requires `sales_erp` module and one of
+        `leads:write`, `leads:status:write`, or `leads:status:write:team`.
+      operationId: updateLead
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/idPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateLeadRequest"
+      responses:
+        "200":
+          description: Lead updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [lead]
+                        properties:
+                          lead:
+                            $ref: "#/components/schemas/LeadResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/leads/{id}/assign:
+    patch:
+      tags: [Leads]
+      summary: Assign or unassign lead
+      description: |
+        Assigns the lead to a user or unassigns it (`assignedToId: null`).
+        Requires `sales_erp` module and `leads:write` or `leads:read:team`.
+      operationId: assignLead
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/idPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignLeadRequest"
+      responses:
+        "200":
+          description: Lead assignment updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [lead]
+                        properties:
+                          lead:
+                            $ref: "#/components/schemas/LeadResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/leads/{id}/activities:
+    get:
+      tags: [Leads]
+      summary: List lead activities
+      description: Returns a paginated activity log for a lead. Requires `sales_erp` module and lead read permission.
+      operationId: listLeadActivities
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/idPath"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/pageSize"
+      responses:
+        "200":
+          description: Paginated activities
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/PaginatedActivitiesResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      tags: [Leads]
+      summary: Log activity
+      description: Creates an activity entry on a lead. Requires `sales_erp` module and `activities:write`.
+      operationId: createLeadActivity
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/idPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateActivityRequest"
+      responses:
+        "201":
+          description: Activity logged
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [activity]
+                        properties:
+                          activity:
+                            $ref: "#/components/schemas/ActivityResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/leads/{id}/status-history:
+    get:
+      tags: [Leads]
+      summary: Get lead status history
+      description: Returns the chronological status change history for a lead. Requires `sales_erp` module and lead read permission.
+      operationId: getLeadStatusHistory
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/idPath"
+      responses:
+        "200":
+          description: Status history
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/LeadStatusHistoryResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/dashboard/summary:
+    get:
+      tags: [Dashboard]
+      summary: Get dashboard summary
+      description: |
+        Returns role-based analytics (me, team, or org view depending on permissions).
+        Requires `dashboards` module and one of `dashboard:me`, `dashboard:team`, or `dashboard:org`.
+      operationId: getDashboardSummary
+      security:
+        - accessTokenCookie: []
+      responses:
+        "200":
+          description: Dashboard summary for the caller's view
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/DashboardSummaryResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/dashboard/layout:
+    get:
+      tags: [Dashboard]
+      summary: Get dashboard layout
+      description: Returns the user's saved widget layout and the widget catalog for their dashboard view.
+      operationId: getDashboardLayout
+      security:
+        - accessTokenCookie: []
+      responses:
+        "200":
+          description: Dashboard layout and widget catalog
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/DashboardLayoutResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    put:
+      tags: [Dashboard]
+      summary: Update dashboard layout
+      description: Saves the user's widget visibility and ordering preferences.
+      operationId: updateDashboardLayout
+      security:
+        - accessTokenCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDashboardLayoutRequest"
+      responses:
+        "200":
+          description: Layout saved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/DashboardLayoutResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/dashboard/layout/reset:
+    post:
+      tags: [Dashboard]
+      summary: Reset dashboard layout
+      description: Resets the user's dashboard layout to the default for their view.
+      operationId: resetDashboardLayout
+      security:
+        - accessTokenCookie: []
+      responses:
+        "200":
+          description: Layout reset to defaults
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/DashboardLayoutResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/notifications:
+    get:
+      tags: [Notifications]
+      summary: List notifications
+      description: Returns a paginated list of in-app notifications. Requires `notifications` module.
+      operationId: listNotifications
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - name: unreadOnly
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/pageSize"
+      responses:
+        "200":
+          description: Paginated notifications
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/PaginatedNotificationsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/notifications/unread-count:
+    get:
+      tags: [Notifications]
+      summary: Get unread notification count
+      description: Returns the count of unread notifications. Requires `notifications` module.
+      operationId: getUnreadNotificationCount
+      security:
+        - accessTokenCookie: []
+      responses:
+        "200":
+          description: Unread count
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/UnreadCountResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/notifications/read-all:
+    patch:
+      tags: [Notifications]
+      summary: Mark all notifications as read
+      description: Marks all notifications as read for the current user. Requires `notifications` module.
+      operationId: markAllNotificationsRead
+      security:
+        - accessTokenCookie: []
+      responses:
+        "200":
+          description: Notifications marked read
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [updated]
+                        properties:
+                          updated:
+                            type: integer
+                            description: Number of notifications marked as read
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/notifications/{id}/read:
+    patch:
+      tags: [Notifications]
+      summary: Mark notification as read
+      description: Marks a single notification as read. Requires `notifications` module.
+      operationId: markNotificationRead
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/idPath"
+      responses:
+        "200":
+          description: Notification marked read
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [notification]
+                        properties:
+                          notification:
+                            $ref: "#/components/schemas/NotificationResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/audit:
+    get:
+      tags: [Audit]
+      summary: List organization audit logs
+      description: Returns a paginated audit trail for the caller's organization. Requires `audit:read`.
+      operationId: listOrgAuditLogs
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/search"
+        - name: action
+          in: query
+          schema:
+            $ref: "#/components/schemas/AuditAction"
+        - name: actorId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: entityType
+          in: query
+          schema:
+            $ref: "#/components/schemas/AuditEntityType"
+        - name: entityId
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          description: ISO 8601 start date filter
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          description: ISO 8601 end date filter
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Paginated audit logs
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/PaginatedAuditLogsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/platform/organizations:
+    get:
+      tags: [Platform]
+      summary: List organizations
+      description: Returns a paginated list of all organizations. Requires `platform:orgs:read`.
+      operationId: listOrganizations
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/search"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/OrganizationStatusFilter"
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [name, code, status, userCount, createdAt]
+            default: createdAt
+        - $ref: "#/components/parameters/sortOrder"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/pageSize"
+      responses:
+        "200":
+          description: Paginated organization list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/PaginatedOrganizationsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Platform]
+      summary: Create organization
+      description: |
+        Provisions a new organization with a default org admin user and enabled modules.
+        Requires `platform:orgs:read` and `platform:orgs:write`.
+      operationId: createOrganization
+      security:
+        - accessTokenCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrganizationRequest"
+      responses:
+        "201":
+          description: Organization created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [organization]
+                        properties:
+                          organization:
+                            $ref: "#/components/schemas/OrganizationResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/platform/organizations/{id}:
+    get:
+      tags: [Platform]
+      summary: Get organization
+      description: Returns organization details. Requires `platform:orgs:read`.
+      operationId: getOrganization
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/idPath"
+      responses:
+        "200":
+          description: Organization details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [organization]
+                        properties:
+                          organization:
+                            $ref: "#/components/schemas/OrganizationResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Platform]
+      summary: Update organization
+      description: Updates organization profile fields. Requires `platform:orgs:write`.
+      operationId: updateOrganization
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/idPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrganizationRequest"
+      responses:
+        "200":
+          description: Organization updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [organization]
+                        properties:
+                          organization:
+                            $ref: "#/components/schemas/OrganizationResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/platform/organizations/{id}/status:
+    patch:
+      tags: [Platform]
+      summary: Update organization status
+      description: Activates or suspends an organization. Requires `platform:orgs:write`.
+      operationId: updateOrganizationStatus
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/idPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrganizationStatusRequest"
+      responses:
+        "200":
+          description: Organization status updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [organization]
+                        properties:
+                          organization:
+                            $ref: "#/components/schemas/OrganizationResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/platform/organizations/{id}/modules:
+    get:
+      tags: [Platform]
+      summary: Get organization modules
+      description: Returns enabled modules and the module catalog for an organization. Requires `platform:orgs:read`.
+      operationId: getOrganizationModules
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/idPath"
+      responses:
+        "200":
+          description: Organization module configuration
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/OrgModulesResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Platform]
+      summary: Update organization modules
+      description: Enables or disables organization modules. Requires `platform:orgs:write`.
+      operationId: updateOrganizationModules
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/idPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrgModulesRequest"
+      responses:
+        "200":
+          description: Modules updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/OrgModulesResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/platform/audit:
+    get:
+      tags: [Platform]
+      summary: List platform audit logs
+      description: |
+        Returns a paginated cross-tenant audit trail. Requires `platform:audit:read`.
+        Supports filtering by `organizationId` to scope to a single tenant.
+      operationId: listPlatformAuditLogs
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/pageSize"
+        - $ref: "#/components/parameters/search"
+        - name: organizationId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: action
+          in: query
+          schema:
+            $ref: "#/components/schemas/AuditAction"
+        - name: actorId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: entityType
+          in: query
+          schema:
+            $ref: "#/components/schemas/AuditEntityType"
+        - name: entityId
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Paginated platform audit logs
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/PaginatedAuditLogsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+components:
+  securitySchemes:
+    accessTokenCookie:
+      type: apiKey
+      in: cookie
+      name: access_token
+      description: Short-lived JWT set by `POST /api/v1/auth/login` or `POST /api/v1/auth/refresh`
+    refreshTokenCookie:
+      type: apiKey
+      in: cookie
+      name: refresh_token
+      description: Long-lived refresh token used only by `POST /api/v1/auth/refresh`
+
+  parameters:
+    idPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    search:
+      name: search
+      in: query
+      description: Free-text search filter
+      schema:
+        type: string
+    sortOrder:
+      name: sortOrder
+      in: query
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: desc
+    page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    pageSize:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiErrorResponse"
+          example:
+            success: false
+            message: Email and password are required
+            data:
+              code: BAD_REQUEST
+              details: []
+    Unauthorized:
+      description: Missing or invalid session
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiErrorResponse"
+          example:
+            success: false
+            message: Unauthorized
+            data:
+              code: UNAUTHORIZED
+    Forbidden:
+      description: Insufficient permissions or module disabled
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiErrorResponse"
+          example:
+            success: false
+            message: Forbidden
+            data:
+              code: FORBIDDEN
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiErrorResponse"
+          example:
+            success: false
+            message: Not found
+            data:
+              code: NOT_FOUND
+
+  schemas:
+    ApiSuccessEnvelope:
+      type: object
+      required: [success, message, data]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        message:
+          type: string
+        data: {}
+
+    ApiErrorResponse:
+      type: object
+      required: [success, message, data]
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        message:
+          type: string
+        data:
+          type: object
+          nullable: true
+          properties:
+            code:
+              type: string
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string
+
+    PaginationMeta:
+      type: object
+      required: [page, pageSize, total, totalPages]
+      properties:
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Login successful
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    UpdateProfileRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        phoneNumber:
+          type: string
+          nullable: true
+
+    ChangePasswordRequest:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+          format: password
+        newPassword:
+          type: string
+          format: password
+          description: Must meet password strength requirements
+
+    UserStatus:
+      type: string
+      enum: [ACTIVE, INACTIVE]
+
+    UserStatusFilter:
+      type: string
+      enum: [ACTIVE, INACTIVE, ALL]
+      default: ALL
+
+    OrganizationStatus:
+      type: string
+      enum: [ACTIVE, SUSPENDED]
+
+    OrganizationStatusFilter:
+      type: string
+      enum: [ACTIVE, SUSPENDED, ALL]
+      default: ALL
+
+    LeadStatus:
+      type: string
+      enum:
+        - NEW
+        - CONTACTED
+        - NEGOTIATION
+        - WON
+        - LOST
+        - SITE_VISIT_COMPLETED
+        - VISIT_SCHEDULED
+
+    LeadStatusFilter:
+      type: string
+      enum:
+        - NEW
+        - CONTACTED
+        - NEGOTIATION
+        - WON
+        - LOST
+        - SITE_VISIT_COMPLETED
+        - VISIT_SCHEDULED
+        - ALL
+      default: ALL
+
+    ActivityType:
+      type: string
+      enum:
+        - CALL
+        - EMAIL
+        - OFFLINE_MEETING
+        - NOTE
+        - ONLINE_MEETING
+        - SITE_VISIT
+        - MESSAGE
+
+    NotificationType:
+      type: string
+      enum:
+        - LEAD_CREATED
+        - LEAD_ASSIGNED
+        - LEAD_REASSIGNED
+        - LEAD_STATUS_CHANGED
+        - ACTIVITY_LOGGED
+
+    RoleMembershipScope:
+      type: string
+      enum: [team, organization]
+
+    OrgModuleKey:
+      type: string
+      enum: [sales_erp, dashboards, notifications]
+
+    DashboardView:
+      type: string
+      enum: [me, team, org]
+
+    DashboardWidgetKey:
+      type: string
+      enum:
+        - conversion_overview
+        - conversion_chart
+        - win_rate_chart
+        - pipeline_stats
+        - assignee_leaderboard
+        - assignee_performance_chart
+        - top_teams
+        - top_teams_chart
+        - top_executives
+        - top_executives_chart
+        - status_breakdown
+        - status_pie_chart
+        - recent_activities
+        - recent_activities_table
+
+    AuditEntityType:
+      type: string
+      enum:
+        - auth
+        - lead
+        - activity
+        - user
+        - team
+        - role
+        - organization
+
+    AuditAction:
+      type: string
+      enum:
+        - AUTH_LOGIN_SUCCESS
+        - AUTH_LOGIN_FAILED
+        - AUTH_LOGOUT
+        - AUTH_TOKEN_REFRESHED
+        - AUTH_TOKEN_REFRESH_FAILED
+        - AUTH_SESSION_REVOKED
+        - AUTH_PROFILE_UPDATED
+        - AUTH_PASSWORD_CHANGED
+        - LEAD_CREATED
+        - LEAD_UPDATED
+        - LEAD_STATUS_CHANGED
+        - LEAD_ASSIGNED
+        - LEAD_REASSIGNED
+        - LEAD_UNASSIGNED
+        - ACTIVITY_LOGGED
+        - USER_CREATED
+        - USER_ACTIVATED
+        - USER_DEACTIVATED
+        - TEAM_CREATED
+        - TEAM_MEMBER_ADDED
+        - ROLE_CREATED
+        - ROLE_UPDATED
+        - ROLE_DELETED
+        - ORG_CREATED
+        - ORG_UPDATED
+        - ORG_STATUS_CHANGED
+        - ORG_MODULES_UPDATED
+
+    AuthRole:
+      type: object
+      required: [id, name, slug]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+
+    AuthTeam:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+
+    AuthUser:
+      type: object
+      required: [id, email, name, status, organizationId, role, permissions, team]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        phoneNumber:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/UserStatus"
+        organizationId:
+          type: string
+          format: uuid
+          nullable: true
+        role:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/AuthRole"
+        permissions:
+          type: array
+          items:
+            type: string
+        team:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/AuthTeam"
+
+    AuthOrganization:
+      type: object
+      required: [id, name, code, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        code:
+          type: string
+        status:
+          $ref: "#/components/schemas/OrganizationStatus"
+
+    AuthMeResponse:
+      type: object
+      required: [user, organization, modules]
+      properties:
+        user:
+          $ref: "#/components/schemas/AuthUser"
+        organization:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/AuthOrganization"
+        modules:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrgModuleKey"
+
+    PermissionResponse:
+      type: object
+      required: [key, label, description, scope]
+      properties:
+        key:
+          type: string
+          example: leads:read
+        label:
+          type: string
+        description:
+          type: string
+          nullable: true
+        scope:
+          type: string
+          enum: [PLATFORM, ORGANIZATION]
+        grantScope:
+          type: string
+          enum: [team, org_wide]
+
+    ListPermissionsResponse:
+      type: object
+      required: [permissions]
+      properties:
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/PermissionResponse"
+
+    UserRoleSummary:
+      type: object
+      required: [id, name, slug]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+
+    UserTeamSummary:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+
+    UserResponse:
+      type: object
+      required: [id, name, email, status, role, team, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        status:
+          $ref: "#/components/schemas/UserStatus"
+        role:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/UserRoleSummary"
+        team:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/UserTeamSummary"
+        createdAt:
+          type: string
+          format: date-time
+
+    PaginatedUsersResponse:
+      type: object
+      required: [users, meta]
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserResponse"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    CreateUserRequest:
+      type: object
+      required: [name, email, password, roleId]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        roleId:
+          type: string
+          format: uuid
+
+    UpdateUserStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE]
+
+    TeamSummary:
+      type: object
+      required: [id, name, memberCount, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        memberCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    TeamDetailResponse:
+      type: object
+      required: [team]
+      properties:
+        team:
+          $ref: "#/components/schemas/TeamSummary"
+
+    PaginatedTeamsResponse:
+      type: object
+      required: [teams, meta]
+      properties:
+        teams:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeamSummary"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    CreateTeamRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    TeamMember:
+      type: object
+      required: [id, name, email, status, role, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE]
+        role:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/UserRoleSummary"
+        createdAt:
+          type: string
+          format: date-time
+
+    PaginatedTeamMembersResponse:
+      type: object
+      required: [members, meta]
+      properties:
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeamMember"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    CreateTeamMemberRequest:
+      type: object
+      required: [name, email, password, roleId]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        roleId:
+          type: string
+          format: uuid
+
+    RoleResponse:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+        - membershipScope
+        - requiresTeamMembership
+        - assignableFrom
+        - permissions
+        - userCount
+        - isProtected
+        - canDelete
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        membershipScope:
+          $ref: "#/components/schemas/RoleMembershipScope"
+        requiresTeamMembership:
+          type: boolean
+        assignableFrom:
+          type: array
+          items:
+            type: string
+            enum: [users, team]
+        permissions:
+          type: array
+          items:
+            type: string
+        userCount:
+          type: integer
+        isProtected:
+          type: boolean
+        canDelete:
+          type: boolean
+
+    ListRolesResponse:
+      type: object
+      required: [roles]
+      properties:
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoleResponse"
+
+    RoleDetailResponse:
+      type: object
+      required: [role]
+      properties:
+        role:
+          $ref: "#/components/schemas/RoleResponse"
+
+    CreateRoleRequest:
+      type: object
+      required: [name, slug, membershipScope, permissions]
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        membershipScope:
+          $ref: "#/components/schemas/RoleMembershipScope"
+        permissions:
+          type: array
+          items:
+            type: string
+
+    UpdateRoleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+
+    LeadUserSummary:
+      type: object
+      required: [id, name, email]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+
+    LeadTeamSummary:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+
+    LeadResponse:
+      type: object
+      required:
+        - id
+        - name
+        - mobileNumber
+        - email
+        - source
+        - project
+        - status
+        - team
+        - assignedTo
+        - createdBy
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        mobileNumber:
+          type: string
+          nullable: true
+        email:
+          type: string
+          format: email
+          nullable: true
+        source:
+          type: string
+          nullable: true
+        project:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/LeadStatus"
+        team:
+          $ref: "#/components/schemas/LeadTeamSummary"
+        assignedTo:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/LeadUserSummary"
+        createdBy:
+          $ref: "#/components/schemas/LeadUserSummary"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PaginatedLeadsResponse:
+      type: object
+      required: [leads, meta]
+      properties:
+        leads:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeadResponse"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    CreateLeadRequest:
+      type: object
+      required: [name, mobileNumber]
+      properties:
+        name:
+          type: string
+        mobileNumber:
+          type: string
+        email:
+          type: string
+          format: email
+        source:
+          type: string
+        project:
+          type: string
+        teamId:
+          type: string
+          format: uuid
+        assignedToId:
+          type: string
+          format: uuid
+          nullable: true
+
+    UpdateLeadRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        mobileNumber:
+          type: string
+          nullable: true
+        email:
+          type: string
+          format: email
+          nullable: true
+        source:
+          type: string
+          nullable: true
+        project:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/LeadStatus"
+
+    AssignLeadRequest:
+      type: object
+      required: [assignedToId]
+      properties:
+        assignedToId:
+          type: string
+          format: uuid
+          nullable: true
+          description: User ID to assign, or `null` to unassign
+
+    ActivityResponse:
+      type: object
+      required: [id, type, notes, createdBy, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          $ref: "#/components/schemas/ActivityType"
+        notes:
+          type: string
+        createdBy:
+          $ref: "#/components/schemas/LeadUserSummary"
+        createdAt:
+          type: string
+          format: date-time
+
+    PaginatedActivitiesResponse:
+      type: object
+      required: [activities, meta]
+      properties:
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityResponse"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    CreateActivityRequest:
+      type: object
+      required: [type, notes]
+      properties:
+        type:
+          $ref: "#/components/schemas/ActivityType"
+        notes:
+          type: string
+
+    LeadStatusHistoryEntry:
+      oneOf:
+        - type: object
+          required: [kind, id, toStatus, changedBy, changedAt]
+          properties:
+            kind:
+              type: string
+              enum: [created]
+            id:
+              type: string
+              format: uuid
+            toStatus:
+              $ref: "#/components/schemas/LeadStatus"
+            changedBy:
+              type: object
+              required: [id, name]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+            changedAt:
+              type: string
+              format: date-time
+        - type: object
+          required: [kind, id, fromStatus, toStatus, changedAt]
+          properties:
+            kind:
+              type: string
+              enum: [transition]
+            id:
+              type: string
+              format: uuid
+            fromStatus:
+              $ref: "#/components/schemas/LeadStatus"
+            toStatus:
+              $ref: "#/components/schemas/LeadStatus"
+            changedBy:
+              type: object
+              nullable: true
+              required: [id, name]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+            changedAt:
+              type: string
+              format: date-time
+
+    LeadStatusHistoryResponse:
+      type: object
+      required: [entries]
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeadStatusHistoryEntry"
+
+    ConversionMetrics:
+      type: object
+      required:
+        - totalLeads
+        - openLeads
+        - wonCount
+        - lostCount
+        - closedCount
+        - winRate
+        - unassignedCount
+      properties:
+        totalLeads:
+          type: integer
+        openLeads:
+          type: integer
+        wonCount:
+          type: integer
+        lostCount:
+          type: integer
+        closedCount:
+          type: integer
+        winRate:
+          type: number
+          nullable: true
+        unassignedCount:
+          type: integer
+
+    StatusBreakdownItem:
+      type: object
+      required: [status, count, percentage]
+      properties:
+        status:
+          $ref: "#/components/schemas/LeadStatus"
+        count:
+          type: integer
+        percentage:
+          type: number
+
+    RecentActivityItem:
+      type: object
+      required: [id, type, notes, leadId, leadName, createdBy, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          $ref: "#/components/schemas/ActivityType"
+        notes:
+          type: string
+        leadId:
+          type: string
+          format: uuid
+        leadName:
+          type: string
+        createdBy:
+          type: object
+          required: [id, name]
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    AssigneeLeadStats:
+      type: object
+      required: [userId, name, total, won, lost, winRate]
+      properties:
+        userId:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+        total:
+          type: integer
+        won:
+          type: integer
+        lost:
+          type: integer
+        winRate:
+          type: number
+          nullable: true
+
+    TeamLeadStats:
+      type: object
+      required: [teamId, teamName, total, won, lost, winRate]
+      properties:
+        teamId:
+          type: string
+          format: uuid
+        teamName:
+          type: string
+        total:
+          type: integer
+        won:
+          type: integer
+        lost:
+          type: integer
+        winRate:
+          type: number
+          nullable: true
+
+    DashboardSummaryBase:
+      type: object
+      required:
+        - conversion
+        - statusBreakdown
+        - totalActivities
+        - recentActivities
+      properties:
+        conversion:
+          $ref: "#/components/schemas/ConversionMetrics"
+        statusBreakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatusBreakdownItem"
+        totalActivities:
+          type: integer
+        recentActivities:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecentActivityItem"
+
+    DashboardSummaryResponse:
+      oneOf:
+        - allOf:
+            - $ref: "#/components/schemas/DashboardSummaryBase"
+            - type: object
+              required: [view, needsAttentionCount]
+              properties:
+                view:
+                  type: string
+                  enum: [me]
+                needsAttentionCount:
+                  type: integer
+        - allOf:
+            - $ref: "#/components/schemas/DashboardSummaryBase"
+            - type: object
+              required: [view, assigneeStats]
+              properties:
+                view:
+                  type: string
+                  enum: [team]
+                assigneeStats:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/AssigneeLeadStats"
+        - allOf:
+            - $ref: "#/components/schemas/DashboardSummaryBase"
+            - type: object
+              required: [view, topTeams, topExecutives]
+              properties:
+                view:
+                  type: string
+                  enum: [org]
+                topTeams:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/TeamLeadStats"
+                topExecutives:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/AssigneeLeadStats"
+
+    DashboardLayoutItem:
+      type: object
+      required: [key, order, visible]
+      properties:
+        key:
+          $ref: "#/components/schemas/DashboardWidgetKey"
+        order:
+          type: integer
+        visible:
+          type: boolean
+
+    DashboardWidgetDefinition:
+      type: object
+      required: [key, label, description, width]
+      properties:
+        key:
+          $ref: "#/components/schemas/DashboardWidgetKey"
+        label:
+          type: string
+        description:
+          type: string
+        width:
+          type: string
+          enum: [full, half]
+
+    DashboardLayoutResponse:
+      type: object
+      required: [view, widgets, catalog]
+      properties:
+        view:
+          $ref: "#/components/schemas/DashboardView"
+        widgets:
+          type: array
+          items:
+            $ref: "#/components/schemas/DashboardLayoutItem"
+        catalog:
+          type: array
+          items:
+            $ref: "#/components/schemas/DashboardWidgetDefinition"
+
+    UpdateDashboardLayoutRequest:
+      type: object
+      required: [widgets]
+      properties:
+        widgets:
+          type: array
+          items:
+            $ref: "#/components/schemas/DashboardLayoutItem"
+
+    NotificationResponse:
+      type: object
+      required: [id, type, title, body, entityType, entityId, readAt, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          $ref: "#/components/schemas/NotificationType"
+        title:
+          type: string
+        body:
+          type: string
+        entityType:
+          type: string
+          nullable: true
+        entityId:
+          type: string
+          nullable: true
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    NotificationListMeta:
+      allOf:
+        - $ref: "#/components/schemas/PaginationMeta"
+        - type: object
+          required: [unreadCount]
+          properties:
+            unreadCount:
+              type: integer
+
+    PaginatedNotificationsResponse:
+      type: object
+      required: [notifications, meta]
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationResponse"
+        meta:
+          $ref: "#/components/schemas/NotificationListMeta"
+
+    UnreadCountResponse:
+      type: object
+      required: [count]
+      properties:
+        count:
+          type: integer
+
+    AuditActorSnapshot:
+      type: object
+      required: [id, name, email, roleSlug]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        roleSlug:
+          type: string
+          nullable: true
+
+    AuditOrganizationSnapshot:
+      type: object
+      required: [id, name, code]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        code:
+          type: string
+
+    AuditLogResponse:
+      type: object
+      required:
+        - id
+        - organizationId
+        - organization
+        - actorId
+        - actor
+        - action
+        - entityType
+        - entityId
+        - metadata
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+          nullable: true
+        organization:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/AuditOrganizationSnapshot"
+        actorId:
+          type: string
+          format: uuid
+          nullable: true
+        actor:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/AuditActorSnapshot"
+        action:
+          $ref: "#/components/schemas/AuditAction"
+        entityType:
+          $ref: "#/components/schemas/AuditEntityType"
+        entityId:
+          type: string
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+
+    PaginatedAuditLogsResponse:
+      type: object
+      required: [auditLogs, meta]
+      properties:
+        auditLogs:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditLogResponse"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    OrganizationResponse:
+      type: object
+      required:
+        - id
+        - name
+        - code
+        - logoUrl
+        - description
+        - status
+        - userCount
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        code:
+          type: string
+        logoUrl:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/OrganizationStatus"
+        userCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PaginatedOrganizationsResponse:
+      type: object
+      required: [organizations, meta]
+      properties:
+        organizations:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrganizationResponse"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    CreateOrganizationOrgAdmin:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    CreateOrganizationRequest:
+      type: object
+      required: [name, code, orgAdmin]
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        description:
+          type: string
+        logoUrl:
+          type: string
+        orgAdmin:
+          $ref: "#/components/schemas/CreateOrganizationOrgAdmin"
+
+    UpdateOrganizationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        description:
+          type: string
+          nullable: true
+        logoUrl:
+          type: string
+          nullable: true
+
+    UpdateOrganizationStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: "#/components/schemas/OrganizationStatus"
+
+    OrgModuleCatalogItem:
+      type: object
+      required: [key, label, description, disableHint]
+      properties:
+        key:
+          $ref: "#/components/schemas/OrgModuleKey"
+        label:
+          type: string
+        description:
+          type: string
+        disableHint:
+          type: string
+
+    OrgModulesResponse:
+      type: object
+      required: [modules, catalog]
+      properties:
+        modules:
+          type: object
+          additionalProperties:
+            type: boolean
+          example:
+            sales_erp: true
+            dashboards: true
+            notifications: true
+        catalog:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrgModuleCatalogItem"
+
+    UpdateOrgModulesRequest:
+      type: object
+      required: [modules]
+      properties:
+        modules:
+          type: object
+          additionalProperties:
+            type: boolean
+          example:
+            sales_erp: true
+            dashboards: false

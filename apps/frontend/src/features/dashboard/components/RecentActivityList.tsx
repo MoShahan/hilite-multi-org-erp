@@ -39,11 +39,14 @@ export const RecentActivityList = ({ activities }: RecentActivityListProps) => (
               className="rounded-lg border bg-muted/20 p-3"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="text-sm font-medium">
-                  {ACTIVITY_TYPE_LABELS[activity.type]} ·{" "}
+                <div className="text-sm">
+                  <span className="text-muted-foreground">
+                    {ACTIVITY_TYPE_LABELS[activity.type]}
+                  </span>
+                  {" · "}
                   <Link
                     to={`/leads/${activity.leadId}`}
-                    className="text-primary hover:underline"
+                    className="font-semibold text-sidebar-primary hover:underline"
                   >
                     {activity.leadName}
                   </Link>

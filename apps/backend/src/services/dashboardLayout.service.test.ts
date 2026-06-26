@@ -19,6 +19,7 @@ const meUser: AuthUser = {
   id: "user-me",
   email: "me@test.com",
   name: "Me User",
+  phoneNumber: null,
   status: "ACTIVE",
   organizationId: "org-1",
   role: { id: "role-1", name: "Executive", slug: "executive" },
@@ -44,7 +45,7 @@ describe("dashboardLayoutService.getLayout", () => {
 
     expect(result.view).toBe("me");
     expect(result.widgets).toEqual(getDefaultLayoutForView("me"));
-    expect(result.catalog).toHaveLength(4);
+    expect(result.catalog).toHaveLength(8);
   });
 
   it("returns default layout when saved view does not match current view", async () => {
@@ -96,7 +97,7 @@ describe("dashboardLayoutService.getLayout", () => {
         (item) => item.key === DASHBOARD_WIDGET_KEYS.CONVERSION_OVERVIEW,
       )?.visible,
     ).toBe(false);
-    expect(result.widgets).toHaveLength(4);
+    expect(result.widgets).toHaveLength(8);
   });
 });
 
@@ -156,7 +157,7 @@ describe("dashboardLayoutService.updateLayout", () => {
       "me",
       expect.arrayContaining([
         expect.objectContaining({ order: 0 }),
-        expect.objectContaining({ order: 3 }),
+        expect.objectContaining({ order: 7 }),
       ]),
     );
     expect(result.widgets[0]?.key).toBe(

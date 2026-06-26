@@ -22,7 +22,7 @@ HILITE Sales OS is a multi-tenant sales platform that supports multiple organiza
 
 **Local endpoints:**
 
-- API: `http://localhost:3000` — health: `GET /health`
+- API: `http://localhost:3000`
 - Frontend: `http://localhost:5173`
 
 The backend follows a consistent layering pattern: **routes → controllers → services → repositories → Prisma**. Cross-cutting concerns (authentication, RBAC, org module gates, audit logging, domain events) sit alongside domain services rather than in separate deployable services.
@@ -539,7 +539,6 @@ The codebase is optimized for MVP delivery and single-instance local development
 | Caching         | None — every poll runs `COUNT(*)` against PostgreSQL                                                                        |
 | Rate limiting   | Not implemented on the API                                                                                                  |
 | Database        | Single Postgres; no read replicas or connection-pool tuning beyond defaults                                                 |
-| Health check    | `GET /health` returns liveness only — no database probe ([`health.routes.ts`](../apps/backend/src/routes/health.routes.ts)) |
 | Data growth     | `notifications` and `audit_logs` tables grow unbounded with no archival strategy                                            |
 
 ### Recommended evolution
@@ -551,7 +550,7 @@ The codebase is optimized for MVP delivery and single-instance local development
 | DB load                        | Single Postgres      | Connection pool tuning, read replicas for list endpoints; indexes exist on `notifications.[userId, readAt]` and `audit_logs.[organizationId, createdAt]` |
 | Caching                        | None                 | Redis for unread counts and permission catalog                                                                                                           |
 | Deployment                     | Local dev only       | Containerize backend, static frontend on CDN, managed Postgres; secrets for `JWT_SECRET`, `DATABASE_URL`, `COOKIE_SECURE`, `FRONTEND_URL`                |
-| Observability                  | Console logs         | Structured logging, metrics, health check with DB connectivity probe                                                                                     |
+| Observability                  | Console logs         | Structured logging and metrics                                                                                                                           |
 | Audit / notification retention | Unbounded            | Time-based archival or partitioning for compliance tables                                                                                                |
 
 Graceful shutdown is implemented (`SIGINT`/`SIGTERM` → close server, disconnect Prisma, end connection pool), which is a foundation for container orchestration but not sufficient on its own for production readiness.

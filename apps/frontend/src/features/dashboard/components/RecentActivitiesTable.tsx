@@ -1,0 +1,90 @@
+import { Link } from "react-router-dom";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+import { ACTIVITY_TYPE_LABELS } from "../dashboardTypes";
+
+import type { RecentActivityItem } from "../dashboardTypes";
+
+type RecentActivitiesTableProps = {
+  activities: RecentActivityItem[];
+};
+
+const formatDateTime = (value: string) =>
+  new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+
+const truncateNotes = (notes: string, maxLength = 80) =>
+  notes.length <= maxLength ? notes : `${notes.slice(0, maxLength)}…`;
+
+export const RecentActivitiesTable = ({
+  activities,
+}: RecentActivitiesTableProps) => (
+  <Card className="shadow-sm">
+    <CardHeader>
+      <CardTitle>Recent activities (table)</CardTitle>
+      <CardDescription>Tabular view of latest interactions</CardDescription>
+    </CardHeader>
+    <CardContent>
+      {activities.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No activities logged yet.</p>
+      ) : (
+        <div className="overflow-hidden rounded-xl border">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/40 hover:bg-muted/40">
+                <TableHead>Type</TableHead>
+                <TableHead>Lead</TableHead>
+                <TableHead className="hidden md:table-cell">Notes</TableHead>
+                <TableHead className="hidden sm:table-cell">By</TableHead>
+                <TableHead>When</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {activities.map((activity) => (
+                <TableRow key={activity.id}>
+                  <TableCell className="whitespace-nowrap">
+                    {ACTIVITY_TYPE_LABELS[activity.type]}
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    <Link
+                      to={`/leads/${activity.leadId}`}
+                      className="text-sidebar-primary hover:underline"
+                    >
+                      {activity.leadName}
+                    </Link>
+                  </TableCell>
+                  <TableCell className="hidden max-w-[200px] truncate md:table-cell text-muted-foreground">
+                    {truncateNotes(activity.notes)}
+                  </TableCell>
+                  <TableCell className="hidden whitespace-nowrap sm:table-cell text-muted-foreground">
+                    {activity.createdBy.name}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-muted-foreground">
+                    {formatDateTime(activity.createdAt)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </CardContent>
+  </Card>
+);
