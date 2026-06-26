@@ -22,6 +22,29 @@ npm run setup
 
 `npm run setup` installs app dependencies, starts PostgreSQL, runs migrations, and seeds development data.
 
+## Environment Variables
+
+### Backend (`apps/backend/.env`)
+
+| Variable | Description | Default |
+| -------- | ----------- | ------- |
+| `PORT` | API server port | `3000` |
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://hilite:hilite@localhost:5432/hilite_erp` |
+| `JWT_SECRET` | Secret used to sign access tokens | `change-me` |
+| `JWT_EXPIRES_IN` | Access token lifetime | `15m` |
+| `REFRESH_TOKEN_EXPIRES_IN` | Refresh token lifetime | `7d` |
+| `FRONTEND_URL` | Allowed frontend origin for CORS and cookies | `http://localhost:5173` |
+| `COOKIE_SECURE` | Set `Secure` flag on auth cookies | `true` |
+| `LOG_LEVEL` | Logging verbosity | `info` |
+
+### Frontend (`apps/frontend/.env`)
+
+| Variable | Description | Default |
+| -------- | ----------- | ------- |
+| `VITE_API_URL` | Backend API base URL | `http://localhost:3000` |
+
+Copy the `.env.example` files to `.env` in each app directory and adjust values as needed.
+
 ### Daily development
 
 From the repository root:
