@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { activityService } from "../services/activity.service";
 import { leadService } from "../services/lead.service";
+import { requireAuthUser } from "../lib/requireAuthUser";
 import { getAuditRequestContext } from "../lib/auditRequestContext";
 import type { AssignLeadInput, CreateLeadInput, UpdateLeadInput } from "../types/lead";
 import type { CreateActivityInput } from "../types/activity";
@@ -10,16 +11,8 @@ const getRouteId = (req: Request) => {
   return Array.isArray(id) ? id[0] : id;
 };
 
-const getAuthUser = (req: Request) => {
-  if (!req.authUser) {
-    throw new Error("Auth context is required");
-  }
-
-  return req.authUser.user;
-};
-
 const getAuditContext = (req: Request) => ({
-  authUser: getAuthUser(req),
+  authUser: requireAuthUser(req),
   requestContext: getAuditRequestContext(req),
 });
 
@@ -31,7 +24,7 @@ export const listLeads = async (
   try {
     const result = await leadService.listLeads(
       req.authUser?.organization?.id ?? null,
-      getAuthUser(req),
+      requireAuthUser(req),
       req.query as Record<string, unknown>,
     );
     return res.json(result);
@@ -48,7 +41,7 @@ export const getLead = async (
   try {
     const result = await leadService.getLead(
       req.authUser?.organization?.id ?? null,
-      getAuthUser(req),
+      requireAuthUser(req),
       getRouteId(req),
     );
     return res.json(result);
@@ -65,7 +58,7 @@ export const createLead = async (
   try {
     const result = await leadService.createLead(
       req.authUser?.organization?.id ?? null,
-      getAuthUser(req),
+      requireAuthUser(req),
       req.body as CreateLeadInput,
       getAuditContext(req),
     );
@@ -83,7 +76,7 @@ export const updateLead = async (
   try {
     const result = await leadService.updateLead(
       req.authUser?.organization?.id ?? null,
-      getAuthUser(req),
+      requireAuthUser(req),
       getRouteId(req),
       req.body as UpdateLeadInput,
       getAuditContext(req),
@@ -102,7 +95,7 @@ export const assignLead = async (
   try {
     const result = await leadService.assignLead(
       req.authUser?.organization?.id ?? null,
-      getAuthUser(req),
+      requireAuthUser(req),
       getRouteId(req),
       req.body as AssignLeadInput,
       getAuditContext(req),
@@ -121,7 +114,7 @@ export const listActivities = async (
   try {
     const result = await activityService.listActivities(
       req.authUser?.organization?.id ?? null,
-      getAuthUser(req),
+      requireAuthUser(req),
       getRouteId(req),
       req.query as Record<string, unknown>,
     );
@@ -139,7 +132,7 @@ export const listStatusHistory = async (
   try {
     const result = await leadService.listStatusHistory(
       req.authUser?.organization?.id ?? null,
-      getAuthUser(req),
+      requireAuthUser(req),
       getRouteId(req),
     );
     return res.json(result);
@@ -156,7 +149,7 @@ export const createActivity = async (
   try {
     const result = await activityService.createActivity(
       req.authUser?.organization?.id ?? null,
-      getAuthUser(req),
+      requireAuthUser(req),
       getRouteId(req),
       req.body as CreateActivityInput,
       getAuditContext(req),

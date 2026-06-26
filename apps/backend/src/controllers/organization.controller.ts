@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { organizationModuleService } from "../services/organizationModule.service";
 import { organizationService } from "../services/organization.service";
+import { requireAuthUser } from "../lib/requireAuthUser";
 import { getAuditRequestContext } from "../lib/auditRequestContext";
 import type {
   CreateOrganizationInput,
@@ -10,16 +11,10 @@ import type {
 import type { UpdateOrgModulesInput } from "../types/organizationModule";
 import { AppError } from "../utils/AppError";
 
-const getAuditContext = (req: Request) => {
-  if (!req.authUser) {
-    throw new Error("Auth context is required");
-  }
-
-  return {
-    authUser: req.authUser.user,
-    requestContext: getAuditRequestContext(req),
-  };
-};
+const getAuditContext = (req: Request) => ({
+  authUser: requireAuthUser(req),
+  requestContext: getAuditRequestContext(req),
+});
 
 export const listOrganizations = async (
   req: Request,

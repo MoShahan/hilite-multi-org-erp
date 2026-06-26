@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { teamService } from "../services/team.service";
+import { requireAuthUser } from "../lib/requireAuthUser";
 import { getAuditRequestContext } from "../lib/auditRequestContext";
 import type { CreateTeamInput, CreateTeamMemberInput } from "../types/team";
 
@@ -8,16 +9,10 @@ const getRouteId = (req: Request) => {
   return Array.isArray(id) ? id[0] : id;
 };
 
-const getAuditContext = (req: Request) => {
-  if (!req.authUser) {
-    throw new Error("Auth context is required");
-  }
-
-  return {
-    authUser: req.authUser.user,
-    requestContext: getAuditRequestContext(req),
-  };
-};
+const getAuditContext = (req: Request) => ({
+  authUser: requireAuthUser(req),
+  requestContext: getAuditRequestContext(req),
+});
 
 export const listTeams = async (
   req: Request,
@@ -74,15 +69,13 @@ export const listTeamMembers = async (
   next: NextFunction,
 ) => {
   try {
-    if (!req.authUser) {
-      throw new Error("Auth context is required");
-    }
+    const authUser = requireAuthUser(req);
 
     const result = await teamService.listMembers(
-      req.authUser.organization?.id ?? null,
+      req.authUser?.organization?.id ?? null,
       getRouteId(req),
       req.query as Record<string, unknown>,
-      req.authUser.user,
+      authUser,
     );
     return res.json(result);
   } catch (error) {
