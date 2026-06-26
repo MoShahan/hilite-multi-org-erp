@@ -12,6 +12,8 @@ import {
   selectHasPermission,
 } from "@/features/auth/authSelectors";
 import { ORG_MODULE_KEYS } from "@/constants/orgModules";
+import { PERMISSIONS } from "@/constants/permissions";
+import { formatDateTime } from "@/lib/format";
 
 import { ActivityTimeline } from "../components/ActivityTimeline";
 import { AssignLeadDialog } from "../components/AssignLeadDialog";
@@ -55,18 +57,21 @@ export const LeadDetailPage = () => {
   const statusHistory = useAppSelector(selectStatusHistory);
   const statusHistoryStatus = useAppSelector(selectStatusHistoryStatus);
   const isMutating = useAppSelector(selectIsLeadsMutating);
-  const canEditLead = useAppSelector(selectHasPermission("leads:write"));
+  const canEditLead = useAppSelector(selectHasPermission(PERMISSIONS.LEADS_WRITE));
   const canUpdateStatusOnly = useAppSelector(
-    selectHasAnyPermission(["leads:status:write", "leads:status:write:team"]),
+    selectHasAnyPermission([
+      PERMISSIONS.LEADS_STATUS_WRITE,
+      PERMISSIONS.LEADS_STATUS_WRITE_TEAM,
+    ]),
   );
   const canAdvanceStatus = canEditLead || canUpdateStatusOnly;
   const canReassign = useAppSelector(
     (state) =>
-      state.auth.user?.permissions.includes("leads:write") &&
-      state.auth.user?.permissions.includes("leads:read:team"),
+      selectHasPermission(PERMISSIONS.LEADS_WRITE)(state) &&
+      selectHasPermission(PERMISSIONS.LEADS_READ_TEAM)(state),
   );
   const canLogActivity = useAppSelector(
-    selectHasPermission("activities:write"),
+    selectHasPermission(PERMISSIONS.ACTIVITIES_WRITE),
   );
 
   const [editOpen, setEditOpen] = useState(false);
@@ -196,10 +201,7 @@ export const LeadDetailPage = () => {
               <DetailField label="Created by" value={lead.createdBy.name} />
               <DetailField
                 label="Created"
-                value={new Intl.DateTimeFormat(undefined, {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                }).format(new Date(lead.createdAt))}
+                value={formatDateTime(lead.createdAt)}
               />
             </div>
 

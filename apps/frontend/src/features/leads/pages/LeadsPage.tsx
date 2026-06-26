@@ -12,6 +12,7 @@ import {
   selectHasPermission,
 } from "@/features/auth/authSelectors";
 import { ORG_MODULE_KEYS } from "@/constants/orgModules";
+import { PERMISSIONS } from "@/constants/permissions";
 import { teamsService } from "@/features/teams/teamsService";
 import { PAGE_SIZE_OPTIONS } from "@/lib/pagination";
 
@@ -34,10 +35,13 @@ export const LeadsPage = () => {
   const hasSalesErpModule = useAppSelector(
     selectHasModule(ORG_MODULE_KEYS.SALES_ERP),
   );
-  const canCreateLead = useAppSelector(selectHasPermission("leads:write"));
-  const canFilterByTeam = useAppSelector(selectHasPermission("leads:read:org"));
+  const canCreateLead = useAppSelector(selectHasPermission(PERMISSIONS.LEADS_WRITE));
+  const canFilterByTeam = useAppSelector(selectHasPermission(PERMISSIONS.LEADS_READ_ORG));
   const canFilterByAssignee = useAppSelector(
-    selectHasAnyPermission(["leads:read:team", "leads:read:org"]),
+    selectHasAnyPermission([
+      PERMISSIONS.LEADS_READ_TEAM,
+      PERMISSIONS.LEADS_READ_ORG,
+    ]),
   );
   const { query, patchQuery, clearFilters, refetch, listSearch } =
     useLeadListQuery();
