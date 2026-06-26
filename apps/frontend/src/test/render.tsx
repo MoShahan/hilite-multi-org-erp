@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 
 import { authReducer } from "@/features/auth/authSlice";
 import { auditReducer } from "@/features/audit/auditSlice";
+import { dashboardReducer } from "@/features/dashboard/dashboardSlice";
 import { leadsReducer } from "@/features/leads/leadsSlice";
 import { notificationsReducer } from "@/features/notifications/notificationsSlice";
 import { platformReducer } from "@/features/platform/platformSlice";
@@ -22,6 +23,7 @@ export const createTestStore = (preloadedState?: DeepPartial<RootState>) =>
   configureStore({
     reducer: {
       auth: authReducer,
+      dashboard: dashboardReducer,
       platform: platformReducer,
       teams: teamsReducer,
       users: usersReducer,
