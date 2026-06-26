@@ -1,8 +1,9 @@
-import { Building2, History, Kanban, LayoutDashboard, ScrollText, Shield, Sparkles, Users, UsersRound } from "lucide-react";
+import { Building2, History, Kanban, LayoutDashboard, ScrollText, Shield, Users, UsersRound } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import { useAppSelector } from "@/app/hooks";
 import { EntityAvatar } from "@/components/EntityAvatar";
+import { HiliteLogo } from "@/components/HiliteLogo";
 import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
@@ -26,7 +27,6 @@ import {
 } from "@/features/auth/authSelectors";
 import { ORG_MODULE_KEYS } from "@/constants/orgModules";
 import { formatRoleLabel } from "@/lib/format";
-import { cn } from "@/lib/utils";
 
 export const AppSidebar = () => {
   const isPlatformAdmin = useAppSelector(selectIsPlatformAdmin);
@@ -61,14 +61,7 @@ export const AppSidebar = () => {
     <Sidebar collapsible="icon" variant="inset">
       <SidebarHeader className="border-b border-sidebar-border/60 px-3 py-4">
         <div className="flex items-center gap-3">
-          <div
-            className={cn(
-              "flex size-9 shrink-0 items-center justify-center rounded-xl",
-              "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-sm",
-            )}
-          >
-            <Sparkles className="size-4" />
-          </div>
+          <HiliteLogo className="size-9 rounded-xl" />
           <div className="flex min-w-0 flex-col group-data-[collapsible=icon]:hidden">
             <span className="truncate text-sm font-semibold tracking-tight">
               HILITE Sales OS
