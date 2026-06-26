@@ -19,6 +19,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -27,6 +28,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  DEFAULT_NEW_USER_PASSWORD,
+  PASSWORD_HELPER_TEXT,
+  passwordFieldSchema,
+} from "@/lib/password";
 
 import { createOrganization } from "../platformSlice";
 
@@ -63,9 +69,7 @@ const createOrganizationSchema = z.object({
     .or(z.literal("")),
   orgAdminName: z.string().min(1, "Org admin name is required"),
   orgAdminEmail: z.email("Enter a valid email address"),
-  orgAdminPassword: z
-    .string()
-    .min(8, "Password must be at least 8 characters"),
+  orgAdminPassword: passwordFieldSchema(),
 });
 
 type CreateOrganizationFormValues = z.infer<typeof createOrganizationSchema>;
@@ -77,7 +81,7 @@ const defaultValues: CreateOrganizationFormValues = {
   logoUrl: "",
   orgAdminName: "",
   orgAdminEmail: "",
-  orgAdminPassword: "",
+  orgAdminPassword: DEFAULT_NEW_USER_PASSWORD,
 };
 
 const slugifyName = (name: string) =>
@@ -321,7 +325,7 @@ export const CreateOrganizationDialog = ({
                       <div className="relative">
                         <Input
                           type={showPassword ? "text" : "password"}
-                          placeholder="Minimum 8 characters"
+                          autoComplete="new-password"
                           {...field}
                         />
                         <Button
@@ -342,6 +346,7 @@ export const CreateOrganizationDialog = ({
                         </Button>
                       </div>
                     </FormControl>
+                    <FormDescription>{PASSWORD_HELPER_TEXT}</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

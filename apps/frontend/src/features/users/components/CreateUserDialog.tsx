@@ -19,6 +19,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -34,6 +35,11 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { rolesService } from "@/features/roles/rolesService";
+import {
+  DEFAULT_NEW_USER_PASSWORD,
+  PASSWORD_HELPER_TEXT,
+  passwordFieldSchema,
+} from "@/lib/password";
 
 import { createUser } from "../usersSlice";
 
@@ -56,7 +62,7 @@ const isApiRejection = (value: unknown): value is ApiRejection => {
 const createUserSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.email("Enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: passwordFieldSchema(),
   roleId: z.string().min(1, "Role is required"),
 });
 
@@ -65,7 +71,7 @@ type CreateUserFormValues = z.infer<typeof createUserSchema>;
 const defaultValues: CreateUserFormValues = {
   name: "",
   email: "",
-  password: "",
+  password: DEFAULT_NEW_USER_PASSWORD,
   roleId: "",
 };
 
@@ -271,6 +277,7 @@ export const CreateUserDialog = ({
                       </button>
                     </div>
                   </FormControl>
+                  <FormDescription>{PASSWORD_HELPER_TEXT}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

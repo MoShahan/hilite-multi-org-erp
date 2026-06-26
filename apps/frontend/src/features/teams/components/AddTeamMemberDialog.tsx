@@ -18,6 +18,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -33,6 +34,11 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { rolesService } from "@/features/roles/rolesService";
+import {
+  DEFAULT_NEW_USER_PASSWORD,
+  PASSWORD_HELPER_TEXT,
+  passwordFieldSchema,
+} from "@/lib/password";
 
 import { createTeamMember } from "../teamsSlice";
 
@@ -52,11 +58,18 @@ const isApiRejection = (value: unknown): value is ApiRejection =>
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.email("Enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: passwordFieldSchema(),
   roleId: z.string().min(1, "Role is required"),
 });
 
 type FormValues = z.infer<typeof schema>;
+
+const defaultValues: FormValues = {
+  name: "",
+  email: "",
+  password: DEFAULT_NEW_USER_PASSWORD,
+  roleId: "",
+};
 
 type AddTeamMemberDialogProps = {
   teamId: string;
@@ -81,7 +94,7 @@ export const AddTeamMemberDialog = ({
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     mode: "onChange",
-    defaultValues: { name: "", email: "", password: "", roleId: "" },
+    defaultValues,
   });
 
   useEffect(() => {
@@ -120,7 +133,7 @@ export const AddTeamMemberDialog = ({
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
-      form.reset();
+      form.reset(defaultValues);
       setShowPassword(false);
     }
     onOpenChange(nextOpen);
@@ -248,6 +261,7 @@ export const AddTeamMemberDialog = ({
                       </button>
                     </div>
                   </FormControl>
+                  <FormDescription>{PASSWORD_HELPER_TEXT}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
