@@ -1,20 +1,6 @@
-export type LeadStatus =
-  | "NEW"
-  | "CONTACTED"
-  | "NEGOTIATION"
-  | "WON"
-  | "LOST"
-  | "SITE_VISIT_COMPLETED"
-  | "VISIT_SCHEDULED";
+export type { ActivityType, LeadStatus } from "@hilite/shared";
 
-export type ActivityType =
-  | "CALL"
-  | "EMAIL"
-  | "OFFLINE_MEETING"
-  | "NOTE"
-  | "ONLINE_MEETING"
-  | "SITE_VISIT"
-  | "MESSAGE";
+import type { ActivityType, LeadStatus } from "@hilite/shared";
 
 export type LeadUserSummary = {
   id: string;
@@ -184,12 +170,9 @@ export type LeadsState = {
 
 export { LEAD_STATUS_FILTER_OPTIONS } from "./leadStatusPipeline";
 
-export const ACTIVITY_TYPE_OPTIONS: { value: ActivityType; label: string }[] = [
-  { value: "CALL", label: "Call" },
-  { value: "EMAIL", label: "Email" },
-  { value: "OFFLINE_MEETING", label: "Offline meeting" },
-  { value: "NOTE", label: "Note" },
-  { value: "ONLINE_MEETING", label: "Online meeting" },
-  { value: "SITE_VISIT", label: "Site visit" },
-  { value: "MESSAGE", label: "Message" },
-];
+import { ACTIVITY_TYPE_LABELS } from "@hilite/shared";
+
+export const ACTIVITY_TYPE_OPTIONS: { value: ActivityType; label: string }[] =
+  (Object.entries(ACTIVITY_TYPE_LABELS) as [ActivityType, string][]).map(
+    ([value, label]) => ({ value, label }),
+  );
