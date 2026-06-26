@@ -7,9 +7,7 @@ A multi-tenant Sales ERP MVP built for the HILITE technical assessment. The plat
 - **Node.js** 20 or later
 - **Docker Desktop** (for PostgreSQL)
 
-## Getting started
-
-### First-time setup
+## Installation Steps
 
 From the repository root:
 
@@ -45,6 +43,8 @@ npm run setup
 
 Copy the `.env.example` files to `.env` in each app directory and adjust values as needed.
 
+## Running the Application
+
 ### Daily development
 
 From the repository root:
@@ -55,7 +55,7 @@ npm run dev
 
 This starts PostgreSQL (if not already running), the API, and the web app together.
 
-- API: [http://localhost:3000](http://localhost:3000) — health check: [http://localhost:3000/health](http://localhost:3000/health)
+- API: [http://localhost:3000](http://localhost:3000)
 - Frontend: [http://localhost:5173](http://localhost:5173)
 
 Press **Ctrl+C** to stop the API and frontend. PostgreSQL keeps running in the background until you run `npm run db:down`.
@@ -74,7 +74,7 @@ Press **Ctrl+C** to stop the API and frontend. PostgreSQL keeps running in the b
 
 ### Seed credentials (development)
 
-After running `npm run db:seed`, these users are available for future auth testing:
+After running `npm run db:seed`, these users are available for auth testing:
 
 | Email                      | Role                        | Password        |
 | -------------------------- | --------------------------- | --------------- |
