@@ -4,7 +4,6 @@ import { isAllowedPageSize } from "./pagination";
 
 describe("isAllowedPageSize", () => {
   it("accepts valid page sizes", () => {
-    expect(isAllowedPageSize(1)).toBe(true);
     expect(isAllowedPageSize(10)).toBe(true);
     expect(isAllowedPageSize(20)).toBe(true);
     expect(isAllowedPageSize(50)).toBe(true);

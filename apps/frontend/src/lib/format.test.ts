@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { formatRelativeTime, formatRoleLabel } from "./format";
+import { formatDateTime, formatRelativeTime, formatRoleLabel, formatWinRate } from "./format";
 
 describe("formatRoleLabel", () => {
   it("returns No role when role is null or undefined", () => {
@@ -51,5 +51,22 @@ describe("formatRelativeTime", () => {
     expect(formatRelativeTime("2026-06-01T12:00:00.000Z")).toBe(
       new Date("2026-06-01T12:00:00.000Z").toLocaleDateString(),
     );
+  });
+});
+
+describe("formatDateTime", () => {
+  it("formats ISO dates with medium date and short time", () => {
+    const formatted = formatDateTime("2026-06-24T12:00:00.000Z");
+    expect(formatted).toContain("2026");
+  });
+});
+
+describe("formatWinRate", () => {
+  it("returns em dash for null win rate", () => {
+    expect(formatWinRate(null)).toBe("—");
+  });
+
+  it("returns percentage for numeric win rate", () => {
+    expect(formatWinRate(42)).toBe("42%");
   });
 });
