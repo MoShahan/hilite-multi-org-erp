@@ -61,6 +61,36 @@ enum ModuleKey {
   NOTIFICATIONS
 }
 
+enum AuditAction {
+  AUTH_LOGIN_SUCCESS
+  AUTH_LOGIN_FAILED
+  AUTH_LOGOUT
+  AUTH_TOKEN_REFRESHED
+  AUTH_TOKEN_REFRESH_FAILED
+  AUTH_SESSION_REVOKED
+  AUTH_PROFILE_UPDATED
+  AUTH_PASSWORD_CHANGED
+  LEAD_CREATED
+  LEAD_UPDATED
+  LEAD_STATUS_CHANGED
+  LEAD_ASSIGNED
+  LEAD_REASSIGNED
+  LEAD_UNASSIGNED
+  ACTIVITY_LOGGED
+  USER_CREATED
+  USER_ACTIVATED
+  USER_DEACTIVATED
+  TEAM_CREATED
+  TEAM_MEMBER_ADDED
+  ROLE_CREATED
+  ROLE_UPDATED
+  ROLE_DELETED
+  ORG_CREATED
+  ORG_UPDATED
+  ORG_STATUS_CHANGED
+  ORG_MODULES_UPDATED
+}
+
 model Organization {
   id          String             @id @default(uuid())
   name        String
@@ -76,6 +106,7 @@ model Organization {
   leads           Lead[]
   notifications   Notification[]
   modules         OrganizationModule[]
+  auditLogs       AuditLog[]
 
   @@map("organizations")
 }
@@ -95,6 +126,7 @@ model User {
   id             String              @id @default(uuid())
   email          String              @unique
   name           String
+  phoneNumber    String?             @map("phone_number")
   passwordHash   String              @map("password_hash")
   status         UserStatus          @default(ACTIVE)
   organizationId String?             @map("organization_id")
@@ -107,9 +139,39 @@ model User {
   assignedLeads  Lead[]              @relation("LeadAssignedTo")
   activities     Activity[]
   notifications  Notification[]
+  auditLogs           AuditLog[]
+  refreshTokens       RefreshToken[]
+  dashboardLayout     UserDashboardLayout?
 
   @@index([organizationId])
   @@map("users")
+}
+
+model UserDashboardLayout {
+  userId    String   @id @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  view      String
+  widgets   Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("user_dashboard_layouts")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique @map("token_hash")
+  familyId  String    @map("family_id")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  userAgent String?   @map("user_agent")
+  ip        String?
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([familyId])
+  @@map("refresh_tokens")
 }
 
 model Role {
@@ -244,4 +306,22 @@ model Notification {
   @@index([userId, readAt])
   @@index([organizationId])
   @@map("notifications")
+}
+
+model AuditLog {
+  id             String       @id @default(uuid())
+  organizationId String?      @map("organization_id")
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  actorId        String?      @map("actor_id")
+  actor          User?        @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action         AuditAction
+  entityType     String       @map("entity_type")
+  entityId       String?      @map("entity_id")
+  metadata       Json?
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@index([organizationId, createdAt])
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+  @@map("audit_logs")
 }
