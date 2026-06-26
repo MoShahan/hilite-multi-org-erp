@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
+import { HiliteLogo } from "@/components/HiliteLogo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { cn } from "@/lib/utils";
 
 import type { LegalSection } from "../types";
 
@@ -15,17 +15,6 @@ type LegalPageLayoutProps = {
     href: string;
   };
 };
-
-const HiliteLogo = ({ className }: { className?: string }) => (
-  <div
-    className={cn(
-      "flex size-10 items-center justify-center rounded-lg bg-foreground text-background shadow-sm",
-      className,
-    )}
-  >
-    <span className="text-lg font-bold tracking-tight">H</span>
-  </div>
-);
 
 export const LegalPageLayout = ({
   title,
