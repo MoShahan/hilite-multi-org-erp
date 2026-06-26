@@ -33,6 +33,12 @@ const OrganizationDetailPage = lazy(() =>
   })),
 );
 
+const AuditPage = lazy(() =>
+  import("@/features/audit/pages/AuditPage").then((module) => ({
+    default: module.AuditPage,
+  })),
+);
+
 const RolesPage = lazy(() =>
   import("@/features/roles/pages/RolesPage").then((module) => ({
     default: module.RolesPage,
@@ -126,6 +132,16 @@ export const AppRouter = () => {
                 <AppLayout>
                   <DashboardPage />
                 </AppLayout>
+              }
+            />
+            <Route
+              path="/audit"
+              element={
+                <RequirePermission permissions={["audit:read"]}>
+                  <AppLayout>
+                    <AuditPage />
+                  </AppLayout>
+                </RequirePermission>
               }
             />
             <Route
