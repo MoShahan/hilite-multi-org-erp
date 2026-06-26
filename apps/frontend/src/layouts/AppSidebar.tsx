@@ -1,4 +1,4 @@
-import { Building2, Kanban, LayoutDashboard, ScrollText, Shield, Sparkles, Users, UsersRound } from "lucide-react";
+import { Building2, History, Kanban, LayoutDashboard, ScrollText, Shield, Sparkles, Users, UsersRound } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import { useAppSelector } from "@/app/hooks";
@@ -31,6 +31,9 @@ import { cn } from "@/lib/utils";
 export const AppSidebar = () => {
   const isPlatformAdmin = useAppSelector(selectIsPlatformAdmin);
   const canViewAudit = useAppSelector(selectHasPermission("audit:read"));
+  const canViewPlatformAudit = useAppSelector(
+    selectHasPermission("platform:audit:read"),
+  );
   const canViewRoles = useAppSelector(selectHasPermission("roles:read"));
   const canViewUsers = useAppSelector(selectHasPermission("users:read"));
   const canViewTeams = useAppSelector(selectHasPermission("teams:read"));
@@ -90,6 +93,21 @@ export const AppSidebar = () => {
                     <NavLink to="/dashboard">
                       <LayoutDashboard />
                       <span>Dashboard</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ) : null}
+              {canViewPlatformAudit ? (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname.startsWith("/platform/audit")}
+                    tooltip="Platform audit"
+                    className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                  >
+                    <NavLink to="/platform/audit">
+                      <History />
+                      <span>Platform audit</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

@@ -33,6 +33,12 @@ const OrganizationDetailPage = lazy(() =>
   })),
 );
 
+const PlatformAuditPage = lazy(() =>
+  import("@/features/platform/pages/PlatformAuditPage").then((module) => ({
+    default: module.PlatformAuditPage,
+  })),
+);
+
 const AuditPage = lazy(() =>
   import("@/features/audit/pages/AuditPage").then((module) => ({
     default: module.AuditPage,
@@ -101,6 +107,12 @@ const HomePage = lazy(() =>
 
 const PlatformAdminLayout = ({ children }: { children: ReactNode }) => (
   <RequirePermission permissions={["platform:orgs:read"]}>
+    <AppLayout>{children}</AppLayout>
+  </RequirePermission>
+);
+
+const PlatformAuditLayout = ({ children }: { children: ReactNode }) => (
+  <RequirePermission permissions={["platform:audit:read"]}>
     <AppLayout>{children}</AppLayout>
   </RequirePermission>
 );
@@ -224,6 +236,14 @@ export const AppRouter = () => {
                 <AppLayout>
                   <NotificationsPage />
                 </AppLayout>
+              }
+            />
+            <Route
+              path="/platform/audit"
+              element={
+                <PlatformAuditLayout>
+                  <PlatformAuditPage />
+                </PlatformAuditLayout>
               }
             />
             <Route
