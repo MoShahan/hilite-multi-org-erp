@@ -7,7 +7,7 @@ import {
 } from "@/features/auth/authSelectors";
 import { fetchUnreadCount } from "../notificationsSlice";
 
-const POLL_INTERVAL_MS = 45_000;
+const POLL_INTERVAL_MS = 60_000;
 
 export const useNotificationPolling = (): void => {
   const dispatch = useAppDispatch();
@@ -19,22 +19,12 @@ export const useNotificationPolling = (): void => {
       return;
     }
 
-    const refreshUnreadCount = () => {
+    const intervalId = window.setInterval(() => {
       void dispatch(fetchUnreadCount());
-    };
-
-    refreshUnreadCount();
-
-    const intervalId = window.setInterval(refreshUnreadCount, POLL_INTERVAL_MS);
-    const handleFocus = () => {
-      refreshUnreadCount();
-    };
-
-    window.addEventListener("focus", handleFocus);
+    }, POLL_INTERVAL_MS);
 
     return () => {
       window.clearInterval(intervalId);
-      window.removeEventListener("focus", handleFocus);
     };
   }, [canAccessNotifications, dispatch, isAuthenticated]);
 };
