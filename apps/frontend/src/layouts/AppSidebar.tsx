@@ -70,10 +70,7 @@ export const AppSidebar = () => {
   const user = useAppSelector(selectAuthUser);
   const location = useLocation();
   const hasPlatformSection =
-    canViewDashboard ||
-    canViewPlatformAudit ||
-    canViewPlatformAdmins ||
-    isPlatformAdmin;
+    canViewPlatformAudit || canViewPlatformAdmins || isPlatformAdmin;
 
   return (
     <Sidebar collapsible="icon" variant="inset">
@@ -98,21 +95,6 @@ export const AppSidebar = () => {
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {canViewDashboard ? (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={location.pathname === "/dashboard"}
-                      tooltip="Dashboard"
-                      className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
-                    >
-                      <NavLink to="/dashboard">
-                        <LayoutDashboard />
-                        <span>Dashboard</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ) : null}
                 {isPlatformAdmin ? (
                   <SidebarMenuItem>
                     <SidebarMenuButton
@@ -164,7 +146,8 @@ export const AppSidebar = () => {
             </SidebarGroupContent>
           </SidebarGroup>
         ) : null}
-        {canViewRoles ||
+        {canViewDashboard ||
+        canViewRoles ||
         canViewUsers ||
         canViewTeams ||
         canViewMyTeam ||
@@ -176,32 +159,17 @@ export const AppSidebar = () => {
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {hasSalesErpModule && canViewLeads ? (
+                {canViewDashboard ? (
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
-                      isActive={location.pathname.startsWith("/leads")}
-                      tooltip="Leads"
+                      isActive={location.pathname === "/dashboard"}
+                      tooltip="Dashboard"
                       className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
                     >
-                      <NavLink to="/leads">
-                        <Kanban />
-                        <span>Leads</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ) : null}
-                {canViewMyTeam ? (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={location.pathname.startsWith("/my-team")}
-                      tooltip="My team"
-                      className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
-                    >
-                      <NavLink to="/my-team">
-                        <UsersRound />
-                        <span>My team</span>
+                      <NavLink to="/dashboard">
+                        <LayoutDashboard />
+                        <span>Dashboard</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -236,17 +204,32 @@ export const AppSidebar = () => {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ) : null}
-                {canViewAudit ? (
+                {canViewMyTeam ? (
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
-                      isActive={location.pathname.startsWith("/audit")}
-                      tooltip="Audit trail"
+                      isActive={location.pathname.startsWith("/my-team")}
+                      tooltip="My team"
                       className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
                     >
-                      <NavLink to="/audit">
-                        <ScrollText />
-                        <span>Audit trail</span>
+                      <NavLink to="/my-team">
+                        <UsersRound />
+                        <span>My team</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ) : null}
+                {hasSalesErpModule && canViewLeads ? (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname.startsWith("/leads")}
+                      tooltip="Leads"
+                      className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                    >
+                      <NavLink to="/leads">
+                        <Kanban />
+                        <span>Leads</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -262,6 +245,21 @@ export const AppSidebar = () => {
                       <NavLink to="/roles">
                         <Shield />
                         <span>Roles</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ) : null}
+                {canViewAudit ? (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname.startsWith("/audit")}
+                      tooltip="Audit trail"
+                      className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                    >
+                      <NavLink to="/audit">
+                        <ScrollText />
+                        <span>Audit trail</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

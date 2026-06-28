@@ -29,13 +29,15 @@ export const selectDefaultLandingPath = (state: RootState): string => {
     return "/platform/organizations";
   }
 
-  const hasSalesErpModule = selectHasModule(ORG_MODULE_KEYS.SALES_ERP)(state);
-  const canViewLeads = selectHasAnyPermission([...LEADS_READ_PERMISSIONS])(state);
-  if (hasSalesErpModule && canViewLeads) {
-    return "/leads";
+  if (selectHasAnyPermission([PERMISSIONS.USERS_READ])(state)) {
+    return "/users";
   }
 
   const canViewTeams = selectHasAnyPermission([PERMISSIONS.TEAMS_READ])(state);
+  if (canViewTeams) {
+    return "/teams";
+  }
+
   const canViewMyTeam =
     selectHasAnyPermission([PERMISSIONS.USERS_READ_TEAM])(state) &&
     !canViewTeams;
@@ -43,20 +45,18 @@ export const selectDefaultLandingPath = (state: RootState): string => {
     return "/my-team";
   }
 
-  if (selectHasAnyPermission([PERMISSIONS.USERS_READ])(state)) {
-    return "/users";
-  }
-
-  if (canViewTeams) {
-    return "/teams";
-  }
-
-  if (selectHasAnyPermission([PERMISSIONS.AUDIT_READ])(state)) {
-    return "/audit";
+  const hasSalesErpModule = selectHasModule(ORG_MODULE_KEYS.SALES_ERP)(state);
+  const canViewLeads = selectHasAnyPermission([...LEADS_READ_PERMISSIONS])(state);
+  if (hasSalesErpModule && canViewLeads) {
+    return "/leads";
   }
 
   if (selectHasAnyPermission([PERMISSIONS.ROLES_WRITE])(state)) {
     return "/roles";
+  }
+
+  if (selectHasAnyPermission([PERMISSIONS.AUDIT_READ])(state)) {
+    return "/audit";
   }
 
   return "/home";
