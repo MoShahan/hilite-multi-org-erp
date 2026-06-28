@@ -1,5 +1,6 @@
 import { Plus, UsersRound } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { useAppSelector } from "@/app/hooks";
 import { ListPagination } from "@/components/ListPagination";
@@ -11,7 +12,8 @@ import {
   selectHasPermission,
 } from "@/features/auth/authSelectors";
 import { rolesService } from "@/features/roles/rolesService";
-import { PAGE_SIZE_OPTIONS } from "@/lib/pagination";
+import { ApiClientError } from "@/lib/api-client";
+import { PAGE_SIZE_OPTIONS, TABLE_SKELETON_ROW_COUNT } from "@/lib/pagination";
 
 import { AddTeamMemberDialog } from "../components/AddTeamMemberDialog";
 import { TeamMembersListToolbar } from "../components/TeamMembersListToolbar";
@@ -45,12 +47,21 @@ export const MyTeamPage = () => {
   const [roles, setRoles] = useState<TeamMemberRoleOption[]>([]);
 
   useEffect(() => {
-    void rolesService
-      .listRoles({ assignableFrom: "team" })
-      .then((result) =>
-        setRoles(result.map((role) => ({ id: role.id, name: role.name }))),
-      )
-      .catch(() => setRoles([]));
+    const loadRoles = async () => {
+      try {
+        const result = await rolesService.listRoles({ assignableFrom: "team" });
+        setRoles(result.map((role) => ({ id: role.id, name: role.name })));
+      } catch (error) {
+        setRoles([]);
+        if (error instanceof ApiClientError) {
+          toast.error(error.message);
+        } else {
+          toast.error("Failed to load roles");
+        }
+      }
+    };
+
+    void loadRoles();
   }, []);
 
   const handleSortChange = (
@@ -134,7 +145,7 @@ export const MyTeamPage = () => {
 
         {isMembersLoading ? (
           <div className="space-y-3">
-            {Array.from({ length: query.pageSize }).map((_, index) => (
+            {Array.from({ length: TABLE_SKELETON_ROW_COUNT }).map((_, index) => (
               <Skeleton key={index} className="h-12 w-full" />
             ))}
           </div>
