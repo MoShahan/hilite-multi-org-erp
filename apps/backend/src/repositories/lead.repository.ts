@@ -1,4 +1,5 @@
 import { LeadStatus, type Prisma } from "../generated/prisma/client";
+import { sortLeadRowsByStatus } from "../lib/leadStatusSort";
 import { prisma } from "../lib/prisma";
 import type { ParsedListLeadsQuery } from "../types/lead";
 
@@ -95,8 +96,40 @@ const buildOrderBy = (
 export const leadRepository = {
   findManyPaginated: async (scope: ListScope, query: ParsedListLeadsQuery) => {
     const where = buildWhere(scope, query);
-    const orderBy = buildOrderBy(query.sortBy, query.sortOrder);
     const skip = (query.page - 1) * query.pageSize;
+
+    if (query.sortBy === "status") {
+      const [statusRows, total] = await Promise.all([
+        prisma.lead.findMany({
+          where,
+          select: { id: true, status: true },
+        }),
+        prisma.lead.count({ where }),
+      ]);
+
+      const pageIds = sortLeadRowsByStatus(
+        statusRows,
+        query.sortOrder,
+        skip,
+        query.pageSize,
+      );
+
+      if (pageIds.length === 0) {
+        return { leads: [], total };
+      }
+
+      const leads = await prisma.lead.findMany({
+        where: { id: { in: pageIds } },
+        include: leadInclude,
+      });
+
+      const leadById = new Map(leads.map((lead) => [lead.id, lead]));
+      const orderedLeads = pageIds.map((id) => leadById.get(id)!);
+
+      return { leads: orderedLeads, total };
+    }
+
+    const orderBy = buildOrderBy(query.sortBy, query.sortOrder);
 
     const [leads, total] = await Promise.all([
       prisma.lead.findMany({

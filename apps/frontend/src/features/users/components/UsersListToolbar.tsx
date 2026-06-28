@@ -137,101 +137,81 @@ export const UsersListToolbar = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 rounded-xl border bg-muted/30 p-3">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Search users..."
-              className={cn(
-                "border-0 bg-background/80 pl-9 shadow-sm",
-                searchInput ? "pr-9" : undefined,
-              )}
-            />
-            {searchInput ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchInput("");
-                  onQueryChange({ search: "", page: 1 });
-                }}
-                className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                aria-label="Clear search"
-              >
-                <X className="size-4" />
-              </button>
-            ) : null}
-          </div>
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-muted/30 p-3">
+        <div className="relative min-w-0 flex-1 basis-[180px]">
+          <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            placeholder="Search users..."
+            className={cn(
+              "border-0 bg-background/80 pl-9 shadow-sm",
+              searchInput ? "pr-9" : undefined,
+            )}
+          />
+          {searchInput ? (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchInput("");
+                onQueryChange({ search: "", page: 1 });
+              }}
+              className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Clear search"
+            >
+              <X className="size-4" />
+            </button>
+          ) : null}
+        </div>
+        <div className="shrink-0">
           <StatusFilter
             value={query.status}
             onChange={(status) => onQueryChange({ status, page: 1 })}
           />
         </div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Select
-            value={query.roleId || "all"}
-            onValueChange={(value) =>
-              onQueryChange({
-                roleId: value === "all" ? "" : value,
-                page: 1,
-              })
-            }
-          >
-            <SelectTrigger className="bg-background/80">
-              <SelectValue placeholder="All roles" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All roles</SelectItem>
-              {roles.map((role) => (
-                <SelectItem key={role.id} value={role.id}>
-                  {role.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={query.membershipScope}
-            onValueChange={(value) =>
-              onQueryChange({
-                membershipScope: value as UserListQuery["membershipScope"],
-                page: 1,
-              })
-            }
-          >
-            <SelectTrigger className="bg-background/80">
-              <SelectValue placeholder="Role type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All role types</SelectItem>
-              <SelectItem value="organization">Organization</SelectItem>
-              <SelectItem value="team">Team</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={query.teamId || "all"}
-            onValueChange={(value) =>
-              onQueryChange({
-                teamId: value === "all" ? "" : value,
-                page: 1,
-              })
-            }
-          >
-            <SelectTrigger className="bg-background/80">
-              <SelectValue placeholder="All teams" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All teams</SelectItem>
-              <SelectItem value="none">No team</SelectItem>
-              {teams.map((team) => (
-                <SelectItem key={team.id} value={team.id}>
-                  {team.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <Select
+          value={query.roleId || "all"}
+          onValueChange={(value) =>
+            onQueryChange({
+              roleId: value === "all" ? "" : value,
+              page: 1,
+            })
+          }
+        >
+          <SelectTrigger className="w-40 shrink-0 bg-background/80">
+            <SelectValue placeholder="All roles" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All roles</SelectItem>
+            {roles.map((role) => (
+              <SelectItem key={role.id} value={role.id}>
+                {role.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={query.teamId || "all"}
+          onValueChange={(value) =>
+            onQueryChange({
+              teamId: value === "all" ? "" : value,
+              page: 1,
+            })
+          }
+        >
+          <SelectTrigger className="w-40 shrink-0 bg-background/80">
+            <SelectValue placeholder="All teams" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All teams</SelectItem>
+            <SelectItem value="none">No team</SelectItem>
+            {teams.map((team) => (
+              <SelectItem key={team.id} value={team.id}>
+                {team.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
         {total === 0

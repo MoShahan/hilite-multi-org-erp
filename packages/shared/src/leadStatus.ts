@@ -17,6 +17,14 @@ export const LINEAR_LEAD_STAGES: LeadStatus[] = [
 
 export const TERMINAL_LEAD_STAGES: LeadStatus[] = ["WON", "LOST"];
 
+export const LEAD_STATUS_SORT_ORDER: LeadStatus[] = [
+  ...LINEAR_LEAD_STAGES,
+  ...TERMINAL_LEAD_STAGES,
+];
+
+export const getLeadStatusSortIndex = (status: LeadStatus): number =>
+  LEAD_STATUS_SORT_ORDER.indexOf(status);
+
 export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
   NEW: "New",
   CONTACTED: "Contacted",

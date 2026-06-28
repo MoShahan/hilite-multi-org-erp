@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,16 @@ import type {
   NotificationListFilter,
   NotificationListQuery,
 } from "../notificationsTypes";
+
+type ApiRejection = {
+  message: string;
+};
+
+const isApiRejection = (value: unknown): value is ApiRejection =>
+  typeof value === "object" &&
+  value !== null &&
+  "message" in value &&
+  typeof value.message === "string";
 
 type NotificationsListToolbarProps = {
   query: NotificationListQuery;
@@ -118,15 +129,22 @@ export const NotificationsListToolbar = ({
     total === 0 ? 0 : (query.page - 1) * query.pageSize + 1;
   const rangeEnd = Math.min(query.page * query.pageSize, total);
 
-  const handleMarkAllRead = () => {
-    void dispatch(markAllNotificationsRead()).then(() => {
+  const handleMarkAllRead = async () => {
+    try {
+      await dispatch(markAllNotificationsRead()).unwrap();
       onMarkAllReadComplete();
-    });
+    } catch (error) {
+      toast.error(
+        isApiRejection(error)
+          ? error.message
+          : "Failed to mark all as read",
+      );
+    }
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 rounded-xl border bg-muted/30 p-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/30 p-3">
         <ReadFilter
           value={query.filter}
           onChange={(filter) => onQueryChange({ filter, page: 1 })}

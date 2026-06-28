@@ -1,4 +1,5 @@
-import { UserStatus } from "../generated/prisma/client";
+import { TERMINAL_LEAD_STAGES } from "@hilite/shared";
+import { LeadStatus, UserStatus } from "../generated/prisma/client";
 import { PERMISSIONS } from "../constants/permissions";
 import type { AuthUser } from "../types/auth";
 import { AppError } from "../utils/AppError";
@@ -9,10 +10,17 @@ type LeadAccessRecord = {
   organizationId: string;
   teamId: string;
   assignedToId: string | null;
+  status: LeadStatus;
 };
 
 const hasPermission = (user: AuthUser, permission: string) =>
   user.permissions.includes(permission);
+
+const assertLeadIsOpen = (lead: LeadAccessRecord) => {
+  if (TERMINAL_LEAD_STAGES.includes(lead.status)) {
+    throw AppError.badRequest("This lead is closed and cannot be modified");
+  }
+};
 
 export const getCallerTeamId = (user: AuthUser): string | null =>
   user.team?.id ?? null;
@@ -78,6 +86,8 @@ export const assertCanWriteLead = (
   user: AuthUser,
   organizationId: string,
 ) => {
+  assertLeadIsOpen(lead);
+
   if (!hasPermission(user, PERMISSIONS.LEADS_WRITE)) {
     throw AppError.forbidden("You do not have permission to manage leads");
   }
@@ -147,6 +157,8 @@ export const assertCanReassignLead = (
   user: AuthUser,
   organizationId: string,
 ) => {
+  assertLeadIsOpen(lead);
+
   if (!hasPermission(user, PERMISSIONS.LEADS_WRITE)) {
     throw AppError.forbidden("You do not have permission to assign leads");
   }
@@ -237,6 +249,8 @@ export const assertCanCreateActivity = (
   lead: LeadAccessRecord,
   user: AuthUser,
 ) => {
+  assertLeadIsOpen(lead);
+
   if (!hasPermission(user, PERMISSIONS.ACTIVITIES_WRITE)) {
     throw AppError.forbidden("You do not have permission to log activities");
   }

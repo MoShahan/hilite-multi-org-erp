@@ -8,7 +8,7 @@ import { ListPagination } from "@/components/ListPagination";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiClientError } from "@/lib/api-client";
-import { PAGE_SIZE_OPTIONS } from "@/lib/pagination";
+import { PAGE_SIZE_OPTIONS, TABLE_SKELETON_ROW_COUNT } from "@/lib/pagination";
 
 import { CreateOrganizationDialog } from "../components/CreateOrganizationDialog";
 import { OrganizationsListToolbar } from "../components/OrganizationsListToolbar";
@@ -139,7 +139,7 @@ export const OrganizationsPage = () => {
 
           {isLoading ? (
             <div className="space-y-3">
-              {Array.from({ length: query.pageSize }).map((_, index) => (
+              {Array.from({ length: TABLE_SKELETON_ROW_COUNT }).map((_, index) => (
                 <Skeleton key={index} className="h-12 w-full" />
               ))}
             </div>

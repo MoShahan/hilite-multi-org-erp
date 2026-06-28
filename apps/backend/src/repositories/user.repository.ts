@@ -144,6 +144,7 @@ export const orgUserRepository = {
           name: data.name,
           email: data.email,
           passwordHash: data.passwordHash,
+          mustChangePassword: true,
           status: UserStatus.ACTIVE,
         },
       });
@@ -246,7 +247,10 @@ export const authUserRepository = {
   updatePasswordHash: (userId: string, passwordHash: string) => {
     return prisma.user.update({
       where: { id: userId },
-      data: { passwordHash },
+      data: {
+        passwordHash,
+        mustChangePassword: false,
+      },
     });
   },
 };

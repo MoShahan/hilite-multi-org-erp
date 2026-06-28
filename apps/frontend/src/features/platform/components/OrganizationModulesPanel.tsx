@@ -33,20 +33,23 @@ export const OrganizationModulesPanel = ({
     let cancelled = false;
     setStatus("loading");
 
-    void platformService
-      .getOrganizationModules(organizationId)
-      .then((response) => {
+    const loadModules = async () => {
+      try {
+        const response =
+          await platformService.getOrganizationModules(organizationId);
         if (!cancelled) {
           setData(response);
           setDraft(response.modules);
           setStatus("idle");
         }
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) {
           setStatus("error");
         }
-      });
+      }
+    };
+
+    void loadModules();
 
     return () => {
       cancelled = true;

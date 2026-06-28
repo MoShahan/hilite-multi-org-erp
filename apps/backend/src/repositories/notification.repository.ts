@@ -1,9 +1,14 @@
-import { UserStatus, type Notification } from "../generated/prisma/client";
+import { NotificationType, UserStatus, type Notification } from "../generated/prisma/client";
 import { prisma } from "../lib/prisma";
 import type {
   CreateNotificationInput,
   ParsedListNotificationsQuery,
 } from "../types/notification";
+
+const notificationScope = (userId: string, organizationId: string | null) => ({
+  userId,
+  organizationId,
+});
 
 export const notificationRepository = {
   createMany: async (inputs: CreateNotificationInput[]): Promise<void> => {
@@ -13,7 +18,7 @@ export const notificationRepository = {
 
     await prisma.notification.createMany({
       data: inputs.map((input) => ({
-        organizationId: input.organizationId,
+        organizationId: input.organizationId ?? null,
         userId: input.userId,
         type: input.type,
         title: input.title,
@@ -60,12 +65,11 @@ export const notificationRepository = {
 
   findPaginated: async (
     userId: string,
-    organizationId: string,
+    organizationId: string | null,
     query: ParsedListNotificationsQuery,
   ): Promise<{ notifications: Notification[]; total: number }> => {
     const where = {
-      userId,
-      organizationId,
+      ...notificationScope(userId, organizationId),
       ...(query.unreadOnly ? { readAt: null } : {}),
     };
 
@@ -84,11 +88,13 @@ export const notificationRepository = {
     return { notifications, total };
   },
 
-  countUnread: (userId: string, organizationId: string): Promise<number> => {
+  countUnread: (
+    userId: string,
+    organizationId: string | null,
+  ): Promise<number> => {
     return prisma.notification.count({
       where: {
-        userId,
-        organizationId,
+        ...notificationScope(userId, organizationId),
         readAt: null,
       },
     });
@@ -97,10 +103,10 @@ export const notificationRepository = {
   markRead: async (
     id: string,
     userId: string,
-    organizationId: string,
+    organizationId: string | null,
   ): Promise<Notification | null> => {
     const existing = await prisma.notification.findFirst({
-      where: { id, userId, organizationId },
+      where: { id, ...notificationScope(userId, organizationId) },
     });
 
     if (!existing) {
@@ -117,16 +123,33 @@ export const notificationRepository = {
     });
   },
 
-  markAllRead: (userId: string, organizationId: string): Promise<number> => {
+  markAllRead: (
+    userId: string,
+    organizationId: string | null,
+  ): Promise<number> => {
     return prisma.notification
       .updateMany({
         where: {
-          userId,
-          organizationId,
+          ...notificationScope(userId, organizationId),
           readAt: null,
         },
         data: { readAt: new Date() },
       })
       .then((result) => result.count);
+  },
+
+  hasWelcomeChangePasswordNotification: (
+    userId: string,
+    organizationId: string | null,
+  ): Promise<boolean> => {
+    return prisma.notification
+      .findFirst({
+        where: {
+          ...notificationScope(userId, organizationId),
+          type: NotificationType.WELCOME_CHANGE_PASSWORD,
+        },
+        select: { id: true },
+      })
+      .then((notification) => notification !== null);
   },
 };

@@ -16,7 +16,8 @@ import { rolesService } from "@/features/roles/rolesService";
 import { UpdateUserStatusDialog } from "@/features/users/components/UpdateUserStatusDialog";
 import { updateUserStatus } from "@/features/users/usersSlice";
 import { selectIsUsersMutating } from "@/features/users/usersSelectors";
-import { PAGE_SIZE_OPTIONS } from "@/lib/pagination";
+import { ApiClientError } from "@/lib/api-client";
+import { PAGE_SIZE_OPTIONS, TABLE_SKELETON_ROW_COUNT } from "@/lib/pagination";
 
 import { AddTeamMemberDialog } from "../components/AddTeamMemberDialog";
 import { TeamMembersListToolbar } from "../components/TeamMembersListToolbar";
@@ -84,12 +85,21 @@ export const TeamDetailPage = () => {
   }, [dispatch, id]);
 
   useEffect(() => {
-    void rolesService
-      .listRoles({ assignableFrom: "team" })
-      .then((result) =>
-        setRoles(result.map((role) => ({ id: role.id, name: role.name }))),
-      )
-      .catch(() => setRoles([]));
+    const loadRoles = async () => {
+      try {
+        const result = await rolesService.listRoles({ assignableFrom: "team" });
+        setRoles(result.map((role) => ({ id: role.id, name: role.name })));
+      } catch (error) {
+        setRoles([]);
+        if (error instanceof ApiClientError) {
+          toast.error(error.message);
+        } else {
+          toast.error("Failed to load roles");
+        }
+      }
+    };
+
+    void loadRoles();
   }, []);
 
   const refetchAll = () => {
@@ -235,7 +245,7 @@ export const TeamDetailPage = () => {
 
             {isMembersLoading ? (
               <div className="space-y-3">
-                {Array.from({ length: query.pageSize }).map((_, index) => (
+                {Array.from({ length: TABLE_SKELETON_ROW_COUNT }).map((_, index) => (
                   <Skeleton key={index} className="h-12 w-full" />
                 ))}
               </div>

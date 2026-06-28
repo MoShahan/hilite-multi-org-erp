@@ -24,6 +24,7 @@ import type { AuditRequestContext } from "../types/audit";
 import { AppError } from "../utils/AppError";
 import { refreshTokenRepository } from "../repositories/refreshToken.repository";
 import { authUserRepository } from "../repositories/user.repository";
+import { welcomeNotificationService } from "./welcomeNotification.service";
 
 type AuthUserRecord = NonNullable<
   Awaited<ReturnType<typeof authUserRepository.findByEmail>>
@@ -108,6 +109,13 @@ export const authService = {
 
     assertActiveUser(user);
     assertUserHasRole(user);
+
+    await welcomeNotificationService.ensureOnLogin(
+      user.id,
+      user.organizationId,
+      user.name,
+      user.mustChangePassword,
+    );
 
     return authService.issueSession(user, requestContext);
   },

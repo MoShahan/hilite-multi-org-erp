@@ -182,6 +182,7 @@ export const teamRepository = {
           name: data.name,
           email: data.email,
           passwordHash: data.passwordHash,
+          mustChangePassword: true,
           status: UserStatus.ACTIVE,
         },
       });

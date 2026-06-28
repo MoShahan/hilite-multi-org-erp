@@ -2,11 +2,9 @@ import { useEffect } from "react";
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import {
-  selectAuthOrganization,
-  selectHasModule,
+  selectCanAccessNotifications,
   selectIsAuthenticated,
 } from "@/features/auth/authSelectors";
-import { ORG_MODULE_KEYS } from "@/constants/orgModules";
 import { fetchUnreadCount } from "../notificationsSlice";
 
 const POLL_INTERVAL_MS = 45_000;
@@ -14,13 +12,10 @@ const POLL_INTERVAL_MS = 45_000;
 export const useNotificationPolling = (): void => {
   const dispatch = useAppDispatch();
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
-  const organization = useAppSelector(selectAuthOrganization);
-  const hasNotificationsModule = useAppSelector(
-    selectHasModule(ORG_MODULE_KEYS.NOTIFICATIONS),
-  );
+  const canAccessNotifications = useAppSelector(selectCanAccessNotifications);
 
   useEffect(() => {
-    if (!isAuthenticated || !organization || !hasNotificationsModule) {
+    if (!isAuthenticated || !canAccessNotifications) {
       return;
     }
 
@@ -41,5 +36,5 @@ export const useNotificationPolling = (): void => {
       window.clearInterval(intervalId);
       window.removeEventListener("focus", handleFocus);
     };
-  }, [dispatch, hasNotificationsModule, isAuthenticated, organization?.id]);
+  }, [canAccessNotifications, dispatch, isAuthenticated]);
 };

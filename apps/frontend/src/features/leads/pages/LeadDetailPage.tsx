@@ -29,6 +29,7 @@ import {
   fetchLead,
   fetchStatusHistory,
 } from "../leadsSlice";
+import { isTerminalLeadStatus } from "../leadStatusPipeline";
 import {
   selectActivities,
   selectActivitiesStatus,
@@ -101,6 +102,7 @@ export const LeadDetailPage = () => {
   const isLoading = detailStatus === "loading" || detailStatus === "idle";
   const isCurrentAssignee =
     !!lead && !!authUser && lead.assignedTo?.id === authUser.id;
+  const isClosed = !!lead && isTerminalLeadStatus(lead.status);
 
   if (!id) {
     return null;
@@ -151,7 +153,7 @@ export const LeadDetailPage = () => {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                {canReassign ? (
+                {canReassign && !isClosed ? (
                   <Button
                     variant="outline"
                     onClick={() => setAssignOpen(true)}
@@ -161,7 +163,7 @@ export const LeadDetailPage = () => {
                     Assign
                   </Button>
                 ) : null}
-                {canEditLead ? (
+                {canEditLead && !isClosed ? (
                   <Button
                     variant="outline"
                     onClick={() => setEditOpen(true)}
@@ -224,10 +226,12 @@ export const LeadDetailPage = () => {
                 <div>
                   <h2 className="text-lg font-semibold">Activity timeline</h2>
                   <p className="text-sm text-muted-foreground">
-                    Newest interactions appear first.
+                    {isClosed
+                      ? "Activities can't be logged on closed leads."
+                      : "Newest interactions appear first."}
                   </p>
                 </div>
-                {canLogActivity && isCurrentAssignee ? (
+                {canLogActivity && isCurrentAssignee && !isClosed ? (
                   <Button
                     className="shrink-0"
                     onClick={() => setLogActivityOpen(true)}

@@ -16,6 +16,7 @@ import {
 } from "../repositories/user.repository";
 import { getCallerTeamId } from "./leadAccess.service";
 import { auditService } from "./audit.service";
+import { welcomeNotificationService } from "./welcomeNotification.service";
 import type { AuthUser } from "../types/auth";
 import type { AuditMutationContext } from "../types/audit";
 import type {
@@ -357,6 +358,8 @@ export const orgUserService = {
         requestContext: auditContext.requestContext,
       });
     }
+
+    await welcomeNotificationService.notifyNewUser(user.id, orgId, user.name);
 
     return toUserResponse(user);
   },

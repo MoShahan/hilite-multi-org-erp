@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -26,6 +25,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -103,7 +103,6 @@ export const CreateOrganizationDialog = ({
   onCreated,
 }: CreateOrganizationDialogProps) => {
   const dispatch = useAppDispatch();
-  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [codeTouched, setCodeTouched] = useState(false);
 
@@ -117,7 +116,6 @@ export const CreateOrganizationDialog = ({
     if (!nextOpen) {
       form.reset(defaultValues);
       setCodeTouched(false);
-      setShowPassword(false);
     }
 
     onOpenChange(nextOpen);
@@ -322,29 +320,11 @@ export const CreateOrganizationDialog = ({
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <div className="relative">
-                        <Input
-                          type={showPassword ? "text" : "password"}
-                          autoComplete="new-password"
-                          {...field}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          className="absolute top-1/2 right-1 -translate-y-1/2"
-                          onClick={() => setShowPassword((value) => !value)}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="size-4" />
-                          ) : (
-                            <Eye className="size-4" />
-                          )}
-                          <span className="sr-only">
-                            {showPassword ? "Hide password" : "Show password"}
-                          </span>
-                        </Button>
-                      </div>
+                      <PasswordInput
+                        autoComplete="new-password"
+                        resetToken={open}
+                        {...field}
+                      />
                     </FormControl>
                     <FormDescription>{PASSWORD_HELPER_TEXT}</FormDescription>
                     <FormMessage />

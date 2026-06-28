@@ -1,4 +1,5 @@
 import { Search, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import { cn } from "@/lib/utils";
 import {
   AUDIT_ACTION_OPTIONS,
   AUDIT_ENTITY_TYPE_OPTIONS,
@@ -19,6 +20,7 @@ import type { Organization, PlatformAuditListQuery } from "../platformTypes";
 
 type PlatformAuditListToolbarProps = {
   query: PlatformAuditListQuery;
+  total: number;
   organizations: Organization[];
   hasActiveFilters: boolean;
   onPatchQuery: (patch: Partial<PlatformAuditListQuery>) => void;
@@ -27,30 +29,69 @@ type PlatformAuditListToolbarProps = {
 
 export const PlatformAuditListToolbar = ({
   query,
+  total,
   organizations,
   hasActiveFilters,
   onPatchQuery,
   onClearFilters,
 }: PlatformAuditListToolbarProps) => {
+  const [searchInput, setSearchInput] = useState(query.search);
+
+  useEffect(() => {
+    setSearchInput(query.search);
+  }, [query.search]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      if (searchInput.trim() !== query.search.trim()) {
+        onPatchQuery({ search: searchInput.trim(), page: 1 });
+      }
+    }, 300);
+    return () => window.clearTimeout(timeoutId);
+  }, [searchInput, query.search, onPatchQuery]);
+
+  const rangeStart =
+    total === 0 ? 0 : (query.page - 1) * query.pageSize + 1;
+  const rangeEnd = Math.min(query.page * query.pageSize, total);
+
   return (
-    <div className="flex flex-col gap-3 border-b p-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-        <div className="relative flex-1">
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-muted/30 p-3">
+        <div className="relative min-w-0 flex-1 basis-[180px]">
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            value={query.search}
-            onChange={(event) => onPatchQuery({ search: event.target.value })}
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
             placeholder="Search summary or actor..."
-            className="pl-9"
+            className={cn(
+              "border-0 bg-background/80 pl-9 shadow-sm",
+              searchInput ? "pr-9" : undefined,
+            )}
           />
+          {searchInput ? (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchInput("");
+                onPatchQuery({ search: "", page: 1 });
+              }}
+              className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Clear search"
+            >
+              <X className="size-4" />
+            </button>
+          ) : null}
         </div>
         <Select
           value={query.organizationId || "ALL"}
           onValueChange={(value) =>
-            onPatchQuery({ organizationId: value === "ALL" ? "" : value })
+            onPatchQuery({
+              organizationId: value === "ALL" ? "" : value,
+              page: 1,
+            })
           }
         >
-          <SelectTrigger className="w-full lg:w-[220px]">
+          <SelectTrigger className="w-44 shrink-0 bg-background/80">
             <SelectValue placeholder="Organization" />
           </SelectTrigger>
           <SelectContent>
@@ -65,10 +106,13 @@ export const PlatformAuditListToolbar = ({
         <Select
           value={query.action}
           onValueChange={(value) =>
-            onPatchQuery({ action: value as PlatformAuditListQuery["action"] })
+            onPatchQuery({
+              action: value as PlatformAuditListQuery["action"],
+              page: 1,
+            })
           }
         >
-          <SelectTrigger className="w-full lg:w-[200px]">
+          <SelectTrigger className="w-44 shrink-0 bg-background/80">
             <SelectValue placeholder="Action" />
           </SelectTrigger>
           <SelectContent>
@@ -85,10 +129,11 @@ export const PlatformAuditListToolbar = ({
           onValueChange={(value) =>
             onPatchQuery({
               entityType: value as PlatformAuditListQuery["entityType"],
+              page: 1,
             })
           }
         >
-          <SelectTrigger className="w-full lg:w-[180px]">
+          <SelectTrigger className="w-44 shrink-0 bg-background/80">
             <SelectValue placeholder="Entity type" />
           </SelectTrigger>
           <SelectContent>
@@ -100,27 +145,39 @@ export const PlatformAuditListToolbar = ({
             ))}
           </SelectContent>
         </Select>
-      </div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <Input
           type="date"
           value={query.from}
-          onChange={(event) => onPatchQuery({ from: event.target.value })}
-          className="sm:max-w-[180px]"
+          onChange={(event) =>
+            onPatchQuery({ from: event.target.value, page: 1 })
+          }
+          className="w-40 shrink-0 bg-background/80 shadow-sm"
         />
         <Input
           type="date"
           value={query.to}
-          onChange={(event) => onPatchQuery({ to: event.target.value })}
-          className="sm:max-w-[180px]"
+          onChange={(event) =>
+            onPatchQuery({ to: event.target.value, page: 1 })
+          }
+          className="w-40 shrink-0 bg-background/80 shadow-sm"
         />
         {hasActiveFilters ? (
-          <Button variant="ghost" size="sm" onClick={onClearFilters}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClearFilters}
+            className="shrink-0"
+          >
             <X className="mr-1 size-4" />
             Clear filters
           </Button>
         ) : null}
       </div>
+      <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        {total === 0
+          ? "No audit events"
+          : `Showing ${rangeStart}–${rangeEnd} of ${total}`}
+      </p>
     </div>
   );
 };

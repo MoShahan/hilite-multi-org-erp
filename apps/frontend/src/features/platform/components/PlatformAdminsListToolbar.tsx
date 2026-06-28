@@ -1,0 +1,178 @@
+import { Search, X } from "lucide-react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+
+import type {
+  PlatformUserListQuery,
+  PlatformUserListStatusFilter,
+} from "../platformTypes";
+
+type PlatformAdminsListToolbarProps = {
+  query: PlatformUserListQuery;
+  total: number;
+  onQueryChange: (patch: Partial<PlatformUserListQuery>) => void;
+};
+
+const STATUS_OPTIONS: {
+  value: PlatformUserListStatusFilter;
+  label: string;
+}[] = [
+  { value: "ALL", label: "All" },
+  { value: "ACTIVE", label: "Active" },
+  { value: "INACTIVE", label: "Inactive" },
+];
+
+const STATUS_FILTER_ANIMATION_MS = 300;
+
+type StatusFilterProps = {
+  value: PlatformUserListStatusFilter;
+  onChange: (value: PlatformUserListStatusFilter) => void;
+};
+
+const StatusFilter = ({ value, onChange }: StatusFilterProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [indicator, setIndicator] = useState({ left: 0, width: 0 });
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    const updateIndicator = () => {
+      const activeIndex = STATUS_OPTIONS.findIndex(
+        (option) => option.value === value,
+      );
+      const activeButton = container.querySelector<HTMLElement>(
+        `[data-status-option="${activeIndex}"]`,
+      );
+
+      if (!activeButton) {
+        return;
+      }
+
+      setIndicator({
+        left: activeButton.offsetLeft,
+        width: activeButton.offsetWidth,
+      });
+    };
+
+    updateIndicator();
+
+    const resizeObserver = new ResizeObserver(updateIndicator);
+    resizeObserver.observe(container);
+
+    return () => resizeObserver.disconnect();
+  }, [value]);
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative flex rounded-lg border bg-background/80 p-1 shadow-sm"
+    >
+      <div
+        aria-hidden
+        className="absolute top-1 bottom-1 rounded-md bg-primary shadow-sm"
+        style={{
+          left: indicator.left,
+          width: indicator.width,
+          transition: `left ${STATUS_FILTER_ANIMATION_MS}ms ease-out, width ${STATUS_FILTER_ANIMATION_MS}ms ease-out`,
+        }}
+      />
+      {STATUS_OPTIONS.map((option, index) => {
+        const isActive = value === option.value;
+
+        return (
+          <button
+            key={option.value}
+            type="button"
+            data-status-option={index}
+            onClick={() => onChange(option.value)}
+            className={cn(
+              "relative z-10 rounded-md px-3 py-1.5 text-sm font-medium transition-colors duration-300 ease-out",
+              isActive
+                ? "text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+export const PlatformAdminsListToolbar = ({
+  query,
+  total,
+  onQueryChange,
+}: PlatformAdminsListToolbarProps) => {
+  const [searchInput, setSearchInput] = useState(query.search);
+
+  useEffect(() => {
+    setSearchInput(query.search);
+  }, [query.search]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      if (searchInput.trim() !== query.search.trim()) {
+        onQueryChange({ search: searchInput.trim(), page: 1 });
+      }
+    }, 300);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchInput, query.search, onQueryChange]);
+
+  const handleClearSearch = () => {
+    setSearchInput("");
+    onQueryChange({ search: "", page: 1 });
+  };
+
+  const rangeStart =
+    total === 0 ? 0 : (query.page - 1) * query.pageSize + 1;
+  const rangeEnd = Math.min(query.page * query.pageSize, total);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-muted/30 p-3">
+        <div className="relative min-w-0 flex-1 basis-[180px]">
+          <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            placeholder="Search by name or email..."
+            className={cn(
+              "border-0 bg-background/80 pl-9 shadow-sm",
+              searchInput ? "pr-9" : undefined,
+            )}
+          />
+          {searchInput ? (
+            <button
+              type="button"
+              onClick={handleClearSearch}
+              className="absolute top-1/2 right-3 -translate-y-1/2 rounded-sm text-muted-foreground transition-colors hover:text-foreground"
+              aria-label="Clear search"
+            >
+              <X className="size-4" />
+            </button>
+          ) : null}
+        </div>
+        <div className="shrink-0">
+          <StatusFilter
+            value={query.status}
+            onChange={(status) => onQueryChange({ status, page: 1 })}
+          />
+        </div>
+      </div>
+      <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        {total === 0
+          ? "No platform admins"
+          : `Showing ${rangeStart}–${rangeEnd} of ${total}`}
+      </p>
+    </div>
+  );
+};

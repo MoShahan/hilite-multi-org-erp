@@ -58,6 +58,23 @@ describe("DefaultLandingRedirect", () => {
     expect(screen.getByText("Users page")).toBeInTheDocument();
   });
 
+  it("redirects to leads when dashboards module is enabled but dashboard permission is missing", () => {
+    renderWithProviders(
+      <Routes>
+        <Route path="/" element={<DefaultLandingRedirect />} />
+        <Route path="/leads" element={<div>Leads page</div>} />
+      </Routes>,
+      {
+        preloadedState: authenticatedState({
+          modules: ["dashboards", "sales_erp"],
+          user: mockUser({ permissions: ["leads:read"] }),
+        }),
+      },
+    );
+
+    expect(screen.getByText("Leads page")).toBeInTheDocument();
+  });
+
   it("falls back to home when no landing permission matches", () => {
     renderWithProviders(
       <Routes>

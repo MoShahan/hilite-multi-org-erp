@@ -104,4 +104,56 @@ export type PlatformState = {
   auditListQuery: PlatformAuditListQuery | null;
   auditListStatus: "idle" | "loading" | "success" | "error";
   auditListError: string | null;
+  platformUsers: PlatformUser[];
+  platformUsersListMeta: PlatformUserListMeta | null;
+  platformUsersListQuery: PlatformUserListQuery | null;
+  platformUsersListStatus: "idle" | "loading" | "success" | "error";
+  platformUsersListError: string | null;
+};
+
+export type PlatformUserStatus = "ACTIVE" | "INACTIVE";
+
+export type PlatformUserListStatusFilter = PlatformUserStatus | "ALL";
+
+export type PlatformUserListSortBy = "name" | "email" | "status" | "createdAt";
+
+export type PlatformUserListSortOrder = "asc" | "desc";
+
+export type PlatformUserListQuery = {
+  search: string;
+  status: PlatformUserListStatusFilter;
+  sortBy: PlatformUserListSortBy;
+  sortOrder: PlatformUserListSortOrder;
+  page: number;
+  pageSize: number;
+};
+
+export type PlatformUserListMeta = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
+export type PlatformUser = {
+  id: string;
+  name: string;
+  email: string;
+  status: PlatformUserStatus;
+  createdAt: string;
+};
+
+export type ListPlatformUsersResult = {
+  users: PlatformUser[];
+  meta: PlatformUserListMeta;
+};
+
+export type CreatePlatformUserInput = {
+  name: string;
+  email: string;
+  password: string;
+};
+
+export type UpdatePlatformUserStatusInput = {
+  status: PlatformUserStatus;
 };

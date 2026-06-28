@@ -33,14 +33,16 @@ export const DashboardGrid = ({ layout, summary }: DashboardGridProps) => {
 
         if (row.type === "half-single") {
           return (
-            <div key={row.key}>{renderDashboardWidget(row.key, summary)}</div>
+            <div key={row.key} className="grid gap-6 md:grid-cols-2">
+              <div>{renderDashboardWidget(row.key, summary)}</div>
+            </div>
           );
         }
 
         return (
           <div
             key={`${row.keys[0]}-${row.keys[1]}`}
-            className="grid gap-6 xl:grid-cols-2"
+            className="grid gap-6 md:grid-cols-2"
           >
             {row.keys.map((key: DashboardWidgetKey) => (
               <div key={key}>{renderDashboardWidget(key, summary)}</div>

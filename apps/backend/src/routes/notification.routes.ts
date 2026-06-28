@@ -5,13 +5,12 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "../controllers/notification.controller";
-import { ORG_MODULE_KEYS } from "../constants/orgModules";
 import { authenticate } from "../middleware/authenticate";
-import { requireOrgModule } from "../middleware/requireOrgModule";
+import { requireNotificationsAccess } from "../middleware/requireNotificationsAccess";
 
 const router = Router();
 
-const auth = [authenticate, requireOrgModule(ORG_MODULE_KEYS.NOTIFICATIONS)];
+const auth = [authenticate, requireNotificationsAccess];
 
 router.get("/", ...auth, listNotifications);
 router.get("/unread-count", ...auth, getUnreadCount);

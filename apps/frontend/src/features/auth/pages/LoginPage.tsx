@@ -1,6 +1,5 @@
 import { loginSchema, type LoginInput } from "@hilite/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -28,6 +27,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { selectAuthUser } from "@/features/auth/authSelectors";
 import { login } from "@/features/auth/authSlice";
 import { ApiClientError } from "@/lib/api-client";
@@ -50,7 +50,6 @@ export const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -182,31 +181,12 @@ export const LoginPage = () => {
                       <FormItem>
                         <FormLabel>Password</FormLabel>
                         <FormControl>
-                          <div className="relative">
-                            <Input
-                              type={showPassword ? "text" : "password"}
-                              placeholder="Enter a password"
-                              autoComplete="current-password"
-                              className="h-10 pr-10"
-                              {...field}
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-sm"
-                              className="absolute top-1/2 right-1 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                              onClick={() => setShowPassword((prev) => !prev)}
-                              aria-label={
-                                showPassword ? "Hide password" : "Show password"
-                              }
-                            >
-                              {showPassword ? (
-                                <EyeOff className="size-4" />
-                              ) : (
-                                <Eye className="size-4" />
-                              )}
-                            </Button>
-                          </div>
+                          <PasswordInput
+                            placeholder="Enter a password"
+                            autoComplete="current-password"
+                            className="h-10"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

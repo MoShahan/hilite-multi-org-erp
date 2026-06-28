@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PERMISSIONS } from "@/constants/permissions";
 import { selectHasPermission } from "@/features/auth/authSelectors";
-import { PAGE_SIZE_OPTIONS } from "@/lib/pagination";
+import { PAGE_SIZE_OPTIONS, TABLE_SKELETON_ROW_COUNT } from "@/lib/pagination";
 
 import { CreateTeamDialog } from "../components/CreateTeamDialog";
 import { TeamsListToolbar } from "../components/TeamsListToolbar";
@@ -88,7 +88,7 @@ export const TeamsPage = () => {
 
         {isLoading ? (
           <div className="space-y-3">
-            {Array.from({ length: query.pageSize }).map((_, index) => (
+            {Array.from({ length: TABLE_SKELETON_ROW_COUNT }).map((_, index) => (
               <Skeleton key={index} className="h-12 w-full" />
             ))}
           </div>

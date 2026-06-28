@@ -30,8 +30,7 @@ export const AccountProfileSection = () => {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>Your account details.</CardDescription>
+          <CardTitle className="text-lg">Profile</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-1">
