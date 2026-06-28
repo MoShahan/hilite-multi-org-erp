@@ -24,7 +24,11 @@ export const login = createAsyncThunk(
 );
 
 export const logout = createAsyncThunk("auth/logout", async () => {
-  await authService.logout();
+  try {
+    await authService.logout();
+  } catch {
+    // Best-effort: cookies may already be invalid after refresh failure.
+  }
 });
 
 const authSlice = createSlice({

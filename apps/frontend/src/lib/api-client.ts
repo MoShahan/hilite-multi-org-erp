@@ -72,11 +72,32 @@ const shouldSkipRefresh = (url?: string): boolean => {
 };
 
 let isRefreshing = false;
+let hasNotifiedSessionExpired = false;
+let sessionExpiredHandler: (() => void | Promise<void>) | null = null;
 let refreshWaitQueue: Array<{
   resolve: (value: AxiosResponse | PromiseLike<AxiosResponse>) => void;
   reject: (reason?: unknown) => void;
   config: RetryableRequestConfig;
 }> = [];
+
+export const registerSessionExpiredHandler = (
+  handler: () => void | Promise<void>,
+) => {
+  sessionExpiredHandler = handler;
+};
+
+export const resetSessionExpiredState = () => {
+  hasNotifiedSessionExpired = false;
+};
+
+const notifySessionExpired = () => {
+  if (hasNotifiedSessionExpired || !sessionExpiredHandler) {
+    return;
+  }
+
+  hasNotifiedSessionExpired = true;
+  void sessionExpiredHandler();
+};
 
 const flushRefreshQueue = (error?: unknown) => {
   const queue = refreshWaitQueue;
@@ -141,6 +162,7 @@ apiClient.interceptors.response.use(
             error.response?.data,
         );
         flushRefreshQueue(apiError);
+        notifySessionExpired();
         return Promise.reject(apiError);
       }
     }

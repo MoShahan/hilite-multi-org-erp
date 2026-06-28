@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { AuthBootstrap } from "@/features/auth/components/AuthBootstrap";
+import { SessionExpiredHandler } from "@/features/auth/components/SessionExpiredHandler";
 import { GuestRoute } from "@/features/auth/components/GuestRoute";
 import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
 import { RequirePermission } from "@/features/auth/components/RequirePermission";
@@ -146,6 +147,7 @@ export const AppRouter = () => {
   return (
     <>
       <AuthBootstrap />
+      <SessionExpiredHandler />
       <Suspense fallback={<PageSkeleton />}>
         <Routes>
           <Route element={<GuestRoute />}>

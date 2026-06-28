@@ -30,7 +30,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { selectAuthUser } from "@/features/auth/authSelectors";
 import { login } from "@/features/auth/authSlice";
-import { ApiClientError } from "@/lib/api-client";
+import { ApiClientError, resetSessionExpiredState } from "@/lib/api-client";
 
 type LoginFormValues = LoginInput;
 
@@ -67,6 +67,7 @@ export const LoginPage = () => {
 
     try {
       await dispatch(login(values)).unwrap();
+      resetSessionExpiredState();
 
       const user = selectAuthUser(store.getState());
       toast.success("Signed in successfully", {

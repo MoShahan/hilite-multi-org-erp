@@ -83,7 +83,10 @@ describe("api-client refresh interceptor", () => {
   });
 
   it("rejects when refresh fails", async () => {
-    await import("./api-client");
+    const sessionExpiredHandler = vi.fn();
+    const { registerSessionExpiredHandler } = await import("./api-client");
+    registerSessionExpiredHandler(sessionExpiredHandler);
+
     const errorHandler = getErrorHandler();
 
     mockPost.mockRejectedValueOnce({
@@ -111,6 +114,47 @@ describe("api-client refresh interceptor", () => {
       message: "Refresh token expired",
       code: "REFRESH_TOKEN_INVALID",
     });
+
+    expect(sessionExpiredHandler).toHaveBeenCalledTimes(1);
+  });
+
+  it("notifies session expired handler only once", async () => {
+    const sessionExpiredHandler = vi.fn();
+    const { registerSessionExpiredHandler } = await import("./api-client");
+    registerSessionExpiredHandler(sessionExpiredHandler);
+
+    const errorHandler = getErrorHandler();
+
+    mockPost.mockRejectedValue({
+      response: {
+        status: 401,
+        data: {
+          success: false,
+          message: "Refresh token expired",
+          data: { code: "REFRESH_TOKEN_INVALID" },
+        },
+      },
+    });
+
+    const makeLead401 = () =>
+      errorHandler(
+        makeAxiosError({
+          response: {
+            status: 401,
+            data: { success: false, message: "Unauthorized", data: null },
+          } as AxiosError["response"],
+          config: { url: "/api/v1/leads" } as unknown as InternalAxiosRequestConfig,
+        }),
+      );
+
+    await expect(makeLead401()).rejects.toMatchObject({
+      code: "REFRESH_TOKEN_INVALID",
+    });
+    await expect(makeLead401()).rejects.toMatchObject({
+      code: "REFRESH_TOKEN_INVALID",
+    });
+
+    expect(sessionExpiredHandler).toHaveBeenCalledTimes(1);
   });
 
   it("does not refresh auth endpoints", async () => {
