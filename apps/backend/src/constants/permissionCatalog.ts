@@ -24,6 +24,18 @@ export const PERMISSION_CATALOG: PermissionCatalogEntry[] = [
     scope: "PLATFORM",
   },
   {
+    key: PERMISSIONS.PLATFORM_USERS_READ,
+    label: "View platform admins",
+    description: "View platform administrator accounts",
+    scope: "PLATFORM",
+  },
+  {
+    key: PERMISSIONS.PLATFORM_USERS_WRITE,
+    label: "Manage platform admins",
+    description: "Create platform administrator accounts",
+    scope: "PLATFORM",
+  },
+  {
     key: PERMISSIONS.USERS_READ,
     label: "View users",
     description: "View users in the organization",

@@ -1,5 +1,9 @@
 import { Router } from "express";
 import {
+  createPlatformUserSchema,
+  updatePlatformUserStatusSchema,
+} from "@hilite/shared";
+import {
   createOrganization,
   getOrganization,
   getOrganizationModules,
@@ -8,10 +12,16 @@ import {
   updateOrganizationModules,
   updateOrganizationStatus,
 } from "../controllers/organization.controller";
+import {
+  createPlatformUser,
+  listPlatformUsers,
+  updatePlatformUserStatus,
+} from "../controllers/platformUser.controller";
 import { listPlatformAuditLogs } from "../controllers/audit.controller";
 import { PERMISSIONS } from "../constants/permissions";
 import { authenticate } from "../middleware/authenticate";
 import { requirePermission } from "../middleware/requirePermission";
+import { validateBody } from "../middleware/validateBody";
 
 const router = Router();
 
@@ -25,6 +35,32 @@ const platformAuditRead = [
   authenticate,
   requirePermission(PERMISSIONS.PLATFORM_AUDIT_READ),
 ];
+
+const platformUsersRead = [
+  authenticate,
+  requirePermission(PERMISSIONS.PLATFORM_USERS_READ),
+];
+
+const platformUsersWrite = [
+  authenticate,
+  requirePermission(PERMISSIONS.PLATFORM_USERS_WRITE),
+];
+
+router.get("/audit", ...platformAuditRead, listPlatformAuditLogs);
+
+router.get("/users", ...platformUsersRead, listPlatformUsers);
+router.post(
+  "/users",
+  ...platformUsersWrite,
+  validateBody(createPlatformUserSchema),
+  createPlatformUser,
+);
+router.patch(
+  "/users/:id/status",
+  ...platformUsersWrite,
+  validateBody(updatePlatformUserStatusSchema),
+  updatePlatformUserStatus,
+);
 
 router.get("/organizations", ...platformRead, listOrganizations);
 router.post("/organizations", ...platformWrite, createOrganization);
@@ -45,7 +81,5 @@ router.patch(
   ...platformWrite,
   updateOrganizationModules,
 );
-
-router.get("/audit", ...platformAuditRead, listPlatformAuditLogs);
 
 export default router;
