@@ -6,16 +6,18 @@ PostgreSQL schema for Hilite ERP, managed with Prisma.
 
 ## Overview
 
-| Domain             | Tables                                                            | Purpose                               |
-| ------------------ | ----------------------------------------------------------------- | ------------------------------------- |
-| Platform / Tenancy | `organizations`, `organization_modules`                           | Multi-tenant orgs and feature toggles |
-| Auth & RBAC        | `users`, `roles`, `permissions`, `role_permissions`, `user_roles`, `refresh_tokens` | Users, roles, permission grants, and refresh sessions |
-| Teams              | `teams`, `team_members`                                           | Org teams and membership              |
-| Sales CRM          | `leads`, `activities`                                             | Lead pipeline and activity log        |
-| Notifications      | `notifications`                                                   | In-app alerts tied to lead events     |
+| Domain             | Tables                                                                                                      | Purpose                                          |
+| ------------------ | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| Platform / Tenancy | `organizations`, `organization_modules`                                                                   | Multi-tenant orgs and feature toggles            |
+| Auth & RBAC        | `users`, `roles`, `permissions`, `role_permissions`, `user_roles`, `refresh_tokens`                         | Users, roles, permission grants, refresh sessions |
+| Teams              | `teams`, `team_members`                                                                                     | Org teams and membership                         |
+| Sales CRM          | `leads`, `activities`                                                                                       | Lead pipeline and activity log                   |
+| Notifications      | `notifications`                                                                                             | In-app alerts (lead events and account welcome)  |
+| Audit              | `audit_logs`                                                                                                | Compliance and security audit trail              |
+| Dashboard          | `user_dashboard_layouts`                                                                                    | Per-user widget layout preferences               |
 
 **Database:** PostgreSQL  
-**Tables:** 12  
+**Tables:** 15  
 **ORM:** Prisma
 
 ---
@@ -76,13 +78,18 @@ PostgreSQL schema for Hilite ERP, managed with Prisma.
 
 ### `NotificationType`
 
-| Value                 |
-| --------------------- |
-| `LEAD_CREATED`        |
-| `LEAD_ASSIGNED`       |
-| `LEAD_REASSIGNED`     |
-| `LEAD_STATUS_CHANGED` |
-| `ACTIVITY_LOGGED`     |
+| Value                     |
+| ------------------------- |
+| `LEAD_CREATED`            |
+| `LEAD_ASSIGNED`           |
+| `LEAD_REASSIGNED`         |
+| `LEAD_STATUS_CHANGED`     |
+| `ACTIVITY_LOGGED`         |
+| `WELCOME_CHANGE_PASSWORD` |
+
+### `AuditAction`
+
+Persisted on `audit_logs.action`. Full list is defined in [`schema.prisma`](../apps/backend/prisma/schema.prisma); notable values include auth events (`AUTH_*`), lead lifecycle (`LEAD_*`), user/team/role/org mutations, and `PLATFORM_USER_CREATED` for platform admin provisioning.
 
 ### `ModuleKey`
 
@@ -132,20 +139,22 @@ Per-organization feature flags.
 
 ### `users`
 
-| Column            | Type         | Constraints                   |
-| ----------------- | ------------ | ----------------------------- |
-| `id`              | UUID         | PK                            |
-| `email`           | TEXT         | NOT NULL, UNIQUE              |
-| `name`            | TEXT         | NOT NULL                      |
-| `password_hash`   | TEXT         | NOT NULL                      |
-| `status`          | `UserStatus` | NOT NULL, default `ACTIVE`    |
-| `organization_id` | UUID         | NULL, FK → `organizations.id` |
-| `created_at`      | TIMESTAMPTZ  | NOT NULL                      |
-| `updated_at`      | TIMESTAMPTZ  | NOT NULL                      |
+| Column                 | Type         | Constraints                   |
+| ---------------------- | ------------ | ----------------------------- |
+| `id`                   | UUID         | PK                            |
+| `email`                | TEXT         | NOT NULL, UNIQUE              |
+| `name`                 | TEXT         | NOT NULL                      |
+| `phone_number`         | TEXT         | NULL                          |
+| `password_hash`        | TEXT         | NOT NULL                      |
+| `must_change_password` | BOOLEAN      | NOT NULL, default `false`     |
+| `status`               | `UserStatus` | NOT NULL, default `ACTIVE`    |
+| `organization_id`      | UUID         | NULL, FK → `organizations.id` |
+| `created_at`           | TIMESTAMPTZ  | NOT NULL                      |
+| `updated_at`           | TIMESTAMPTZ  | NOT NULL                      |
 
 **Indexes:** `organization_id`
 
-**Notes:** `organization_id` is nullable for platform-level users (e.g. platform admin).
+**Notes:** `organization_id` is nullable for platform-level users (e.g. platform admin). New users provisioned with a default password are created with `must_change_password = true` and receive a `WELCOME_CHANGE_PASSWORD` notification.
 
 ---
 
@@ -168,6 +177,19 @@ Server-side refresh sessions. Only the SHA-256 hash of the opaque token is store
 **Indexes:** `user_id`, `family_id`
 
 **Notes:** Tokens rotate on each refresh; reuse of a revoked token revokes the entire `family_id`.
+
+---
+
+### `user_dashboard_layouts`
+
+Per-user saved dashboard widget visibility and ordering.
+
+| Column       | Type        | Constraints                              |
+| ------------ | ----------- | ---------------------------------------- |
+| `user_id`    | UUID        | PK, FK → `users.id` ON DELETE CASCADE    |
+| `view`       | TEXT        | NOT NULL (`me`, `team`, or `org`)        |
+| `widgets`    | JSONB       | NOT NULL — array of `{ key, order, visible }` |
+| `updated_at` | TIMESTAMPTZ | NOT NULL                                 |
 
 ---
 
@@ -207,12 +229,17 @@ Global permission catalog (seeded at startup, not org-specific).
 | ------------------------- | ------------ |
 | `platform:orgs:read`      | PLATFORM     |
 | `platform:orgs:write`     | PLATFORM     |
+| `platform:users:read`     | PLATFORM     |
+| `platform:users:write`    | PLATFORM     |
+| `platform:audit:read`     | PLATFORM     |
 | `users:read`              | ORGANIZATION |
 | `users:read:team`         | ORGANIZATION |
 | `users:write`             | ORGANIZATION |
+| `users:write:team`        | ORGANIZATION |
 | `teams:read`              | ORGANIZATION |
 | `teams:write`             | ORGANIZATION |
 | `roles:read`              | ORGANIZATION |
+| `roles:read:team`         | ORGANIZATION |
 | `roles:write`             | ORGANIZATION |
 | `leads:read`              | ORGANIZATION |
 | `leads:read:team`         | ORGANIZATION |
@@ -225,6 +252,7 @@ Global permission catalog (seeded at startup, not org-specific).
 | `dashboard:me`            | ORGANIZATION |
 | `dashboard:team`          | ORGANIZATION |
 | `dashboard:org`           | ORGANIZATION |
+| `audit:read`              | ORGANIZATION |
 
 ---
 
@@ -321,17 +349,40 @@ Junction table: teams ↔ users.
 | Column            | Type               | Constraints                                         |
 | ----------------- | ------------------ | --------------------------------------------------- |
 | `id`              | UUID               | PK                                                  |
-| `organization_id` | UUID               | NOT NULL, FK → `organizations.id` ON DELETE CASCADE |
+| `organization_id` | UUID               | NULL, FK → `organizations.id` ON DELETE SET NULL    |
 | `user_id`         | UUID               | NOT NULL, FK → `users.id` ON DELETE CASCADE         |
 | `type`            | `NotificationType` | NOT NULL                                            |
 | `title`           | TEXT               | NOT NULL                                            |
 | `body`            | TEXT               | NOT NULL                                            |
-| `entity_type`     | TEXT               | NULL (polymorphic, e.g. `"lead"`)                   |
+| `entity_type`     | TEXT               | NULL (polymorphic, e.g. `"lead"`, `"account"`)      |
 | `entity_id`       | UUID               | NULL                                                |
 | `read_at`         | TIMESTAMPTZ        | NULL                                                |
 | `created_at`      | TIMESTAMPTZ        | NOT NULL                                            |
 
-**Indexes:** `(user_id, read_at)`, `organization_id`
+**Indexes:** `(user_id, read_at)`, `organization_id`, `(user_id, organization_id, read_at)`
+
+**Notes:** `organization_id` is nullable for platform users (e.g. welcome notifications for platform admins). Org-scoped lead notifications always set `organization_id`.
+
+---
+
+### `audit_logs`
+
+Append-only compliance and security audit trail.
+
+| Column            | Type          | Constraints                                         |
+| ----------------- | ------------- | --------------------------------------------------- |
+| `id`              | UUID          | PK                                                  |
+| `organization_id` | UUID          | NULL, FK → `organizations.id` ON DELETE SET NULL  |
+| `actor_id`        | UUID          | NULL, FK → `users.id` ON DELETE SET NULL            |
+| `action`          | `AuditAction` | NOT NULL                                            |
+| `entity_type`     | TEXT          | NOT NULL                                            |
+| `entity_id`       | TEXT          | NULL                                                |
+| `metadata`        | JSONB         | NULL                                                |
+| `created_at`      | TIMESTAMPTZ   | NOT NULL                                            |
+
+**Indexes:** `(organization_id, created_at)`, `(entity_type, entity_id)`, `(actor_id, created_at)`
+
+**Notes:** `organization_id` is `null` for platform-wide events (org create, platform login, platform admin create).
 
 ---
 
@@ -340,6 +391,7 @@ Junction table: teams ↔ users.
 | Relationship                          | ON DELETE |
 | ------------------------------------- | --------- |
 | Organization → child records          | CASCADE   |
+| Organization → notifications, audit_logs | SET NULL |
 | Role → role_permissions, user_roles   | CASCADE   |
 | Permission → role_permissions         | RESTRICT  |
 | Team → team_members                   | CASCADE   |
@@ -347,6 +399,9 @@ Junction table: teams ↔ users.
 | Lead → activities                     | CASCADE   |
 | Lead assignee → users                 | SET NULL  |
 | Lead creator, activity author → users | RESTRICT  |
+| User → user_dashboard_layouts         | CASCADE   |
+| User → refresh_tokens                 | CASCADE   |
+| Actor → audit_logs                    | SET NULL  |
 
 ---
 
@@ -354,14 +409,14 @@ Junction table: teams ↔ users.
 
 Defined in application code, not as separate DB tables.
 
-| Slug             | Scope        | Key permissions                              |
-| ---------------- | ------------ | -------------------------------------------- |
-| `platform_admin` | Platform     | `platform:orgs:read`, `platform:orgs:write`  |
-| `org_admin`      | Organization | users, teams, roles, all org leads           |
-| `executive`      | Team         | own leads, activities, `dashboard:me`        |
-| `team_lead`      | Team         | Team Leader — team users / leads in team, lead write, `dashboard:team` |
-| `sales_manager`  | Organization | all org leads (read/write)                   |
-| `director`       | Organization | all org leads, `dashboard:org`               |
+| Slug             | Scope        | Key permissions                                                                 |
+| ---------------- | ------------ | ------------------------------------------------------------------------------- |
+| `platform_admin` | Platform     | `platform:orgs:*`, `platform:users:*`, `platform:audit:read`                    |
+| `org_admin`      | Organization | users, teams, roles, org-wide leads, `audit:read`                               |
+| `executive`      | Team         | own leads, activities, `dashboard:me`                                           |
+| `team_lead`      | Team         | team users/leads, team lead write, `dashboard:team`                             |
+| `sales_manager`  | Organization | all org leads (read/write)                                                      |
+| `director`       | Organization | all org leads, `dashboard:org`                                                  |
 
 ---
 
@@ -372,10 +427,13 @@ Organization (1) ──< (N) User
 Organization (1) ──< (N) Role
 Organization (1) ──< (N) Team
 Organization (1) ──< (N) Lead
-Organization (1) ──< (N) Notification
+Organization (1) ──< (N) Notification (optional FK)
+Organization (1) ──< (N) AuditLog (optional FK)
 Organization (1) ──< (N) OrganizationModule
 
 User (1) ──< (0..1) UserRole ──> (1) Role
+User (1) ──< (0..1) UserDashboardLayout
+User (1) ──< (N) RefreshToken
 Role (N) ──< (M) Permission  [via role_permissions]
 
 Team (N) ──< (M) User  [via team_members]
@@ -386,4 +444,5 @@ User (1) ──< (N) Lead [assigned_to, optional]
 Lead (1) ──< (N) Activity
 User (1) ──< (N) Activity [created_by]
 User (1) ──< (N) Notification
+User (1) ──< (N) AuditLog [as actor, optional]
 ```
