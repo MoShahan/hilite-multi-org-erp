@@ -14,8 +14,11 @@ erDiagram
     organizations ||--o{ teams : "has"
     organizations ||--o{ leads : "owns"
     organizations ||--o{ notifications : "scopes"
+    organizations ||--o{ audit_logs : "scopes"
 
     users ||--o| user_roles : "assigned"
+    users ||--o| user_dashboard_layouts : "customizes"
+    users ||--o{ refresh_tokens : "has sessions"
     roles ||--o{ user_roles : "grants"
     roles ||--o{ role_permissions : "includes"
     permissions ||--o{ role_permissions : "granted via"
@@ -29,6 +32,7 @@ erDiagram
     leads ||--o{ activities : "has"
     users ||--o{ activities : "logged by"
     users ||--o{ notifications : "receives"
+    users ||--o{ audit_logs : "performs"
 
     organizations {
         uuid id PK
@@ -52,11 +56,30 @@ erDiagram
         uuid id PK
         string email UK
         string name
+        string phone_number
         string password_hash
+        boolean must_change_password
         enum status
         uuid organization_id FK
         datetime created_at
         datetime updated_at
+    }
+
+    user_dashboard_layouts {
+        uuid user_id PK_FK
+        string view
+        json widgets
+        datetime updated_at
+    }
+
+    refresh_tokens {
+        uuid id PK
+        uuid user_id FK
+        string token_hash UK
+        uuid family_id
+        datetime expires_at
+        datetime revoked_at
+        datetime created_at
     }
 
     roles {
@@ -136,6 +159,17 @@ erDiagram
         datetime read_at
         datetime created_at
     }
+
+    audit_logs {
+        uuid id PK
+        uuid organization_id FK
+        uuid actor_id FK
+        enum action
+        string entity_type
+        string entity_id
+        json metadata
+        datetime created_at
+    }
 ```
 
 ## Domain views
@@ -175,12 +209,14 @@ erDiagram
     users ||--o{ team_members : member of
 ```
 
-### Notifications
+### Notifications and audit
 
 ```mermaid
 erDiagram
     organizations ||--o{ notifications : scopes
+    organizations ||--o{ audit_logs : scopes
     users ||--o{ notifications : receives
+    users ||--o{ audit_logs : performs
 ```
 
 ## Relationship cardinality
@@ -191,7 +227,11 @@ erDiagram
 | Organization | Role               | 1:N         | `roles.organization_id` (nullable for platform role)  |
 | Organization | Team               | 1:N         |                                                       |
 | Organization | Lead               | 1:N         |                                                       |
-| Organization | Notification       | 1:N         |                                                       |
+| Organization | Notification       | 1:N         | `notifications.organization_id` nullable for platform users |
+| Organization | AuditLog           | 1:N         | `audit_logs.organization_id` nullable for platform events   |
+| User         | UserDashboardLayout | 1:0..1     | One saved layout per user                                   |
+| User         | RefreshToken       | 1:N         | Server-side refresh sessions                                |
+| User         | AuditLog           | 1:N         | As actor (`actor_id`, optional)                             |
 | Organization | OrganizationModule | 1:N         | Composite PK on `(organization_id, module_key)`       |
 | User         | Role               | N:1         | Via `user_roles`; one role per user                   |
 | Role         | Permission         | N:M         | Via `role_permissions`                                |
