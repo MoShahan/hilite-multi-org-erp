@@ -1,6 +1,8 @@
 export const PERMISSIONS = {
   PLATFORM_ORGS_READ: "platform:orgs:read",
   PLATFORM_ORGS_WRITE: "platform:orgs:write",
+  PLATFORM_USERS_READ: "platform:users:read",
+  PLATFORM_USERS_WRITE: "platform:users:write",
 
   USERS_READ: "users:read",
   USERS_READ_TEAM: "users:read:team",
