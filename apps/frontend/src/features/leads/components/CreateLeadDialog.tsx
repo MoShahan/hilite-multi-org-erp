@@ -37,6 +37,7 @@ import {
   selectHasPermission,
 } from "@/features/auth/authSelectors";
 import { teamsService } from "@/features/teams/teamsService";
+import { ApiClientError } from "@/lib/api-client";
 
 import { createLead } from "../leadsSlice";
 import { leadsService } from "../leadsService";
@@ -93,7 +94,12 @@ export const CreateLeadDialog = ({
 }: CreateLeadDialogProps) => {
   const dispatch = useAppDispatch();
   const authUser = useAppSelector(selectAuthUser);
-  const canPickTeam = useAppSelector(selectHasPermission(PERMISSIONS.LEADS_READ_ORG));
+  const canPickTeam = useAppSelector(
+    selectHasPermission(PERMISSIONS.LEADS_READ_ORG),
+  );
+  const canReadTeams = useAppSelector(
+    selectHasPermission(PERMISSIONS.TEAMS_READ),
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [teams, setTeams] = useState<TeamFilterOption[]>([]);
   const [assignees, setAssignees] = useState<AssigneeOption[]>([]);
@@ -107,37 +113,56 @@ export const CreateLeadDialog = ({
   });
 
   const selectedTeamId = canPickTeam
-    ? form.watch("teamId")
-    : authUser?.team?.id ?? "";
+    ? canReadTeams
+      ? form.watch("teamId")
+      : (authUser?.team?.id ?? "")
+    : (authUser?.team?.id ?? "");
 
   useEffect(() => {
-    if (!open || !canPickTeam) return;
+    if (!open || !canReadTeams) return;
 
     let cancelled = false;
-    setTeamsLoading(true);
 
-    void teamsService
-      .listTeams({
-        search: "",
-        membership: "ALL",
-        sortBy: "name",
-        sortOrder: "asc",
-        page: 1,
-        pageSize: 100,
-      })
-      .then((result) => {
+    const loadTeams = async () => {
+      setTeamsLoading(true);
+      try {
+        const result = await teamsService.listTeams({
+          search: "",
+          membership: "ALL",
+          sortBy: "name",
+          sortOrder: "asc",
+          page: 1,
+          pageSize: 100,
+        });
         if (!cancelled) {
-          setTeams(result.teams.map((team) => ({ id: team.id, name: team.name })));
+          setTeams(
+            result.teams.map((team) => ({ id: team.id, name: team.name })),
+          );
         }
-      })
-      .finally(() => {
+      } catch (error) {
+        if (!cancelled) {
+          if (error instanceof ApiClientError) {
+            toast.error(error.message);
+          } else {
+            toast.error("Failed to load teams");
+          }
+        }
+      } finally {
         if (!cancelled) setTeamsLoading(false);
-      });
+      }
+    };
+
+    void loadTeams();
 
     return () => {
       cancelled = true;
     };
-  }, [open, canPickTeam]);
+  }, [open, canReadTeams]);
+
+  useEffect(() => {
+    if (!open || canReadTeams || !authUser?.team?.id) return;
+    form.setValue("teamId", authUser.team.id);
+  }, [open, canReadTeams, authUser?.team?.id, form]);
 
   useEffect(() => {
     if (!open || !selectedTeamId) {
@@ -146,11 +171,11 @@ export const CreateLeadDialog = ({
     }
 
     let cancelled = false;
-    setAssigneesLoading(true);
 
-    void leadsService
-      .listAssignableUsers(selectedTeamId)
-      .then((result) => {
+    const loadAssignees = async () => {
+      setAssigneesLoading(true);
+      try {
+        const result = await leadsService.listAssignableUsers(selectedTeamId);
         if (!cancelled) {
           setAssignees(
             result.users.map((user) => ({
@@ -160,10 +185,20 @@ export const CreateLeadDialog = ({
             })),
           );
         }
-      })
-      .finally(() => {
+      } catch (error) {
+        if (!cancelled) {
+          if (error instanceof ApiClientError) {
+            toast.error(error.message);
+          } else {
+            toast.error("Failed to load assignees");
+          }
+        }
+      } finally {
         if (!cancelled) setAssigneesLoading(false);
-      });
+      }
+    };
+
+    void loadAssignees();
 
     return () => {
       cancelled = true;
@@ -188,7 +223,11 @@ export const CreateLeadDialog = ({
           email: values.email?.trim() || undefined,
           source: values.source?.trim() || undefined,
           project: values.project?.trim() || undefined,
-          teamId: canPickTeam ? values.teamId : authUser?.team?.id,
+          teamId: canPickTeam
+            ? canReadTeams
+              ? values.teamId
+              : authUser?.team?.id
+            : authUser?.team?.id,
           assignedToId: values.assignedToId || null,
         }),
       ).unwrap();
@@ -307,11 +346,12 @@ export const CreateLeadDialog = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Team</FormLabel>
-                    {teamsLoading ? (
+                    {canReadTeams && teamsLoading ? (
                       <Skeleton className="h-10 w-full" />
                     ) : (
                       <Select
                         value={field.value}
+                        disabled={!canReadTeams}
                         onValueChange={(value) => {
                           field.onChange(value);
                           form.setValue("assignedToId", "");
@@ -323,11 +363,17 @@ export const CreateLeadDialog = ({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {teams.map((team) => (
-                            <SelectItem key={team.id} value={team.id}>
-                              {team.name}
-                            </SelectItem>
-                          ))}
+                          {canReadTeams
+                            ? teams.map((team) => (
+                                <SelectItem key={team.id} value={team.id}>
+                                  {team.name}
+                                </SelectItem>
+                              ))
+                            : authUser?.team ? (
+                                <SelectItem value={authUser.team.id}>
+                                  {authUser.team.name}
+                                </SelectItem>
+                              ) : null}
                         </SelectContent>
                       </Select>
                     )}

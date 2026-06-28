@@ -1,8 +1,4 @@
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-} from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -18,11 +14,7 @@ import { cn } from "@/lib/utils";
 
 import { LeadStatusBadge } from "./LeadStatusBadge";
 
-import type {
-  Lead,
-  LeadListSortBy,
-  LeadListSortOrder,
-} from "../leadsTypes";
+import type { Lead, LeadListSortBy, LeadListSortOrder } from "../leadsTypes";
 
 type LeadsTableProps = {
   leads: Lead[];
@@ -67,18 +59,27 @@ const SortableHeader = ({
     : ArrowUpDown;
 
   return (
-    <TableHead className={className}>
+    <TableHead className={cn("h-11 bg-muted/40", className)}>
       <button
         type="button"
         onClick={handleClick}
-        className="inline-flex items-center gap-1.5 font-medium hover:text-foreground"
+        className={cn(
+          "inline-flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase transition-colors hover:text-foreground",
+          isActive ? "text-foreground" : "text-muted-foreground",
+        )}
       >
         {label}
-        <SortIcon className={cn("size-3.5", isActive ? "opacity-100" : "opacity-40")} />
+        <SortIcon className="size-3.5" />
       </button>
     </TableHead>
   );
 };
+
+const PlainHeader = ({ label }: { label: string }) => (
+  <TableHead className="h-11 bg-muted/40 text-xs font-semibold tracking-wide uppercase text-muted-foreground">
+    {label}
+  </TableHead>
+);
 
 export const LeadsTable = ({
   leads,
@@ -93,7 +94,7 @@ export const LeadsTable = ({
     <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
       <Table>
         <TableHeader>
-          <TableRow className="bg-muted/40 hover:bg-muted/40">
+          <TableRow className="border-b hover:bg-transparent">
             <SortableHeader
               label="Name"
               column="name"
@@ -101,8 +102,8 @@ export const LeadsTable = ({
               sortOrder={sortOrder}
               onSortChange={onSortChange}
             />
-            <TableHead>Mobile</TableHead>
-            <TableHead>Email</TableHead>
+            <PlainHeader label="Mobile" />
+            <PlainHeader label="Email" />
             <SortableHeader
               label="Team"
               column="team"
@@ -124,8 +125,8 @@ export const LeadsTable = ({
               sortOrder={sortOrder}
               onSortChange={onSortChange}
             />
-            <TableHead>Source</TableHead>
-            <TableHead>Project</TableHead>
+            <PlainHeader label="Source" />
+            <PlainHeader label="Project" />
             <SortableHeader
               label="Created"
               column="createdAt"
@@ -139,34 +140,34 @@ export const LeadsTable = ({
           {leads.map((lead) => (
             <TableRow
               key={lead.id}
-              className="cursor-pointer"
+              className="cursor-pointer transition-colors hover:bg-muted/40"
               onClick={() =>
                 navigate(`/leads/${lead.id}${listSearch}`, {
                   state: { listSearch },
                 })
               }
             >
-              <TableCell className="font-medium">{lead.name}</TableCell>
-              <TableCell className="text-muted-foreground">
+              <TableCell className="py-3 font-medium">{lead.name}</TableCell>
+              <TableCell className="py-3 text-muted-foreground">
                 {lead.mobileNumber ?? "—"}
               </TableCell>
-              <TableCell className="text-muted-foreground">
+              <TableCell className="py-3 text-muted-foreground">
                 {lead.email ?? "—"}
               </TableCell>
-              <TableCell>{lead.team.name}</TableCell>
-              <TableCell>
+              <TableCell className="py-3">{lead.team.name}</TableCell>
+              <TableCell className="py-3">
                 {lead.assignedTo ? lead.assignedTo.name : "Unassigned"}
               </TableCell>
-              <TableCell>
+              <TableCell className="py-3">
                 <LeadStatusBadge status={lead.status} />
               </TableCell>
-              <TableCell className="text-muted-foreground">
+              <TableCell className="py-3 text-muted-foreground">
                 {lead.source ?? "—"}
               </TableCell>
-              <TableCell className="text-muted-foreground">
+              <TableCell className="py-3 text-muted-foreground">
                 {lead.project ?? "—"}
               </TableCell>
-              <TableCell className="text-muted-foreground">
+              <TableCell className="py-3 text-muted-foreground">
                 {formatDate(lead.createdAt)}
               </TableCell>
             </TableRow>

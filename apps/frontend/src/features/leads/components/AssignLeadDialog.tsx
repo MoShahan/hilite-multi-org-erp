@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ApiClientError } from "@/lib/api-client";
 
 import { assignLead } from "../leadsSlice";
 import { leadsService } from "../leadsService";
@@ -61,9 +62,9 @@ export const AssignLeadDialog = ({
     let cancelled = false;
     setLoading(true);
 
-    void leadsService
-      .listAssignableUsers(lead.team.id)
-      .then((result) => {
+    const loadAssignees = async () => {
+      try {
+        const result = await leadsService.listAssignableUsers(lead.team.id);
         if (!cancelled) {
           setAssignees(
             result.users.map((user) => ({
@@ -73,10 +74,20 @@ export const AssignLeadDialog = ({
             })),
           );
         }
-      })
-      .finally(() => {
+      } catch (error) {
+        if (!cancelled) {
+          if (error instanceof ApiClientError) {
+            toast.error(error.message);
+          } else {
+            toast.error("Failed to load assignees");
+          }
+        }
+      } finally {
         if (!cancelled) setLoading(false);
-      });
+      }
+    };
+
+    void loadAssignees();
 
     return () => {
       cancelled = true;
