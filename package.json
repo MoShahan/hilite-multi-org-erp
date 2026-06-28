@@ -13,10 +13,11 @@
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:ps": "docker compose ps",
+    "db:generate": "npm run db:generate --prefix apps/backend",
     "db:migrate": "npm run db:migrate --prefix apps/backend",
     "db:seed": "npm run db:seed --prefix apps/backend",
     "db:studio": "npm run db:studio --prefix apps/backend",
-    "setup": "npm install && npm run db:up && npm run db:migrate && npm run db:seed",
+    "setup": "npm install && npm run db:up && npm run db:migrate && npm run db:generate && npm run db:seed",
     "test:frontend": "npm run test:run --prefix apps/frontend"
   },
   "devDependencies": {

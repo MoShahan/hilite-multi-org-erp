@@ -18,7 +18,7 @@ copy apps\frontend\.env.example apps\frontend\.env
 npm run setup
 ```
 
-`npm run setup` runs `npm install` (workspace root), starts PostgreSQL, runs migrations, and seeds development data.
+`npm run setup` runs `npm install` (workspace root), starts PostgreSQL, runs migrations, regenerates the Prisma client (fallback if migrate did not), and seeds development data.
 
 This repo uses npm workspaces. Shared constants, types, and Zod schemas live in `packages/shared` (`@hilite/shared`) and are consumed by both apps.
 
@@ -72,8 +72,9 @@ Press **Ctrl+C** to stop the API and frontend. PostgreSQL keeps running in the b
 | `npm run db:up`      | Start PostgreSQL                                       |
 | `npm run db:down`    | Stop PostgreSQL                                        |
 | `npm run db:ps`      | Check PostgreSQL status                                |
-| `npm run db:migrate` | Run database migrations                                |
-| `npm run db:seed`    | Seed development data                                  |
+| `npm run db:migrate`  | Run database migrations                                |
+| `npm run db:generate` | Regenerate Prisma client from schema                   |
+| `npm run db:seed`     | Seed development data                                  |
 | `npm run db:studio`  | Open Prisma Studio                                     |
 
 ### Seed credentials (development)
