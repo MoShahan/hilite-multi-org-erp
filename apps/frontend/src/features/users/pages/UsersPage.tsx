@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import { PERMISSIONS } from "@/constants/permissions";
 import { ListPagination } from "@/components/ListPagination";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -47,8 +48,8 @@ const isApiRejection = (value: unknown): value is ApiRejection =>
 
 export const UsersPage = () => {
   const dispatch = useAppDispatch();
-  const canCreateUser = useAppSelector(selectHasPermission("users:write"));
-  const canManageStatus = useAppSelector(selectHasPermission("users:write"));
+  const canCreateUser = useAppSelector(selectHasPermission(PERMISSIONS.USERS_WRITE));
+  const canManageStatus = useAppSelector(selectHasPermission(PERMISSIONS.USERS_WRITE));
   const currentUser = useAppSelector(selectAuthUser);
   const isUpdatingStatus = useAppSelector(selectIsUsersMutating);
   const { query, patchQuery, clearFilters, refetch } = useUserListQuery();

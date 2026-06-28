@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useAppSelector } from "@/app/hooks";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PERMISSIONS } from "@/constants/permissions";
 import { selectHasPermission } from "@/features/auth/authSelectors";
 import { ApiClientError } from "@/lib/api-client";
 
@@ -22,7 +23,7 @@ type OrganizationModulesPanelProps = {
 export const OrganizationModulesPanel = ({
   organizationId,
 }: OrganizationModulesPanelProps) => {
-  const canWrite = useAppSelector(selectHasPermission("platform:orgs:write"));
+  const canWrite = useAppSelector(selectHasPermission(PERMISSIONS.PLATFORM_ORGS_WRITE));
   const [data, setData] = useState<OrganizationModulesResponse | null>(null);
   const [draft, setDraft] = useState<OrganizationModulesMap | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");

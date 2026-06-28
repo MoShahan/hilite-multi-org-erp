@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { ListPagination } from "@/components/ListPagination";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PERMISSIONS } from "@/constants/permissions";
 import {
   selectAuthUser,
   selectHasPermission,
@@ -49,8 +50,8 @@ export const TeamDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const dispatch = useAppDispatch();
-  const canAddMember = useAppSelector(selectHasPermission("teams:write"));
-  const canManageStatus = useAppSelector(selectHasPermission("users:write"));
+  const canAddMember = useAppSelector(selectHasPermission(PERMISSIONS.TEAMS_WRITE));
+  const canManageStatus = useAppSelector(selectHasPermission(PERMISSIONS.USERS_WRITE));
   const currentUser = useAppSelector(selectAuthUser);
   const isUpdatingStatus = useAppSelector(selectIsUsersMutating);
 

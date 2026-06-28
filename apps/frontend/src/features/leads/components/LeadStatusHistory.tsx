@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 
+import { formatDateTime } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import type { LeadStatusHistoryEntry } from "../leadsTypes";
@@ -9,12 +10,6 @@ type LeadStatusHistoryProps = {
   entries: LeadStatusHistoryEntry[];
   isLoading: boolean;
 };
-
-const formatDateTime = (value: string) =>
-  new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
 
 export const LeadStatusHistory = ({
   entries,

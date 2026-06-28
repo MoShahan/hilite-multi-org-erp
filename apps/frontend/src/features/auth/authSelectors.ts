@@ -1,3 +1,5 @@
+import type { Permission } from "@/constants/permissions";
+import { PERMISSIONS } from "@/constants/permissions";
 import type { RootState } from "@/app/store";
 
 export const selectAuthUser = (state: RootState) => state.auth.user;
@@ -17,13 +19,15 @@ export const selectIsAuthLoading = (state: RootState) =>
   state.auth.status === "idle" || state.auth.status === "loading";
 
 export const selectIsPlatformAdmin = (state: RootState) =>
-  state.auth.user?.permissions.includes("platform:orgs:read") ?? false;
+  state.auth.user?.permissions.includes(PERMISSIONS.PLATFORM_ORGS_READ) ??
+  false;
 
-export const selectHasPermission = (permission: string) => (state: RootState) =>
-  state.auth.user?.permissions.includes(permission) ?? false;
+export const selectHasPermission =
+  (permission: Permission) => (state: RootState) =>
+    state.auth.user?.permissions.includes(permission) ?? false;
 
 export const selectHasAnyPermission =
-  (permissions: string[]) => (state: RootState) =>
+  (permissions: Permission[]) => (state: RootState) =>
     permissions.some((permission) =>
       state.auth.user?.permissions.includes(permission),
     );

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useAppSelector } from "@/app/hooks";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PERMISSIONS } from "@/constants/permissions";
 import { selectHasPermission } from "@/features/auth/authSelectors";
 import { ApiClientError } from "@/lib/api-client";
 
@@ -19,8 +20,8 @@ import { useRolesPage } from "../hooks/useRolesPage";
 import { rolesService } from "../rolesService";
 
 export const RolesPage = () => {
-  const canWrite = useAppSelector(selectHasPermission("roles:write"));
-  const canReadAllRoles = useAppSelector(selectHasPermission("roles:read"));
+  const canWrite = useAppSelector(selectHasPermission(PERMISSIONS.ROLES_WRITE));
+  const canReadAllRoles = useAppSelector(selectHasPermission(PERMISSIONS.ROLES_READ));
   const {
     roles,
     permissions,

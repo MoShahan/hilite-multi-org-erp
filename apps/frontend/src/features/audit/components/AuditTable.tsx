@@ -11,6 +11,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+import { formatDateTime } from "@/lib/format";
+
 import { AuditActionBadge, AuditDetailRow } from "./AuditDetailRow";
 
 import type { AuditLog } from "../auditTypes";
@@ -19,12 +21,6 @@ type AuditTableProps = {
   auditLogs: AuditLog[];
   showOrganization?: boolean;
 };
-
-const formatDateTime = (value: string) =>
-  new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
 
 export const AuditTable = ({
   auditLogs,

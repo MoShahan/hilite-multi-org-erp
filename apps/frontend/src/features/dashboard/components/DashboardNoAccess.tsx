@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useAppSelector } from "@/app/hooks";
+import { PERMISSIONS } from "@/constants/permissions";
 import {
   selectHasAnyPermission,
   selectHasModule,
@@ -17,15 +18,15 @@ import {
 import { ORG_MODULE_KEYS } from "@/constants/orgModules";
 
 export const DashboardNoAccess = () => {
-  const canViewUsers = useAppSelector(selectHasPermission("users:read"));
+  const canViewUsers = useAppSelector(selectHasPermission(PERMISSIONS.USERS_READ));
   const hasSalesErpModule = useAppSelector(
     selectHasModule(ORG_MODULE_KEYS.SALES_ERP),
   );
   const canViewLeads = useAppSelector(
     selectHasAnyPermission([
-      "leads:read",
-      "leads:read:team",
-      "leads:read:org",
+      PERMISSIONS.LEADS_READ,
+      PERMISSIONS.LEADS_READ_TEAM,
+      PERMISSIONS.LEADS_READ_ORG,
     ]),
   );
 

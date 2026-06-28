@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { orgUserService } from "../services/user.service";
+import { requireAuthUser } from "../lib/requireAuthUser";
 import { getAuditRequestContext } from "../lib/auditRequestContext";
 import type { CreateUserInput, UpdateUserStatusInput } from "../types/user";
 
@@ -8,16 +9,10 @@ const getRouteId = (req: Request) => {
   return Array.isArray(id) ? id[0] : id;
 };
 
-const getAuditContext = (req: Request) => {
-  if (!req.authUser) {
-    throw new Error("Auth context is required");
-  }
-
-  return {
-    authUser: req.authUser.user,
-    requestContext: getAuditRequestContext(req),
-  };
-};
+const getAuditContext = (req: Request) => ({
+  authUser: requireAuthUser(req),
+  requestContext: getAuditRequestContext(req),
+});
 
 export const listUsers = async (
   req: Request,

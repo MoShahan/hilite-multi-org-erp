@@ -1,5 +1,11 @@
 import { Router } from "express";
 import {
+  assignLeadSchema,
+  createActivitySchema,
+  createLeadSchema,
+  updateLeadSchema,
+} from "@hilite/shared";
+import {
   assignLead,
   createActivity,
   createLead,
@@ -15,6 +21,7 @@ import { authenticate } from "../middleware/authenticate";
 import { requireAnyPermission } from "../middleware/requireAnyPermission";
 import { requireOrgModule } from "../middleware/requireOrgModule";
 import { requirePermission } from "../middleware/requirePermission";
+import { validateBody } from "../middleware/validateBody";
 
 const router = Router();
 
@@ -48,10 +55,10 @@ const leadsReassign = [
 const activitiesWrite = [requirePermission(PERMISSIONS.ACTIVITIES_WRITE)];
 
 router.get("/", ...salesErpModule, ...leadsRead, listLeads);
-router.post("/", ...salesErpModule, ...leadsWrite, createLead);
+router.post("/", ...salesErpModule, ...leadsWrite, validateBody(createLeadSchema), createLead);
 router.get("/:id", ...salesErpModule, ...leadsRead, getLead);
-router.patch("/:id", ...salesErpModule, ...leadsUpdate, updateLead);
-router.patch("/:id/assign", ...salesErpModule, ...leadsReassign, assignLead);
+router.patch("/:id", ...salesErpModule, ...leadsUpdate, validateBody(updateLeadSchema), updateLead);
+router.patch("/:id/assign", ...salesErpModule, ...leadsReassign, validateBody(assignLeadSchema), assignLead);
 router.get("/:id/activities", ...salesErpModule, ...leadsRead, listActivities);
 router.get(
   "/:id/status-history",
@@ -59,6 +66,6 @@ router.get(
   ...leadsRead,
   listStatusHistory,
 );
-router.post("/:id/activities", ...salesErpModule, ...activitiesWrite, createActivity);
+router.post("/:id/activities", ...salesErpModule, ...activitiesWrite, validateBody(createActivitySchema), createActivity);
 
 export default router;

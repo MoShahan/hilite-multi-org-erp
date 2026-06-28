@@ -5,6 +5,7 @@ import { useAppSelector } from "@/app/hooks";
 import { ListPagination } from "@/components/ListPagination";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PERMISSIONS } from "@/constants/permissions";
 import { selectHasPermission } from "@/features/auth/authSelectors";
 import { PAGE_SIZE_OPTIONS } from "@/lib/pagination";
 
@@ -21,7 +22,7 @@ import {
 } from "../teamsSelectors";
 
 export const TeamsPage = () => {
-  const canCreateTeam = useAppSelector(selectHasPermission("teams:write"));
+  const canCreateTeam = useAppSelector(selectHasPermission(PERMISSIONS.TEAMS_WRITE));
   const { query, patchQuery, clearFilters, refetch, listSearch } =
     useTeamListQuery();
 

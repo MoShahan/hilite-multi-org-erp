@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { ACTIVITY_TYPE_OPTIONS } from "../leadsTypes";
@@ -8,12 +9,6 @@ type ActivityTimelineProps = {
   activities: Activity[];
   isLoading: boolean;
 };
-
-const formatDateTime = (value: string) =>
-  new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
 
 const getActivityLabel = (type: Activity["type"]) =>
   ACTIVITY_TYPE_OPTIONS.find((option) => option.value === type)?.label ?? type;

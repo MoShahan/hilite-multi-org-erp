@@ -1,9 +1,10 @@
+import type { DashboardView as SharedDashboardView } from "@hilite/shared";
 import { LeadStatus, type Prisma } from "../generated/prisma/client";
 import { PERMISSIONS } from "../constants/permissions";
 import type { AuthUser } from "../types/auth";
 import { AppError } from "../utils/AppError";
 
-export type DashboardView = "me" | "team" | "org";
+export type DashboardView = SharedDashboardView;
 
 const hasPermission = (user: AuthUser, permission: string) =>
   user.permissions.includes(permission);

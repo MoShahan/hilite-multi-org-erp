@@ -8,6 +8,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+import { formatDateTime } from "@/lib/format";
+
 import { ACTIVITY_TYPE_LABELS } from "../dashboardTypes";
 
 import type { RecentActivityItem } from "../dashboardTypes";
@@ -15,12 +17,6 @@ import type { RecentActivityItem } from "../dashboardTypes";
 type RecentActivityListProps = {
   activities: RecentActivityItem[];
 };
-
-const formatDateTime = (value: string) =>
-  new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
 
 export const RecentActivityList = ({ activities }: RecentActivityListProps) => (
   <Card className="shadow-sm">

@@ -38,3 +38,32 @@ export const formatRelativeTime = (isoDate: string): string => {
 
   return date.toLocaleDateString();
 };
+
+export const formatDateTime = (iso: string) =>
+  new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(iso));
+
+export const formatDate = (iso: string) =>
+  new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
+    new Date(iso),
+  );
+
+export const formatWinRate = (winRate: number | null) =>
+  winRate === null ? "—" : `${winRate}%`;
+
+export const formatWinRateDetail = (
+  winRate: number | null,
+  won: number,
+  lost: number,
+) => {
+  if (winRate === null) {
+    return { value: "—", description: "No closed leads yet" };
+  }
+
+  return {
+    value: `${winRate}%`,
+    description: `${won} won / ${won + lost} closed`,
+  };
+};

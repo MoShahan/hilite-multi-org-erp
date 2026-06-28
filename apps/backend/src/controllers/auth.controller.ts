@@ -301,42 +301,45 @@ export const logout = async (req: Request, res: Response) => {
 
   const accessToken = req.cookies[ACCESS_TOKEN_COOKIE] as string | undefined;
 
-  if (accessToken) {
-    try {
-      const payload = verifyAccessToken(accessToken);
-      context = await authService.resolveAuthContext(payload.sub);
-    } catch {
-      // Access token expired or invalid.
-    }
-  }
-
-  if (refreshToken) {
-    if (!context) {
-      const user = await authService.revokeSession(refreshToken);
-
-      if (user) {
-        context = await authService.resolveAuthContext(user.id);
+  try {
+    if (accessToken) {
+      try {
+        const payload = verifyAccessToken(accessToken);
+        context = await authService.resolveAuthContext(payload.sub);
+      } catch {
+        // Access token expired or invalid.
       }
-    } else {
-      await authService.revokeSession(refreshToken);
     }
+
+    if (refreshToken) {
+      if (!context) {
+        const user = await authService.revokeSession(refreshToken);
+
+        if (user) {
+          context = await authService.resolveAuthContext(user.id);
+        }
+      } else {
+        await authService.revokeSession(refreshToken);
+      }
+    }
+
+    if (context) {
+      auditService.log({
+        organizationId: context.organization?.id ?? null,
+        actorId: context.user.id,
+        action: "AUTH_LOGOUT",
+        entityType: "auth",
+        entityId: context.user.id,
+        metadata: buildAuthAuditMetadata(
+          context,
+          `Logged out: ${context.user.email}`,
+        ),
+        requestContext,
+      });
+    }
+  } finally {
+    clearSessionCookies(res);
   }
 
-  if (context) {
-    auditService.log({
-      organizationId: context.organization?.id ?? null,
-      actorId: context.user.id,
-      action: "AUTH_LOGOUT",
-      entityType: "auth",
-      entityId: context.user.id,
-      metadata: buildAuthAuditMetadata(
-        context,
-        `Logged out: ${context.user.email}`,
-      ),
-      requestContext,
-    });
-  }
-
-  clearSessionCookies(res);
   return res.json({ message: "Logout successful" });
 };

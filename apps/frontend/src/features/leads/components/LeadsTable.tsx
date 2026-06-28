@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import { LeadStatusBadge } from "./LeadStatusBadge";
@@ -30,11 +31,6 @@ type LeadsTableProps = {
   listSearch: string;
   onSortChange: (sortBy: LeadListSortBy, sortOrder: LeadListSortOrder) => void;
 };
-
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
-    new Date(value),
-  );
 
 type SortableHeaderProps = {
   label: string;

@@ -1,11 +1,8 @@
-export const ORG_MODULE_KEYS = {
-  SALES_ERP: "sales_erp",
-  DASHBOARDS: "dashboards",
-  NOTIFICATIONS: "notifications",
-} as const;
-
-export type OrgModuleKey =
-  (typeof ORG_MODULE_KEYS)[keyof typeof ORG_MODULE_KEYS];
+export {
+  ALL_ORG_MODULE_KEYS,
+  ORG_MODULE_KEYS,
+  type OrgModuleKey,
+} from "@hilite/shared";
 
 export const NO_FEATURES_COPY = {
   title: "No features available",

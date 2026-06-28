@@ -1,8 +1,8 @@
 import { LayoutDashboard } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link, Navigate } from "react-router-dom";
 
-import { useAppSelector } from "@/app/hooks";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -11,35 +11,31 @@ import {
   selectHasModule,
 } from "@/features/auth/authSelectors";
 import { ORG_MODULE_KEYS } from "@/constants/orgModules";
+import {
+  DASHBOARD_PERMISSIONS,
+  LEADS_READ_PERMISSIONS,
+} from "@/constants/permissions";
 import { formatRoleLabel } from "@/lib/format";
 
 import { CustomizeDashboardSheet } from "../components/CustomizeDashboardSheet";
 import { DashboardGrid } from "../components/DashboardGrid";
 import { DashboardNoAccess } from "../components/DashboardNoAccess";
-import { dashboardService } from "../dashboardService";
+import {
+  selectDashboardError,
+  selectDashboardLayout,
+  selectDashboardSummary,
+  selectIsDashboardLoading,
+} from "../dashboardSelectors";
+import { fetchDashboard } from "../dashboardSlice";
 
-import type { DashboardLayoutResponse } from "../dashboardLayoutTypes";
-import type { DashboardSummaryResponse } from "../dashboardTypes";
-
-const DASHBOARD_PERMISSIONS = [
-  "dashboard:me",
-  "dashboard:team",
-  "dashboard:org",
-] as const;
-
-const LEADS_READ_PERMISSIONS = [
-  "leads:read",
-  "leads:read:team",
-  "leads:read:org",
-] as const;
-
-const viewTitle: Record<DashboardSummaryResponse["view"], string> = {
+const viewTitle = {
   me: "My dashboard",
   team: "Team dashboard",
   org: "Organization dashboard",
-};
+} as const;
 
 export const DashboardPage = () => {
+  const dispatch = useAppDispatch();
   const user = useAppSelector(selectAuthUser);
   const hasDashboardsModule = useAppSelector(
     selectHasModule(ORG_MODULE_KEYS.DASHBOARDS),
@@ -53,47 +49,18 @@ export const DashboardPage = () => {
   const canViewLeads = useAppSelector(
     selectHasAnyPermission([...LEADS_READ_PERMISSIONS]),
   );
-
-  const [summary, setSummary] = useState<DashboardSummaryResponse | null>(null);
-  const [layout, setLayout] = useState<DashboardLayoutResponse | null>(null);
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
-    "idle",
-  );
-  const [error, setError] = useState<string | null>(null);
+  const summary = useAppSelector(selectDashboardSummary);
+  const layout = useAppSelector(selectDashboardLayout);
+  const error = useAppSelector(selectDashboardError);
+  const isLoading = useAppSelector(selectIsDashboardLoading);
 
   useEffect(() => {
     if (!hasDashboardsModule || !hasDashboard) {
       return;
     }
 
-    let cancelled = false;
-    setStatus("loading");
-    setError(null);
-
-    void Promise.all([
-      dashboardService.getSummary(),
-      dashboardService.getLayout(),
-    ])
-      .then(([summaryData, layoutData]) => {
-        if (!cancelled) {
-          setSummary(summaryData);
-          setLayout(layoutData);
-          setStatus("success");
-        }
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setStatus("error");
-          setError(
-            err instanceof Error ? err.message : "Failed to load dashboard",
-          );
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [hasDashboard, hasDashboardsModule]);
+    void dispatch(fetchDashboard());
+  }, [dispatch, hasDashboard, hasDashboardsModule]);
 
   if (!hasDashboardsModule) {
     return <Navigate to="/" replace />;
@@ -102,8 +69,6 @@ export const DashboardPage = () => {
   if (!hasDashboard) {
     return <DashboardNoAccess />;
   }
-
-  const isLoading = status === "loading" || status === "idle";
 
   return (
     <div className="space-y-6">
@@ -126,12 +91,7 @@ export const DashboardPage = () => {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {layout ? (
-            <CustomizeDashboardSheet
-              layout={layout}
-              onLayoutSaved={setLayout}
-            />
-          ) : null}
+          {layout ? <CustomizeDashboardSheet layout={layout} /> : null}
           {hasSalesErpModule && canViewLeads ? (
             <Button variant="outline" asChild>
               <Link to="/leads">View leads</Link>

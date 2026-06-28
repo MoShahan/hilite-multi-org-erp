@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { roleService } from "../services/role.service";
+import { requireAuthUser } from "../lib/requireAuthUser";
 import { getAuditRequestContext } from "../lib/auditRequestContext";
 import type { CreateRoleInput, UpdateRoleInput } from "../types/role";
 import { AppError } from "../utils/AppError";
@@ -14,16 +15,10 @@ const getRoleId = (req: Request): string => {
   return id;
 };
 
-const getAuditContext = (req: Request) => {
-  if (!req.authUser) {
-    throw new Error("Auth context is required");
-  }
-
-  return {
-    authUser: req.authUser.user,
-    requestContext: getAuditRequestContext(req),
-  };
-};
+const getAuditContext = (req: Request) => ({
+  authUser: requireAuthUser(req),
+  requestContext: getAuditRequestContext(req),
+});
 
 export const listRoles = async (
   req: Request,
@@ -31,14 +26,12 @@ export const listRoles = async (
   next: NextFunction,
 ) => {
   try {
-    if (!req.authUser) {
-      throw new Error("Auth context is required");
-    }
+    const authUser = requireAuthUser(req);
 
     const result = await roleService.listRoles(
-      req.authUser.organization?.id ?? null,
+      req.authUser?.organization?.id ?? null,
       roleService.parseListQuery(req.query as Record<string, unknown>),
-      req.authUser.user,
+      authUser,
     );
     return res.json(result);
   } catch (error) {
@@ -52,14 +45,12 @@ export const getRole = async (
   next: NextFunction,
 ) => {
   try {
-    if (!req.authUser) {
-      throw new Error("Auth context is required");
-    }
+    const authUser = requireAuthUser(req);
 
     const result = await roleService.getRole(
-      req.authUser.organization?.id ?? null,
+      req.authUser?.organization?.id ?? null,
       getRoleId(req),
-      req.authUser.user,
+      authUser,
     );
     return res.json(result);
   } catch (error) {

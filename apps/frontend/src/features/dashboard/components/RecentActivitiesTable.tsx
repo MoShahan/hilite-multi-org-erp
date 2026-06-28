@@ -16,6 +16,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+import { formatDateTime } from "@/lib/format";
+
 import { ACTIVITY_TYPE_LABELS } from "../dashboardTypes";
 
 import type { RecentActivityItem } from "../dashboardTypes";
@@ -23,12 +25,6 @@ import type { RecentActivityItem } from "../dashboardTypes";
 type RecentActivitiesTableProps = {
   activities: RecentActivityItem[];
 };
-
-const formatDateTime = (value: string) =>
-  new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
 
 const truncateNotes = (notes: string, maxLength = 80) =>
   notes.length <= maxLength ? notes : `${notes.slice(0, maxLength)}…`;

@@ -1,7 +1,11 @@
 import type { ReactNode } from "react";
 
 import { DASHBOARD_WIDGET_KEYS, type DashboardWidgetKey } from "../../dashboardLayoutTypes";
-import type { DashboardSummaryResponse } from "../../dashboardTypes";
+import type {
+  DashboardSummaryResponse,
+  OrgDashboardSummary,
+  TeamDashboardSummary,
+} from "../../dashboardTypes";
 import { AssigneeLeaderboardWidget } from "./AssigneeLeaderboardWidget";
 import { AssigneePerformanceChartWidget } from "./AssigneePerformanceChartWidget";
 import { ConversionChartWidget } from "./ConversionChartWidget";
@@ -31,29 +35,25 @@ export const renderDashboardWidget = (
     case DASHBOARD_WIDGET_KEYS.PIPELINE_STATS:
       return <PipelineStatsWidget summary={summary} />;
     case DASHBOARD_WIDGET_KEYS.ASSIGNEE_LEADERBOARD:
-      return summary.view === "team" ? (
-        <AssigneeLeaderboardWidget summary={summary} />
-      ) : null;
+      return (
+        <AssigneeLeaderboardWidget summary={summary as TeamDashboardSummary} />
+      );
     case DASHBOARD_WIDGET_KEYS.ASSIGNEE_PERFORMANCE_CHART:
-      return summary.view === "team" ? (
-        <AssigneePerformanceChartWidget summary={summary} />
-      ) : null;
+      return (
+        <AssigneePerformanceChartWidget
+          summary={summary as TeamDashboardSummary}
+        />
+      );
     case DASHBOARD_WIDGET_KEYS.TOP_TEAMS:
-      return summary.view === "org" ? (
-        <TopTeamsWidget summary={summary} />
-      ) : null;
+      return <TopTeamsWidget summary={summary as OrgDashboardSummary} />;
     case DASHBOARD_WIDGET_KEYS.TOP_TEAMS_CHART:
-      return summary.view === "org" ? (
-        <TopTeamsChartWidget summary={summary} />
-      ) : null;
+      return <TopTeamsChartWidget summary={summary as OrgDashboardSummary} />;
     case DASHBOARD_WIDGET_KEYS.TOP_EXECUTIVES:
-      return summary.view === "org" ? (
-        <TopExecutivesWidget summary={summary} />
-      ) : null;
+      return <TopExecutivesWidget summary={summary as OrgDashboardSummary} />;
     case DASHBOARD_WIDGET_KEYS.TOP_EXECUTIVES_CHART:
-      return summary.view === "org" ? (
-        <TopExecutivesChartWidget summary={summary} />
-      ) : null;
+      return (
+        <TopExecutivesChartWidget summary={summary as OrgDashboardSummary} />
+      );
     case DASHBOARD_WIDGET_KEYS.STATUS_BREAKDOWN:
       return <StatusBreakdownWidget summary={summary} />;
     case DASHBOARD_WIDGET_KEYS.STATUS_PIE_CHART:

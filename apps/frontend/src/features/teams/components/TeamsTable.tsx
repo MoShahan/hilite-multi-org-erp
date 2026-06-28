@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import type {
@@ -24,11 +25,6 @@ type TeamsTableProps = {
   listSearch: string;
   onSortChange: (sortBy: TeamListSortBy, sortOrder: TeamListSortOrder) => void;
 };
-
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
-    new Date(value),
-  );
 
 type SortableHeaderProps = {
   label: string;

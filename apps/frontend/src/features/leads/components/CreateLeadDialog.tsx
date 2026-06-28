@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PERMISSIONS } from "@/constants/permissions";
 import {
   selectAuthUser,
   selectHasPermission,
@@ -92,7 +93,7 @@ export const CreateLeadDialog = ({
 }: CreateLeadDialogProps) => {
   const dispatch = useAppDispatch();
   const authUser = useAppSelector(selectAuthUser);
-  const canPickTeam = useAppSelector(selectHasPermission("leads:read:org"));
+  const canPickTeam = useAppSelector(selectHasPermission(PERMISSIONS.LEADS_READ_ORG));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [teams, setTeams] = useState<TeamFilterOption[]>([]);
   const [assignees, setAssignees] = useState<AssigneeOption[]>([]);

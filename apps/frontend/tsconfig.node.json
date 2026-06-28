@@ -14,7 +14,13 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@vitejs/plugin-react": ["../../node_modules/@vitejs/plugin-react"],
+      "@tailwindcss/vite": ["../../node_modules/@tailwindcss/vite"]
+    }
   },
-  "include": ["vite.config.ts"]
+  "include": ["vite.config.ts", "vitest.config.ts", "config.d.ts"]
 }

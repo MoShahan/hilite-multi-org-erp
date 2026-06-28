@@ -1,9 +1,11 @@
 import { Router } from "express";
+import { createUserSchema } from "@hilite/shared";
 import { createUser, listUsers, updateUserStatus } from "../controllers/user.controller";
 import { PERMISSIONS } from "../constants/permissions";
 import { authenticate } from "../middleware/authenticate";
 import { requireAnyPermission } from "../middleware/requireAnyPermission";
 import { requirePermission } from "../middleware/requirePermission";
+import { validateBody } from "../middleware/validateBody";
 
 const router = Router();
 
@@ -18,7 +20,7 @@ const usersList = [
 const usersWrite = [authenticate, requirePermission(PERMISSIONS.USERS_WRITE)];
 
 router.get("/", ...usersList, listUsers);
-router.post("/", ...usersWrite, createUser);
+router.post("/", ...usersWrite, validateBody(createUserSchema), createUser);
 router.patch("/:id/status", ...usersWrite, updateUserStatus);
 
 export default router;

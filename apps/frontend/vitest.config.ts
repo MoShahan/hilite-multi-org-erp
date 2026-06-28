@@ -9,6 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@hilite/shared": path.resolve(__dirname, "../../packages/shared/src"),
     },
   },
   test: {
@@ -16,5 +17,10 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
     globals: false,
     css: false,
+    server: {
+      deps: {
+        inline: ["@testing-library/jest-dom"],
+      },
+    },
   },
 });

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { createTeamSchema } from "@hilite/shared";
 import {
   createTeam,
   createTeamMember,
@@ -10,6 +11,7 @@ import { PERMISSIONS } from "../constants/permissions";
 import { authenticate } from "../middleware/authenticate";
 import { requireAnyPermission } from "../middleware/requireAnyPermission";
 import { requirePermission } from "../middleware/requirePermission";
+import { validateBody } from "../middleware/validateBody";
 
 const router = Router();
 
@@ -29,7 +31,7 @@ const teamMembersWrite = [
 ];
 
 router.get("/", ...teamsRead, listTeams);
-router.post("/", ...teamsWrite, createTeam);
+router.post("/", ...teamsWrite, validateBody(createTeamSchema), createTeam);
 router.get("/:id", ...teamsRead, getTeam);
 router.get("/:id/members", ...teamMembersRead, listTeamMembers);
 router.post("/:id/members", ...teamMembersWrite, createTeamMember);
