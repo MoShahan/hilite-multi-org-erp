@@ -1,4 +1,3 @@
-import { UserMenu } from "@/components/UserMenu";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 import { useAppSelector } from "@/app/hooks";
@@ -30,7 +29,6 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
             <div className="flex flex-1 items-center justify-end gap-3">
               <ThemeToggle />
               {canAccessNotifications ? <NotificationBell /> : null}
-              <UserMenu />
             </div>
           </header>
           <main className="flex flex-1 flex-col bg-muted/20 p-4 md:p-6">

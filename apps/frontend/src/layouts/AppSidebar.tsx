@@ -1,10 +1,18 @@
-import { Building2, History, Kanban, LayoutDashboard, ScrollText, Shield, Users, UsersRound } from "lucide-react";
+import {
+  Building2,
+  History,
+  Kanban,
+  LayoutDashboard,
+  ScrollText,
+  Shield,
+  Users,
+  UsersRound,
+} from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import { useAppSelector } from "@/app/hooks";
-import { EntityAvatar } from "@/components/EntityAvatar";
 import { HiliteLogo } from "@/components/HiliteLogo";
-import { Badge } from "@/components/ui/badge";
+import { UserMenu } from "@/components/UserMenu";
 import {
   Sidebar,
   SidebarContent,
@@ -26,37 +34,46 @@ import {
   selectIsPlatformAdmin,
 } from "@/features/auth/authSelectors";
 import { ORG_MODULE_KEYS } from "@/constants/orgModules";
-import {
-  LEADS_READ_PERMISSIONS,
-  PERMISSIONS,
-} from "@/constants/permissions";
-import { formatRoleLabel } from "@/lib/format";
+import { LEADS_READ_PERMISSIONS, PERMISSIONS } from "@/constants/permissions";
+import { selectCanViewDashboard } from "@/lib/defaultLandingPath";
 
 export const AppSidebar = () => {
   const isPlatformAdmin = useAppSelector(selectIsPlatformAdmin);
-  const canViewAudit = useAppSelector(selectHasPermission(PERMISSIONS.AUDIT_READ));
+  const canViewAudit = useAppSelector(
+    selectHasPermission(PERMISSIONS.AUDIT_READ),
+  );
   const canViewPlatformAudit = useAppSelector(
     selectHasPermission(PERMISSIONS.PLATFORM_AUDIT_READ),
   );
-  const canViewRoles = useAppSelector(
-    selectHasAnyPermission([PERMISSIONS.ROLES_READ, PERMISSIONS.ROLES_READ_TEAM]),
+  const canViewPlatformAdmins = useAppSelector(
+    selectHasPermission(PERMISSIONS.PLATFORM_USERS_READ),
   );
-  const canViewUsers = useAppSelector(selectHasPermission(PERMISSIONS.USERS_READ));
-  const canViewTeams = useAppSelector(selectHasPermission(PERMISSIONS.TEAMS_READ));
+  const canViewRoles = useAppSelector(
+    selectHasAnyPermission([PERMISSIONS.ROLES_WRITE]),
+  );
+  const canViewUsers = useAppSelector(
+    selectHasPermission(PERMISSIONS.USERS_READ),
+  );
+  const canViewTeams = useAppSelector(
+    selectHasPermission(PERMISSIONS.TEAMS_READ),
+  );
   const canViewMyTeam =
     useAppSelector(selectHasPermission(PERMISSIONS.USERS_READ_TEAM)) &&
     !canViewTeams;
   const canViewLeads = useAppSelector(
     selectHasAnyPermission([...LEADS_READ_PERMISSIONS]),
   );
-  const hasDashboardsModule = useAppSelector(
-    selectHasModule(ORG_MODULE_KEYS.DASHBOARDS),
-  );
+  const canViewDashboard = useAppSelector(selectCanViewDashboard);
   const hasSalesErpModule = useAppSelector(
     selectHasModule(ORG_MODULE_KEYS.SALES_ERP),
   );
   const user = useAppSelector(selectAuthUser);
   const location = useLocation();
+  const hasPlatformSection =
+    canViewDashboard ||
+    canViewPlatformAudit ||
+    canViewPlatformAdmins ||
+    isPlatformAdmin;
 
   return (
     <Sidebar collapsible="icon" variant="inset">
@@ -74,63 +91,85 @@ export const AppSidebar = () => {
         </div>
       </SidebarHeader>
       <SidebarContent className="px-2 py-3">
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-[11px] font-semibold tracking-wider uppercase text-sidebar-foreground/50">
-            Platform
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {hasDashboardsModule ? (
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={location.pathname === "/dashboard"}
-                    tooltip="Dashboard"
-                    className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
-                  >
-                    <NavLink to="/dashboard">
-                      <LayoutDashboard />
-                      <span>Dashboard</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ) : null}
-              {canViewPlatformAudit ? (
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={location.pathname.startsWith("/platform/audit")}
-                    tooltip="Platform audit"
-                    className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
-                  >
-                    <NavLink to="/platform/audit">
-                      <History />
-                      <span>Platform audit</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ) : null}
-              {isPlatformAdmin ? (
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={location.pathname.startsWith(
-                      "/platform/organizations",
-                    )}
-                    tooltip="Organizations"
-                    className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
-                  >
-                    <NavLink to="/platform/organizations">
-                      <Building2 />
-                      <span>Organizations</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ) : null}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        {canViewRoles || canViewUsers || canViewTeams || canViewMyTeam || canViewAudit || (hasSalesErpModule && canViewLeads) ? (
+        {hasPlatformSection ? (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-[11px] font-semibold tracking-wider uppercase text-sidebar-foreground/50">
+              Platform
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {canViewDashboard ? (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname === "/dashboard"}
+                      tooltip="Dashboard"
+                      className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                    >
+                      <NavLink to="/dashboard">
+                        <LayoutDashboard />
+                        <span>Dashboard</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ) : null}
+                {canViewPlatformAudit ? (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname.startsWith("/platform/audit")}
+                      tooltip="Platform audit"
+                      className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                    >
+                      <NavLink to="/platform/audit">
+                        <History />
+                        <span>Platform audit</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ) : null}
+                {isPlatformAdmin ? (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname.startsWith(
+                        "/platform/organizations",
+                      )}
+                      tooltip="Organizations"
+                      className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                    >
+                      <NavLink to="/platform/organizations">
+                        <Building2 />
+                        <span>Organizations</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ) : null}
+                {canViewPlatformAdmins ? (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname.startsWith("/platform/admins")}
+                      tooltip="Platform admins"
+                      className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                    >
+                      <NavLink to="/platform/admins">
+                        <Shield />
+                        <span>Platform admins</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ) : null}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
+        {canViewRoles ||
+        canViewUsers ||
+        canViewTeams ||
+        canViewMyTeam ||
+        canViewAudit ||
+        (hasSalesErpModule && canViewLeads) ? (
           <SidebarGroup>
             <SidebarGroupLabel className="text-[11px] font-semibold tracking-wider uppercase text-sidebar-foreground/50">
               Organization
@@ -236,18 +275,7 @@ export const AppSidebar = () => {
         <>
           <SidebarSeparator className="mx-3" />
           <SidebarFooter className="p-3">
-            <div className="flex items-center gap-3 rounded-xl border border-sidebar-border/60 bg-sidebar-accent/30 p-2.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2">
-              <EntityAvatar name={user.name} size="sm" />
-              <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
-                <p className="truncate text-sm font-medium">{user.name}</p>
-                <Badge
-                  variant="outline"
-                  className="mt-1 h-5 border-sidebar-border/60 px-1.5 text-[10px] font-normal"
-                >
-                  {formatRoleLabel(user.role)}
-                </Badge>
-              </div>
-            </div>
+            <UserMenu />
           </SidebarFooter>
         </>
       ) : null}
