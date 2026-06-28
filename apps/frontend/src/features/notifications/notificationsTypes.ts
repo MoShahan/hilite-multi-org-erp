@@ -11,7 +11,8 @@ export type NotificationType =
   | "LEAD_ASSIGNED"
   | "LEAD_REASSIGNED"
   | "LEAD_STATUS_CHANGED"
-  | "ACTIVITY_LOGGED";
+  | "ACTIVITY_LOGGED"
+  | "WELCOME_CHANGE_PASSWORD";
 
 export type Notification = {
   id: string;

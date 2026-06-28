@@ -1,6 +1,7 @@
 import type { Permission } from "@/constants/permissions";
 import { PERMISSIONS } from "@/constants/permissions";
 import type { RootState } from "@/app/store";
+import { ORG_MODULE_KEYS } from "@/constants/orgModules";
 
 export const selectAuthUser = (state: RootState) => state.auth.user;
 
@@ -37,6 +38,16 @@ export const selectAuthModules = (state: RootState) => state.auth.modules;
 export const selectHasModule =
   (moduleKey: string) => (state: RootState) =>
     state.auth.modules.includes(moduleKey);
+
+export const selectCanAccessNotifications = (state: RootState) => {
+  const organization = selectAuthOrganization(state);
+
+  if (!organization) {
+    return selectIsAuthenticated(state);
+  }
+
+  return selectHasModule(ORG_MODULE_KEYS.NOTIFICATIONS)(state);
+};
 
 export const selectIsOrgAdmin = (state: RootState) =>
   state.auth.user?.role?.slug === "org_admin";

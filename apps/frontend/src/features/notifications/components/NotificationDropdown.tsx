@@ -26,6 +26,7 @@ import {
 import { NotificationItem } from "./NotificationItem";
 
 import type { Notification } from "../notificationsTypes";
+import { getNotificationDestination } from "../notificationNavigation";
 
 type NotificationDropdownProps = {
   open: boolean;
@@ -61,8 +62,9 @@ export const NotificationDropdown = ({
 
     onOpenChange(false);
 
-    if (notification.entityType === "lead" && notification.entityId) {
-      navigate(`/leads/${notification.entityId}`);
+    const destination = getNotificationDestination(notification);
+    if (destination) {
+      navigate(destination);
     }
   };
 

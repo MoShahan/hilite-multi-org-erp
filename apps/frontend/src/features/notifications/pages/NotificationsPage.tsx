@@ -6,11 +6,9 @@ import { ListPagination } from "@/components/ListPagination";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  selectAuthOrganization,
-  selectHasModule,
+  selectCanAccessNotifications,
 } from "@/features/auth/authSelectors";
-import { ORG_MODULE_KEYS } from "@/constants/orgModules";
-import { PAGE_SIZE_OPTIONS } from "@/lib/pagination";
+import { PAGE_SIZE_OPTIONS, TABLE_SKELETON_ROW_COUNT } from "@/lib/pagination";
 
 import { NotificationItem } from "../components/NotificationItem";
 import { NotificationsListToolbar } from "../components/NotificationsListToolbar";
@@ -25,14 +23,12 @@ import {
 import { markNotificationRead } from "../notificationsSlice";
 
 import type { Notification } from "../notificationsTypes";
+import { getNotificationDestination } from "../notificationNavigation";
 
 export const NotificationsPage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const organization = useAppSelector(selectAuthOrganization);
-  const hasNotificationsModule = useAppSelector(
-    selectHasModule(ORG_MODULE_KEYS.NOTIFICATIONS),
-  );
+  const canAccessNotifications = useAppSelector(selectCanAccessNotifications);
   const { query, patchQuery, clearFilters, refetch } = useNotificationListQuery();
 
   const notifications = useAppSelector(selectNotifications);
@@ -40,11 +36,7 @@ export const NotificationsPage = () => {
   const listStatus = useAppSelector(selectNotificationsListStatus);
   const listError = useAppSelector(selectNotificationsListError);
 
-  if (!organization) {
-    return <Navigate to="/" replace />;
-  }
-
-  if (!hasNotificationsModule) {
+  if (!canAccessNotifications) {
     return <Navigate to="/" replace />;
   }
 
@@ -53,8 +45,9 @@ export const NotificationsPage = () => {
       void dispatch(markNotificationRead(notification.id));
     }
 
-    if (notification.entityType === "lead" && notification.entityId) {
-      navigate(`/leads/${notification.entityId}`);
+    const destination = getNotificationDestination(notification);
+    if (destination) {
+      navigate(destination);
     }
   };
 
@@ -98,7 +91,7 @@ export const NotificationsPage = () => {
 
         {isLoading ? (
           <div className="divide-y rounded-xl border">
-            {Array.from({ length: query.pageSize }).map((_, index) => (
+            {Array.from({ length: TABLE_SKELETON_ROW_COUNT }).map((_, index) => (
               <div key={index} className="p-3">
                 <Skeleton className="mb-2 h-4 w-1/3" />
                 <Skeleton className="h-3 w-full" />

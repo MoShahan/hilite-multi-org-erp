@@ -2,8 +2,7 @@ import { UserMenu } from "@/components/UserMenu";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 import { useAppSelector } from "@/app/hooks";
-import { selectHasModule } from "@/features/auth/authSelectors";
-import { ORG_MODULE_KEYS } from "@/constants/orgModules";
+import { selectCanAccessNotifications } from "@/features/auth/authSelectors";
 import {
   SidebarInset,
   SidebarProvider,
@@ -19,9 +18,7 @@ type AppLayoutProps = {
 };
 
 export const AppLayout = ({ children }: AppLayoutProps) => {
-  const hasNotificationsModule = useAppSelector(
-    selectHasModule(ORG_MODULE_KEYS.NOTIFICATIONS),
-  );
+  const canAccessNotifications = useAppSelector(selectCanAccessNotifications);
 
   return (
     <TooltipProvider>
@@ -32,7 +29,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
             <SidebarTrigger className="-ml-1 size-8" />
             <div className="flex flex-1 items-center justify-end gap-3">
               <ThemeToggle />
-              {hasNotificationsModule ? <NotificationBell /> : null}
+              {canAccessNotifications ? <NotificationBell /> : null}
               <UserMenu />
             </div>
           </header>

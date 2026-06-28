@@ -3,11 +3,9 @@ import { useState } from "react";
 
 import { useAppSelector } from "@/app/hooks";
 import {
-  selectAuthOrganization,
-  selectHasModule,
+  selectCanAccessNotifications,
   selectIsAuthenticated,
 } from "@/features/auth/authSelectors";
-import { ORG_MODULE_KEYS } from "@/constants/orgModules";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useNotificationPolling } from "../hooks/useNotificationPolling";
@@ -21,16 +19,13 @@ import { NotificationDropdown } from "./NotificationDropdown";
 export const NotificationBell = () => {
   const [open, setOpen] = useState(false);
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
-  const organization = useAppSelector(selectAuthOrganization);
-  const hasNotificationsModule = useAppSelector(
-    selectHasModule(ORG_MODULE_KEYS.NOTIFICATIONS),
-  );
+  const canAccessNotifications = useAppSelector(selectCanAccessNotifications);
   const unreadCount = useAppSelector(selectUnreadCount);
   const hasUnread = useAppSelector(selectHasUnreadNotifications);
 
   useNotificationPolling();
 
-  if (!isAuthenticated || !organization || !hasNotificationsModule) {
+  if (!isAuthenticated || !canAccessNotifications) {
     return null;
   }
 
