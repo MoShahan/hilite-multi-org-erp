@@ -41,3 +41,15 @@ export const selectPlatformAuditListStatus = (state: RootState) =>
 
 export const selectPlatformAuditListError = (state: RootState) =>
   state.platform.auditListError;
+
+export const selectPlatformUsers = (state: RootState) =>
+  state.platform.platformUsers;
+
+export const selectPlatformUsersListMeta = (state: RootState) =>
+  state.platform.platformUsersListMeta;
+
+export const selectPlatformUsersListStatus = (state: RootState) =>
+  state.platform.platformUsersListStatus;
+
+export const selectPlatformUsersListError = (state: RootState) =>
+  state.platform.platformUsersListError;

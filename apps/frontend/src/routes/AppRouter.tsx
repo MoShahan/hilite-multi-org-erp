@@ -28,6 +28,12 @@ const OrganizationsPage = lazy(() =>
   })),
 );
 
+const PlatformAdminsPage = lazy(() =>
+  import("@/features/platform/pages/PlatformAdminsPage").then((module) => ({
+    default: module.PlatformAdminsPage,
+  })),
+);
+
 const OrganizationDetailPage = lazy(() =>
   import("@/features/platform/pages/OrganizationDetailPage").then((module) => ({
     default: module.OrganizationDetailPage,
@@ -120,6 +126,12 @@ const AccountPage = lazy(() =>
 
 const PlatformAdminLayout = ({ children }: { children: ReactNode }) => (
   <RequirePermission permissions={["platform:orgs:read"]}>
+    <AppLayout>{children}</AppLayout>
+  </RequirePermission>
+);
+
+const PlatformAdminsLayout = ({ children }: { children: ReactNode }) => (
+  <RequirePermission permissions={["platform:users:read"]}>
     <AppLayout>{children}</AppLayout>
   </RequirePermission>
 );
@@ -296,6 +308,14 @@ export const AppRouter = () => {
                 <PlatformAdminLayout>
                   <OrganizationDetailPage />
                 </PlatformAdminLayout>
+              }
+            />
+            <Route
+              path="/platform/admins"
+              element={
+                <PlatformAdminsLayout>
+                  <PlatformAdminsPage />
+                </PlatformAdminsLayout>
               }
             />
           </Route>

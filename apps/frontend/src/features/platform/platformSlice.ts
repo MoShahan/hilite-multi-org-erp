@@ -6,10 +6,13 @@ import { platformService } from "./platformService";
 
 import type {
   CreateOrganizationInput,
+  CreatePlatformUserInput,
   OrganizationListQuery,
   PlatformAuditListQuery,
   PlatformState,
+  PlatformUserListQuery,
   UpdateOrganizationInput,
+  UpdatePlatformUserStatusInput,
 } from "./platformTypes";
 
 const initialState: PlatformState = {
@@ -27,6 +30,11 @@ const initialState: PlatformState = {
   auditListQuery: null,
   auditListStatus: "idle",
   auditListError: null,
+  platformUsers: [],
+  platformUsersListMeta: null,
+  platformUsersListQuery: null,
+  platformUsersListStatus: "idle",
+  platformUsersListError: null,
 };
 
 export const fetchOrganizations = createAsyncThunk(
@@ -100,6 +108,54 @@ export const fetchPlatformAuditLogs = createAsyncThunk(
   "platform/fetchPlatformAuditLogs",
   async (query: PlatformAuditListQuery) =>
     platformService.listAuditLogs(query),
+);
+
+export const fetchPlatformUsers = createAsyncThunk(
+  "platform/fetchPlatformUsers",
+  async (query: PlatformUserListQuery) =>
+    platformService.listPlatformUsers(query),
+);
+
+export const createPlatformUser = createAsyncThunk(
+  "platform/createPlatformUser",
+  async (input: CreatePlatformUserInput, { rejectWithValue }) => {
+    try {
+      return await platformService.createPlatformUser(input);
+    } catch (error) {
+      if (error instanceof ApiClientError) {
+        return rejectWithValue({
+          message: error.message,
+          details: error.details,
+        });
+      }
+
+      throw error;
+    }
+  },
+);
+
+export const updatePlatformUserStatus = createAsyncThunk(
+  "platform/updatePlatformUserStatus",
+  async (
+    {
+      userId,
+      input,
+    }: { userId: string; input: UpdatePlatformUserStatusInput },
+    { rejectWithValue },
+  ) => {
+    try {
+      return await platformService.updatePlatformUserStatus(userId, input);
+    } catch (error) {
+      if (error instanceof ApiClientError) {
+        return rejectWithValue({
+          message: error.message,
+          details: error.details,
+        });
+      }
+
+      throw error;
+    }
+  },
 );
 
 const platformSlice = createSlice({
@@ -192,6 +248,42 @@ const platformSlice = createSlice({
         state.auditListStatus = "error";
         state.auditListError =
           action.error.message ?? "Failed to load platform audit trail";
+      })
+      .addCase(fetchPlatformUsers.pending, (state, action) => {
+        state.platformUsersListStatus = "loading";
+        state.platformUsersListError = null;
+        state.platformUsersListQuery = action.meta.arg;
+      })
+      .addCase(fetchPlatformUsers.fulfilled, (state, action) => {
+        state.platformUsers = action.payload.users;
+        state.platformUsersListMeta = action.payload.meta;
+        state.platformUsersListStatus = "success";
+      })
+      .addCase(fetchPlatformUsers.rejected, (state, action) => {
+        state.platformUsersListStatus = "error";
+        state.platformUsersListError =
+          action.error.message ?? "Failed to load platform admins";
+      })
+      .addCase(createPlatformUser.pending, (state) => {
+        state.mutationStatus = "loading";
+      })
+      .addCase(createPlatformUser.fulfilled, (state) => {
+        state.mutationStatus = "idle";
+      })
+      .addCase(createPlatformUser.rejected, (state) => {
+        state.mutationStatus = "idle";
+      })
+      .addCase(updatePlatformUserStatus.pending, (state) => {
+        state.mutationStatus = "loading";
+      })
+      .addCase(updatePlatformUserStatus.fulfilled, (state, action) => {
+        state.mutationStatus = "idle";
+        state.platformUsers = state.platformUsers.map((user) =>
+          user.id === action.payload.id ? action.payload : user,
+        );
+      })
+      .addCase(updatePlatformUserStatus.rejected, (state) => {
+        state.mutationStatus = "idle";
       });
   },
 });

@@ -1,17 +1,23 @@
 import { apiClient, unwrapResponse } from "@/lib/api-client";
 
 import { toOrganizationListApiParams } from "./organizationListParams";
+import { toPlatformUserListApiParams } from "./platformUserListParams";
 import { toPlatformAuditListApiParams } from "@/features/audit/auditListParams";
 
 import type { ListAuditLogsResult } from "@/features/audit/auditTypes";
 import type {
   CreateOrganizationInput,
+  CreatePlatformUserInput,
   ListOrganizationsResult,
+  ListPlatformUsersResult,
   Organization,
   OrganizationListQuery,
   OrganizationModulesMap,
   OrganizationModulesResponse,
   PlatformAuditListQuery,
+  PlatformUser,
+  PlatformUserListQuery,
+  UpdatePlatformUserStatusInput,
   UpdateOrganizationInput,
 } from "./platformTypes";
 
@@ -95,5 +101,34 @@ export const platformService = {
       params: toPlatformAuditListApiParams(query),
     });
     return unwrapResponse<ListAuditLogsResult>(response);
+  },
+
+  listPlatformUsers: async (
+    query: PlatformUserListQuery,
+  ): Promise<ListPlatformUsersResult> => {
+    const response = await apiClient.get("/api/v1/platform/users", {
+      params: toPlatformUserListApiParams(query),
+    });
+    return unwrapResponse<ListPlatformUsersResult>(response);
+  },
+
+  createPlatformUser: async (
+    input: CreatePlatformUserInput,
+  ): Promise<PlatformUser> => {
+    const response = await apiClient.post("/api/v1/platform/users", input);
+    const data = unwrapResponse<{ user: PlatformUser }>(response);
+    return data.user;
+  },
+
+  updatePlatformUserStatus: async (
+    userId: string,
+    input: UpdatePlatformUserStatusInput,
+  ): Promise<PlatformUser> => {
+    const response = await apiClient.patch(
+      `/api/v1/platform/users/${userId}/status`,
+      input,
+    );
+    const data = unwrapResponse<{ user: PlatformUser }>(response);
+    return data.user;
   },
 };
