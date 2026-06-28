@@ -82,7 +82,7 @@ tags:
   - name: Dashboard
     description: Analytics and customizable layout (requires `dashboards` module)
   - name: Notifications
-    description: In-app alerts (requires `notifications` module)
+    description: In-app alerts (org users require `notifications` module; platform users always have access)
   - name: Audit
     description: Organization audit trail
   - name: Platform
@@ -1169,7 +1169,9 @@ paths:
     get:
       tags: [Notifications]
       summary: List notifications
-      description: Returns a paginated list of in-app notifications. Requires `notifications` module.
+      description: |
+        Returns a paginated list of in-app notifications.
+        Org users require the `notifications` module; platform users (no org context) always have access.
       operationId: listNotifications
       security:
         - accessTokenCookie: []
@@ -1202,7 +1204,9 @@ paths:
     get:
       tags: [Notifications]
       summary: Get unread notification count
-      description: Returns the count of unread notifications. Requires `notifications` module.
+      description: |
+        Returns the count of unread notifications.
+        Org users require the `notifications` module; platform users always have access.
       operationId: getUnreadNotificationCount
       security:
         - accessTokenCookie: []
@@ -1227,7 +1231,9 @@ paths:
     patch:
       tags: [Notifications]
       summary: Mark all notifications as read
-      description: Marks all notifications as read for the current user. Requires `notifications` module.
+      description: |
+        Marks all notifications as read for the current user.
+        Org users require the `notifications` module; platform users always have access.
       operationId: markAllNotificationsRead
       security:
         - accessTokenCookie: []
@@ -1257,7 +1263,9 @@ paths:
     patch:
       tags: [Notifications]
       summary: Mark notification as read
-      description: Marks a single notification as read. Requires `notifications` module.
+      description: |
+        Marks a single notification as read.
+        Org users require the `notifications` module; platform users always have access.
       operationId: markNotificationRead
       security:
         - accessTokenCookie: []
@@ -2031,6 +2039,7 @@ components:
         - LEAD_REASSIGNED
         - LEAD_STATUS_CHANGED
         - ACTIVITY_LOGGED
+        - WELCOME_CHANGE_PASSWORD
 
     RoleMembershipScope:
       type: string
