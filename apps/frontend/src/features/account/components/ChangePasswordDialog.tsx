@@ -1,6 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -24,7 +23,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { ApiClientError } from "@/lib/api-client";
 import { PASSWORD_HELPER_TEXT, passwordFieldSchema } from "@/lib/password";
 
@@ -58,10 +57,6 @@ export const ChangePasswordDialog = ({
   open,
   onOpenChange,
 }: ChangePasswordDialogProps) => {
-  const [showCurrent, setShowCurrent] = useState(false);
-  const [showNew, setShowNew] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-
   const form = useForm<ChangePasswordFormValues>({
     resolver: zodResolver(changePasswordSchema),
     mode: "onChange",
@@ -71,9 +66,6 @@ export const ChangePasswordDialog = ({
   useEffect(() => {
     if (!open) {
       form.reset(defaultValues);
-      setShowCurrent(false);
-      setShowNew(false);
-      setShowConfirm(false);
     }
   }, [open, form]);
 
@@ -109,9 +101,6 @@ export const ChangePasswordDialog = ({
         newPassword: values.newPassword,
       });
       form.reset(defaultValues);
-      setShowCurrent(false);
-      setShowNew(false);
-      setShowConfirm(false);
       toast.success("Password updated");
       onOpenChange(false);
     } catch (error) {
@@ -147,30 +136,11 @@ export const ChangePasswordDialog = ({
                 <FormItem>
                   <FormLabel>Current password</FormLabel>
                   <FormControl>
-                    <div className="relative">
-                      <Input
-                        type={showCurrent ? "text" : "password"}
-                        autoComplete="current-password"
-                        className="pr-10"
-                        {...field}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        className="absolute top-1/2 right-1 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        onClick={() => setShowCurrent((value) => !value)}
-                        aria-label={
-                          showCurrent ? "Hide password" : "Show password"
-                        }
-                      >
-                        {showCurrent ? (
-                          <EyeOff className="size-4" />
-                        ) : (
-                          <Eye className="size-4" />
-                        )}
-                      </Button>
-                    </div>
+                    <PasswordInput
+                      autoComplete="current-password"
+                      resetToken={open}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -183,30 +153,11 @@ export const ChangePasswordDialog = ({
                 <FormItem>
                   <FormLabel>New password</FormLabel>
                   <FormControl>
-                    <div className="relative">
-                      <Input
-                        type={showNew ? "text" : "password"}
-                        autoComplete="new-password"
-                        className="pr-10"
-                        {...field}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        className="absolute top-1/2 right-1 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        onClick={() => setShowNew((value) => !value)}
-                        aria-label={
-                          showNew ? "Hide password" : "Show password"
-                        }
-                      >
-                        {showNew ? (
-                          <EyeOff className="size-4" />
-                        ) : (
-                          <Eye className="size-4" />
-                        )}
-                      </Button>
-                    </div>
+                    <PasswordInput
+                      autoComplete="new-password"
+                      resetToken={open}
+                      {...field}
+                    />
                   </FormControl>
                   <FormDescription>{PASSWORD_HELPER_TEXT}</FormDescription>
                   <FormMessage />
@@ -220,30 +171,11 @@ export const ChangePasswordDialog = ({
                 <FormItem>
                   <FormLabel>Confirm new password</FormLabel>
                   <FormControl>
-                    <div className="relative">
-                      <Input
-                        type={showConfirm ? "text" : "password"}
-                        autoComplete="new-password"
-                        className="pr-10"
-                        {...field}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        className="absolute top-1/2 right-1 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        onClick={() => setShowConfirm((value) => !value)}
-                        aria-label={
-                          showConfirm ? "Hide password" : "Show password"
-                        }
-                      >
-                        {showConfirm ? (
-                          <EyeOff className="size-4" />
-                        ) : (
-                          <Eye className="size-4" />
-                        )}
-                      </Button>
-                    </div>
+                    <PasswordInput
+                      autoComplete="new-password"
+                      resetToken={open}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

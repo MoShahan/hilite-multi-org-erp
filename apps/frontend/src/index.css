@@ -143,3 +143,18 @@
     width: 1.75rem !important;
   }
 }
+
+/* Must stay outside @layer so Edge/IE pseudo-elements are reliably hidden. */
+input.password-input[type="password"]::-ms-reveal,
+input.password-input[type="password"]::-ms-clear {
+  display: none !important;
+}
+
+input.password-input::-webkit-credentials-auto-fill-button,
+input.password-input::-webkit-strong-password-auto-fill-button {
+  display: none !important;
+}
+
+.password-input-masked {
+  -webkit-text-security: disc;
+}
