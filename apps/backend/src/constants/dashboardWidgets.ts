@@ -37,11 +37,13 @@ const ME_WIDGETS: DashboardWidgetDefinition[] = [
     DASHBOARD_WIDGET_KEYS.CONVERSION_CHART,
     "Conversion outcomes (chart)",
     "Donut chart of open, won, and lost leads",
+    "half",
   ),
   widget(
     DASHBOARD_WIDGET_KEYS.WIN_RATE_CHART,
     "Win rate (chart)",
     "Pie chart of won vs lost among closed leads",
+    "half",
   ),
   widget(
     DASHBOARD_WIDGET_KEYS.PIPELINE_STATS,
@@ -84,11 +86,13 @@ const TEAM_WIDGETS: DashboardWidgetDefinition[] = [
     DASHBOARD_WIDGET_KEYS.CONVERSION_CHART,
     "Conversion outcomes (chart)",
     "Donut chart of open, won, and lost leads",
+    "half",
   ),
   widget(
     DASHBOARD_WIDGET_KEYS.WIN_RATE_CHART,
     "Win rate (chart)",
     "Pie chart of won vs lost among closed leads",
+    "half",
   ),
   widget(
     DASHBOARD_WIDGET_KEYS.PIPELINE_STATS,
@@ -141,11 +145,13 @@ const ORG_WIDGETS: DashboardWidgetDefinition[] = [
     DASHBOARD_WIDGET_KEYS.CONVERSION_CHART,
     "Conversion outcomes (chart)",
     "Donut chart of open, won, and lost leads",
+    "half",
   ),
   widget(
     DASHBOARD_WIDGET_KEYS.WIN_RATE_CHART,
     "Win rate (chart)",
     "Pie chart of won vs lost among closed leads",
+    "half",
   ),
   widget(
     DASHBOARD_WIDGET_KEYS.PIPELINE_STATS,
