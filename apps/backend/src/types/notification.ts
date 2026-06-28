@@ -41,7 +41,7 @@ export type ParsedListNotificationsQuery = {
 };
 
 export type CreateNotificationInput = {
-  organizationId: string;
+  organizationId?: string | null;
   userId: string;
   type: NotificationType;
   title: string;

@@ -64,15 +64,26 @@ const toNotificationResponse = (notification: Notification) => ({
   createdAt: notification.createdAt.toISOString(),
 });
 
-const requireOrgContext = (
+const resolveNotificationScope = (
   organizationId: string | null | undefined,
-): string | null => {
-  if (!organizationId) {
-    return null;
+): string | null | undefined => {
+  if (organizationId === undefined) {
+    return undefined;
   }
 
   return organizationId;
 };
+
+const emptyListResponse = (pageSize: number): PaginatedNotificationsResponse => ({
+  notifications: [],
+  meta: {
+    page: 1,
+    pageSize,
+    total: 0,
+    totalPages: 1,
+    unreadCount: 0,
+  },
+});
 
 export const notificationService = {
   createMany: async (inputs: CreateNotificationInput[]): Promise<void> => {
@@ -84,25 +95,16 @@ export const notificationService = {
     organizationId: string | null | undefined,
     rawQuery: Record<string, unknown>,
   ): Promise<PaginatedNotificationsResponse> => {
-    const orgId = requireOrgContext(organizationId);
+    const scope = resolveNotificationScope(organizationId);
 
-    if (!orgId) {
-      return {
-        notifications: [],
-        meta: {
-          page: 1,
-          pageSize: DEFAULT_LIST_QUERY.pageSize,
-          total: 0,
-          totalPages: 1,
-          unreadCount: 0,
-        },
-      };
+    if (scope === undefined) {
+      return emptyListResponse(DEFAULT_LIST_QUERY.pageSize);
     }
 
     const query = parseListQuery(rawQuery);
     const [{ notifications, total }, unreadCount] = await Promise.all([
-      notificationRepository.findPaginated(userId, orgId, query),
-      notificationRepository.countUnread(userId, orgId),
+      notificationRepository.findPaginated(userId, scope, query),
+      notificationRepository.countUnread(userId, scope),
     ]);
 
     const totalPages = Math.max(1, Math.ceil(total / query.pageSize));
@@ -123,13 +125,13 @@ export const notificationService = {
     userId: string,
     organizationId: string | null | undefined,
   ): Promise<UnreadCountResponse> => {
-    const orgId = requireOrgContext(organizationId);
+    const scope = resolveNotificationScope(organizationId);
 
-    if (!orgId) {
+    if (scope === undefined) {
       return { count: 0 };
     }
 
-    const count = await notificationRepository.countUnread(userId, orgId);
+    const count = await notificationRepository.countUnread(userId, scope);
     return { count };
   },
 
@@ -138,16 +140,16 @@ export const notificationService = {
     organizationId: string | null | undefined,
     notificationId: string,
   ) => {
-    const orgId = requireOrgContext(organizationId);
+    const scope = resolveNotificationScope(organizationId);
 
-    if (!orgId) {
+    if (scope === undefined) {
       throw AppError.notFound("Notification not found");
     }
 
     const notification = await notificationRepository.markRead(
       notificationId,
       userId,
-      orgId,
+      scope,
     );
 
     if (!notification) {
@@ -161,13 +163,13 @@ export const notificationService = {
     userId: string,
     organizationId: string | null | undefined,
   ): Promise<{ updated: number }> => {
-    const orgId = requireOrgContext(organizationId);
+    const scope = resolveNotificationScope(organizationId);
 
-    if (!orgId) {
+    if (scope === undefined) {
       return { updated: 0 };
     }
 
-    const updated = await notificationRepository.markAllRead(userId, orgId);
+    const updated = await notificationRepository.markAllRead(userId, scope);
     return { updated };
   },
 };
