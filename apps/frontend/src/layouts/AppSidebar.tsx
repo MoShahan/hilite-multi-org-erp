@@ -113,21 +113,6 @@ export const AppSidebar = () => {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ) : null}
-                {canViewPlatformAudit ? (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={location.pathname.startsWith("/platform/audit")}
-                      tooltip="Platform audit"
-                      className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
-                    >
-                      <NavLink to="/platform/audit">
-                        <History />
-                        <span>Platform audit</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ) : null}
                 {isPlatformAdmin ? (
                   <SidebarMenuItem>
                     <SidebarMenuButton
@@ -156,6 +141,21 @@ export const AppSidebar = () => {
                       <NavLink to="/platform/admins">
                         <Shield />
                         <span>Platform admins</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ) : null}
+                {canViewPlatformAudit ? (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname.startsWith("/platform/audit")}
+                      tooltip="Platform audit"
+                      className="rounded-lg data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:shadow-sm"
+                    >
+                      <NavLink to="/platform/audit">
+                        <History />
+                        <span>Platform audit</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
