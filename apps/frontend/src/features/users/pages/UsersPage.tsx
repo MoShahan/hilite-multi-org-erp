@@ -13,7 +13,8 @@ import {
 } from "@/features/auth/authSelectors";
 import { rolesService } from "@/features/roles/rolesService";
 import { teamsService } from "@/features/teams/teamsService";
-import { PAGE_SIZE_OPTIONS } from "@/lib/pagination";
+import { ApiClientError } from "@/lib/api-client";
+import { PAGE_SIZE_OPTIONS, TABLE_SKELETON_ROW_COUNT } from "@/lib/pagination";
 
 import { CreateUserDialog } from "../components/CreateUserDialog";
 import { UpdateUserStatusDialog } from "../components/UpdateUserStatusDialog";
@@ -66,30 +67,42 @@ export const UsersPage = () => {
   const [teams, setTeams] = useState<TeamFilterOption[]>([]);
 
   useEffect(() => {
-    void rolesService.listRoles().then((allRoles) => {
-      setRoles(
-        allRoles.map((role) => ({
-          id: role.id,
-          name: role.name,
-          slug: role.slug,
-        })),
-      );
-    });
-
-    void teamsService
-      .listTeams({
-        search: "",
-        membership: "ALL",
-        sortBy: "name",
-        sortOrder: "asc",
-        page: 1,
-        pageSize: 100,
-      })
-      .then((result) => {
-        setTeams(
-          result.teams.map((team) => ({ id: team.id, name: team.name })),
+    const loadFilterOptions = async () => {
+      try {
+        const [allRoles, teamsResult] = await Promise.all([
+          rolesService.listRoles(),
+          teamsService.listTeams({
+            search: "",
+            membership: "ALL",
+            sortBy: "name",
+            sortOrder: "asc",
+            page: 1,
+            pageSize: 100,
+          }),
+        ]);
+        setRoles(
+          allRoles.map((role) => ({
+            id: role.id,
+            name: role.name,
+            slug: role.slug,
+          })),
         );
-      });
+        setTeams(
+          teamsResult.teams.map((team) => ({
+            id: team.id,
+            name: team.name,
+          })),
+        );
+      } catch (error) {
+        if (error instanceof ApiClientError) {
+          toast.error(error.message);
+        } else {
+          toast.error("Failed to load filter options");
+        }
+      }
+    };
+
+    void loadFilterOptions();
   }, []);
 
   const handleStatusAction = (user: User) => {
@@ -185,7 +198,7 @@ export const UsersPage = () => {
 
         {isLoading ? (
           <div className="space-y-3">
-            {Array.from({ length: query.pageSize }).map((_, index) => (
+            {Array.from({ length: TABLE_SKELETON_ROW_COUNT }).map((_, index) => (
               <Skeleton key={index} className="h-12 w-full" />
             ))}
           </div>
