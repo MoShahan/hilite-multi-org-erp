@@ -1,22 +1,8 @@
-import { Cell, Pie, PieChart } from "recharts";
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from "@/components/ui/chart";
-
+import { DashboardWidgetCard } from "../DashboardWidgetCard";
 import { LEAD_STATUS_LABELS } from "../../dashboardTypes";
+
+import { ModernPieChart } from "./ModernPieChart";
+import { buildStatusPieConfig } from "./pieChartColors";
 
 import type { StatusBreakdownItem } from "../../dashboardTypes";
 
@@ -24,85 +10,45 @@ type StatusPieChartProps = {
   items: StatusBreakdownItem[];
 };
 
-const STATUS_CHART_COLORS = [
-  "var(--chart-1)",
-  "var(--chart-2)",
-  "var(--chart-3)",
-  "var(--chart-4)",
-  "var(--chart-5)",
-  "var(--chart-1)",
-  "var(--chart-2)",
-];
-
-const buildChartConfig = (items: StatusBreakdownItem[]): ChartConfig =>
-  Object.fromEntries(
-    items.map((item, index) => [
-      item.status,
-      {
-        label: LEAD_STATUS_LABELS[item.status],
-        color: STATUS_CHART_COLORS[index % STATUS_CHART_COLORS.length],
-      },
-    ]),
-  );
-
 export const StatusPieChart = ({ items }: StatusPieChartProps) => {
   if (items.length === 0) {
     return (
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle>Lead status (chart)</CardTitle>
-          <CardDescription>Pie chart of leads by status</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">No leads in scope yet.</p>
-        </CardContent>
-      </Card>
+      <DashboardWidgetCard
+        title="Lead status"
+        description="Distribution of leads across pipeline stages"
+      >
+        <p className="text-sm text-muted-foreground">No leads in scope yet.</p>
+      </DashboardWidgetCard>
     );
   }
 
+  const total = items.reduce((sum, item) => sum + item.count, 0);
+
   const chartData = items.map((item) => ({
-    status: item.status,
+    key: item.status,
     count: item.count,
     percentage: item.percentage,
-    fill: `var(--color-${item.status})`,
   }));
 
-  const chartConfig = buildChartConfig(items);
+  const chartConfig = buildStatusPieConfig(
+    items.map((item) => item.status),
+    LEAD_STATUS_LABELS,
+  );
 
   return (
-    <Card className="shadow-sm">
-      <CardHeader>
-        <CardTitle>Lead status (chart)</CardTitle>
-        <CardDescription>Pie chart of leads by status</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[280px]">
-          <PieChart>
-            <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  hideLabel
-                  formatter={(value, _name, item) =>
-                    `${value} (${item.payload.percentage}%)`
-                  }
-                />
-              }
-            />
-            <Pie
-              data={chartData}
-              dataKey="count"
-              nameKey="status"
-              innerRadius={0}
-              strokeWidth={2}
-            >
-              {chartData.map((entry) => (
-                <Cell key={entry.status} fill={entry.fill} />
-              ))}
-            </Pie>
-            <ChartLegend content={<ChartLegendContent nameKey="status" />} />
-          </PieChart>
-        </ChartContainer>
-      </CardContent>
-    </Card>
+    <DashboardWidgetCard
+      title="Lead status"
+      description="Distribution of leads across pipeline stages"
+    >
+      <ModernPieChart
+        data={chartData}
+        config={chartConfig}
+        total={total}
+        centerLabel={{
+          primary: String(total),
+          secondary: "In pipeline",
+        }}
+      />
+    </DashboardWidgetCard>
   );
 };

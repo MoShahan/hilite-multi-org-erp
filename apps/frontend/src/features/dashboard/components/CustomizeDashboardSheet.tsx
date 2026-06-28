@@ -3,6 +3,7 @@ import {
   closestCenter,
   type DragEndEvent,
   KeyboardSensor,
+  type Modifier,
   PointerSensor,
   useSensor,
   useSensors,
@@ -55,6 +56,11 @@ type SortableWidgetRowProps = {
   description: string;
   onToggleVisible: (key: DashboardLayoutItem["key"], visible: boolean) => void;
 };
+
+const restrictToVerticalAxis: Modifier = ({ transform }) => ({
+  ...transform,
+  x: 0,
+});
 
 const SortableWidgetRow = ({
   item,
@@ -232,6 +238,7 @@ export const CustomizeDashboardSheet = ({
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
+          modifiers={[restrictToVerticalAxis]}
           onDragEnd={handleDragEnd}
         >
           <SortableContext
