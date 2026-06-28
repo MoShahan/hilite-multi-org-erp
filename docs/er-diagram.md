@@ -35,9 +35,9 @@ erDiagram
     users ||--o{ audit_logs : "performs"
 
     organizations {
-        uuid id PK
+        uuid id
         string name
-        string code UK
+        string code
         string logo_url
         string description
         enum status
@@ -46,36 +46,36 @@ erDiagram
     }
 
     organization_modules {
-        uuid organization_id PK_FK
-        enum module_key PK
+        uuid organization_id
+        enum module_key
         boolean enabled
         datetime updated_at
     }
 
     users {
-        uuid id PK
-        string email UK
+        uuid id
+        string email
         string name
         string phone_number
         string password_hash
         boolean must_change_password
         enum status
-        uuid organization_id FK
+        uuid organization_id
         datetime created_at
         datetime updated_at
     }
 
     user_dashboard_layouts {
-        uuid user_id PK_FK
+        uuid user_id
         string view
         json widgets
         datetime updated_at
     }
 
     refresh_tokens {
-        uuid id PK
-        uuid user_id FK
-        string token_hash UK
+        uuid id
+        uuid user_id
+        string token_hash
         uuid family_id
         datetime expires_at
         datetime revoked_at
@@ -83,8 +83,8 @@ erDiagram
     }
 
     roles {
-        uuid id PK
-        uuid organization_id FK
+        uuid id
+        uuid organization_id
         string name
         string slug
         enum membership_scope
@@ -93,64 +93,64 @@ erDiagram
     }
 
     permissions {
-        string key PK
+        string key
         string label
         string description
         enum scope
     }
 
     role_permissions {
-        uuid role_id PK_FK
-        string permission_key PK_FK
+        uuid role_id
+        string permission_key
     }
 
     user_roles {
-        uuid user_id PK_FK
-        uuid role_id PK_FK
+        uuid user_id
+        uuid role_id
     }
 
     teams {
-        uuid id PK
-        uuid organization_id FK
+        uuid id
+        uuid organization_id
         string name
         datetime created_at
         datetime updated_at
     }
 
     team_members {
-        uuid team_id PK_FK
-        uuid user_id PK_FK
+        uuid team_id
+        uuid user_id
     }
 
     leads {
-        uuid id PK
-        uuid organization_id FK
-        uuid team_id FK
-        uuid assigned_to_id FK
+        uuid id
+        uuid organization_id
+        uuid team_id
+        uuid assigned_to_id
         string name
         string mobile_number
         string email
         string source
         string project
         enum status
-        uuid created_by_id FK
+        uuid created_by_id
         datetime created_at
         datetime updated_at
     }
 
     activities {
-        uuid id PK
-        uuid lead_id FK
+        uuid id
+        uuid lead_id
         enum type
         string notes
-        uuid created_by_id FK
+        uuid created_by_id
         datetime created_at
     }
 
     notifications {
-        uuid id PK
-        uuid organization_id FK
-        uuid user_id FK
+        uuid id
+        uuid organization_id
+        uuid user_id
         enum type
         string title
         string body
@@ -161,9 +161,9 @@ erDiagram
     }
 
     audit_logs {
-        uuid id PK
-        uuid organization_id FK
-        uuid actor_id FK
+        uuid id
+        uuid organization_id
+        uuid actor_id
         enum action
         string entity_type
         string entity_id
@@ -178,45 +178,45 @@ erDiagram
 
 ```mermaid
 erDiagram
-    organizations ||--o{ organization_modules : enables
-    organizations ||--o{ users : has
-    organizations ||--o{ roles : defines
-    organizations ||--o{ teams : has
+    organizations ||--o{ organization_modules : "enables"
+    organizations ||--o{ users : "has"
+    organizations ||--o{ roles : "defines"
+    organizations ||--o{ teams : "has"
 ```
 
 ### RBAC
 
 ```mermaid
 erDiagram
-    users ||--o| user_roles : has
-    roles ||--o{ user_roles : assigned to
-    roles ||--o{ role_permissions : grants
-    permissions ||--o{ role_permissions : included in
-    organizations ||--o{ roles : owns
+    users ||--o| user_roles : "has"
+    roles ||--o{ user_roles : "assigned to"
+    roles ||--o{ role_permissions : "grants"
+    permissions ||--o{ role_permissions : "included in"
+    organizations ||--o{ roles : "owns"
 ```
 
 ### Sales CRM
 
 ```mermaid
 erDiagram
-    organizations ||--o{ leads : owns
-    teams ||--o{ leads : scoped to
-    users ||--o{ leads : creates
-    users ||--o{ leads : assigned to
-    leads ||--o{ activities : has
-    users ||--o{ activities : logged by
-    teams ||--o{ team_members : contains
-    users ||--o{ team_members : member of
+    organizations ||--o{ leads : "owns"
+    teams ||--o{ leads : "scoped to"
+    users ||--o{ leads : "creates"
+    users ||--o{ leads : "assigned to"
+    leads ||--o{ activities : "has"
+    users ||--o{ activities : "logged by"
+    teams ||--o{ team_members : "contains"
+    users ||--o{ team_members : "member of"
 ```
 
 ### Notifications and audit
 
 ```mermaid
 erDiagram
-    organizations ||--o{ notifications : scopes
-    organizations ||--o{ audit_logs : scopes
-    users ||--o{ notifications : receives
-    users ||--o{ audit_logs : performs
+    organizations ||--o{ notifications : "scopes"
+    organizations ||--o{ audit_logs : "scopes"
+    users ||--o{ notifications : "receives"
+    users ||--o{ audit_logs : "performs"
 ```
 
 ## Relationship cardinality
