@@ -11,7 +11,7 @@ System architecture for HILITE Sales OS — a multi-tenant Sales ERP MVP.
 
 ## Introduction
 
-HILITE Sales OS is a multi-tenant sales platform that supports multiple organizations with isolated users, teams, leads, and dashboards. Platform administrators manage organizations cross-tenant; org administrators configure users, roles, and teams within their tenant.
+HILITE Sales OS is a multi-tenant sales platform that supports multiple organizations with isolated users, teams, leads, and dashboards. Platform administrators manage organizations and other platform admins cross-tenant; org administrators configure users, roles, and teams within their tenant.
 
 | Layer    | Technology                                                                         |
 | -------- | ---------------------------------------------------------------------------------- |
@@ -118,13 +118,13 @@ The system is organized into three overlapping boundary types: **API route modul
 | Prefix                  | Scope    | Gating                                             | Domain                                   |
 | ----------------------- | -------- | -------------------------------------------------- | ---------------------------------------- |
 | `/api/v1/auth`          | Both     | Public login; authenticated `/me`, `/logout`       | Session bootstrap                        |
-| `/api/v1/platform`      | Platform | `platform:*` permissions                           | Org CRUD, module toggles, platform audit |
+| `/api/v1/platform`      | Platform | `platform:*` permissions                           | Org CRUD, platform admin CRUD, module toggles, platform audit |
 | `/api/v1/users`         | Org      | `users:*`                                          | User management                          |
 | `/api/v1/teams`         | Org      | `teams:*`                                          | Team management                          |
 | `/api/v1/roles`         | Org      | `roles:*`                                          | Role and permission grants               |
 | `/api/v1/leads`         | Org      | `leads:*`, `activities:write` + `sales_erp` module | CRM pipeline                             |
 | `/api/v1/dashboard`     | Org      | Dashboard permissions + `dashboards` module        | Analytics                                |
-| `/api/v1/notifications` | Org      | `notifications` module                             | In-app alerts                            |
+| `/api/v1/notifications` | Both     | Org: `notifications` module; platform users: always | In-app alerts                            |
 | `/api/v1/audit`         | Org      | `audit:read`                                       | Org audit trail                          |
 | `/api/v1/permissions`   | Org      | Authenticated                                      | Permission catalog for role UI           |
 
@@ -134,20 +134,21 @@ Middleware is applied **per route**, not globally. Only protected endpoints requ
 
 Each feature lives under `apps/frontend/src/features/`. Shared global state uses the slice pattern documented in [`store.ts`](../apps/frontend/src/app/store.ts): `service.ts` → `slice.ts` → `selectors.ts` → components.
 
-| Feature           | Redux slice        | Routes                                                                      | Nav visibility                                   |
-| ----------------- | ------------------ | --------------------------------------------------------------------------- | ------------------------------------------------ |
-| **auth**          | `auth`             | `/login`, bootstrap                                                         | N/A                                              |
-| **platform**      | `platform`         | `/platform/organizations`, `/platform/organizations/:id`, `/platform/audit` | Platform group in sidebar                        |
-| **audit**         | `audit`            | `/audit`                                                                    | `audit:read` permission                          |
-| **users**         | `users`            | `/users`                                                                    | `users:read`                                     |
-| **teams**         | `teams`            | `/teams`, `/teams/:id`, `/my-team`                                          | `teams:read` (admin Teams); `users:read:team` + not `teams:read` (My team nav); `users:write:team` (add member) |
-| **leads**         | `leads`            | `/leads`, `/leads/:id`                                                      | `sales_erp` module + any lead read permission    |
-| **notifications** | `notifications`    | `/notifications`                                                            | Notification bell (module-gated; not in sidebar) |
-| **dashboard**     | None (local state) | `/dashboard`                                                                | `dashboards` module                              |
-| **roles**         | None (hooks)       | `/roles`                                                                    | `roles:read` (all org roles); `roles:read:team` (team-assignable roles only, read-only) |
-| **legal**         | None               | `/privacy`, `/terms`                                                        | Public                                           |
+| Feature           | Redux slice        | Routes                                                                                              | Nav visibility                                   |
+| ----------------- | ------------------ | --------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| **auth**          | `auth`             | `/login`, bootstrap                                                                                 | N/A                                              |
+| **account**       | None (local)       | `/account`                                                                                          | User menu                                        |
+| **platform**      | `platform`         | `/platform/organizations`, `/platform/organizations/:id`, `/platform/admins`, `/platform/audit`     | Platform group in sidebar                        |
+| **audit**         | `audit`            | `/audit`                                                                                            | `audit:read` permission                          |
+| **users**         | `users`            | `/users`                                                                                            | `users:read`                                     |
+| **teams**         | `teams`            | `/teams`, `/teams/:id`, `/my-team`                                                                  | `teams:read` (admin Teams); `users:read:team` + not `teams:read` (My team nav); `users:write:team` (add member) |
+| **leads**         | `leads`            | `/leads`, `/leads/:id`                                                                              | `sales_erp` module + any lead read permission    |
+| **notifications** | `notifications`    | `/notifications`                                                                                    | Notification bell (module-gated for org users; always for platform users) |
+| **dashboard**     | None (local state) | `/dashboard`                                                                                        | `dashboards` module + dashboard permission       |
+| **roles**         | None (hooks)       | `/roles`                                                                                            | `roles:write`                                    |
+| **legal**         | None               | `/privacy`, `/terms`                                                                                | Public                                           |
 
-Route guards are defined in [`AppRouter.tsx`](../apps/frontend/src/routes/AppRouter.tsx). Navigation visibility is controlled in [`AppSidebar.tsx`](../apps/frontend/src/layouts/AppSidebar.tsx).
+Route guards are defined in [`AppRouter.tsx`](../apps/frontend/src/routes/AppRouter.tsx). Navigation visibility is controlled in [`AppSidebar.tsx`](../apps/frontend/src/layouts/AppSidebar.tsx). The root path `/` redirects to the first accessible route via [`DefaultLandingRedirect.tsx`](../apps/frontend/src/routes/DefaultLandingRedirect.tsx) and [`defaultLandingPath.ts`](../apps/frontend/src/lib/defaultLandingPath.ts) (dashboard → platform audit → organizations → leads → my team → users → teams → audit → roles → `/home`).
 
 ### Org feature modules (per-tenant toggles)
 
@@ -163,7 +164,7 @@ Enforced by [`requireOrgModule.ts`](../apps/backend/src/middleware/requireOrgMod
 
 ### Boundary rules
 
-1. **Platform vs org** — Platform users (`organizationId: null`) access cross-tenant APIs under `/api/v1/platform/*`. Org users never pass a tenant ID in URLs; the tenant is implicit from the authenticated user context.
+1. **Platform vs org** — Platform users (`organizationId: null`) access cross-tenant APIs under `/api/v1/platform/*` and receive notifications without an org module gate. Org users never pass a tenant ID in URLs; the tenant is implicit from the authenticated user context.
 2. **UI gating is advisory** — Frontend route guards and sidebar visibility improve UX. The backend middleware and service-layer scoping are authoritative.
 3. **Audit vs notifications** — Audit logs are written synchronously by domain services for compliance ([`audit.service.ts`](../apps/backend/src/services/audit.service.ts)). Notifications are async, event-driven user alerts ([`notification.handler.ts`](../apps/backend/src/handlers/notification.handler.ts)).
 
@@ -173,6 +174,7 @@ Enforced by [`requireOrgModule.ts`](../apps/backend/src/middleware/requireOrgMod
 flowchart LR
   subgraph platform [Platform Scope]
     PlatformOrgs[Organizations]
+    PlatformUsers[Platform Admins]
     PlatformAudit[Platform Audit]
   end
   subgraph org [Org Scope]
@@ -339,14 +341,14 @@ User ──(1:1)── UserRoleAssignment ── Role ──(M:N)── Permissi
 
 Seeded from [`defaultRoles.ts`](../apps/backend/src/constants/defaultRoles.ts):
 
-| Role             | Scope                             | Typical permissions                                          |
-| ---------------- | --------------------------------- | ------------------------------------------------------------ |
-| `platform_admin` | Platform (`organizationId: null`) | `platform:orgs:read/write`, `platform:audit:read`            |
-| `org_admin`      | Organization                      | Users, teams, roles (read/write); org-wide leads; audit read |
-| `executive`      | Team (requires team membership)   | Own leads, status write, activities, `dashboard:me`          |
-| `team_lead`      | Team (requires team membership)   | Team Leader — team users / leads in team, team status write, `dashboard:team` |
-| `sales_manager`  | Organization                      | Org-wide leads (read/write)                                    |
-| `director`       | Organization                      | Org-wide leads (read/write), `dashboard:org`                   |
+| Role             | Scope                             | Typical permissions                                                                 |
+| ---------------- | --------------------------------- | ----------------------------------------------------------------------------------- |
+| `platform_admin` | Platform (`organizationId: null`) | `platform:orgs:*`, `platform:users:*`, `platform:audit:read`                        |
+| `org_admin`      | Organization                      | Users, teams, roles (read/write); org-wide leads; `audit:read`                      |
+| `executive`      | Team (requires team membership)   | Own leads, status write, activities, `dashboard:me`                                 |
+| `team_lead`      | Team (requires team membership)   | Team users/leads in team, team status write, `dashboard:team`                         |
+| `sales_manager`  | Organization                      | Org-wide leads (read/write)                                                         |
+| `director`       | Organization                      | Org-wide leads (read/write), `dashboard:org`                                        |
 
 Built-in role slugs are protected from deletion. Custom roles can be created by org admins with permissions from the catalog.
 
@@ -392,11 +394,13 @@ flowchart LR
 
 | Table                             | `organizationId`        | Notes                                                        |
 | --------------------------------- | ----------------------- | ------------------------------------------------------------ |
-| `teams`, `leads`, `notifications` | Required                | Always tenant-scoped                                         |
+| `teams`, `leads`                  | Required                | Always tenant-scoped                                         |
+| `notifications`                   | Nullable                | Set for org-scoped alerts; `null` for platform user alerts   |
 | `organization_modules`            | Required (composite PK) | Per-org feature toggles                                      |
+| `audit_logs`                      | Nullable                | `null` for platform-wide events                              |
 | `users`                           | Nullable                | `null` = platform admin                                      |
 | `roles`                           | Nullable                | `null` = platform-level role                                 |
-| `audit_logs`                      | Nullable                | `null` for platform-wide events (org create, platform login) |
+| `user_dashboard_layouts`          | Via user FK             | Scoped to individual user, not tenant                          |
 
 `activities` are scoped indirectly via `Lead → organizationId`. See [`schema.prisma`](../apps/backend/prisma/schema.prisma) and [ER diagram](er-diagram.md).
 
@@ -404,8 +408,10 @@ flowchart LR
 
 | User type      | `organizationId` | API scope                         | Cross-tenant access                |
 | -------------- | ---------------- | --------------------------------- | ---------------------------------- |
-| Platform admin | `null`           | `/api/v1/platform/*`              | Yes, with `platform:*` permissions |
+| Platform admin | `null`           | `/api/v1/platform/*`, notifications | Yes, with `platform:*` permissions |
 | Org user       | Set              | `/api/v1/{users,teams,leads,...}` | No — implicit tenant from auth     |
+
+Platform administrators are managed via `GET/POST /api/v1/platform/users` and `PATCH /api/v1/platform/users/:id/status` ([`platformUser.service.ts`](../apps/backend/src/services/platformUser.service.ts)). New platform admins are created with `must_change_password = true` and receive a welcome notification.
 
 Platform audit (`GET /api/v1/platform/audit`) can filter across tenants. Org audit (`GET /api/v1/audit`) is limited to the caller's organization.
 
@@ -430,7 +436,7 @@ Notifications use an **event-driven write, REST read (polling)** model. There ar
 
 ### Design rationale
 
-Domain services emit events (`LEAD_CREATED`, `LEAD_ASSIGNED`, etc.) without knowing subscribers. An in-process event bus dispatches to a notification handler that persists in-app alerts. This keeps the MVP simple: notification delivery is lightweight and runs in the same monolith. An external queue can be added later for email or high-volume fan-out.
+Domain services emit events (`LEAD_CREATED`, `LEAD_ASSIGNED`, etc.) without knowing subscribers. An in-process event bus dispatches to a notification handler that persists in-app alerts. Account welcome alerts are created synchronously by [`welcomeNotification.service.ts`](../apps/backend/src/services/welcomeNotification.service.ts) when users are provisioned with a default password or on first login while `must_change_password` is still set.
 
 ### Event pipeline
 
@@ -438,6 +444,8 @@ Domain services emit events (`LEAD_CREATED`, `LEAD_ASSIGNED`, etc.) without know
 flowchart LR
   LeadSvc[lead.service] --> Bus[eventBus]
   ActivitySvc[activity.service] --> Bus
+  UserSvc[user provisioning] --> WelcomeSvc[welcomeNotification.service]
+  WelcomeSvc --> DB[(notifications table)]
   Bus --> Handler[notification.handler]
   Handler --> ModuleGate{notifications module enabled?}
   ModuleGate -->|yes| DB[(notifications table)]
@@ -447,6 +455,7 @@ flowchart LR
 | Step                 | File                                                                                                                                         | Role                                                                                         |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | Event types          | [`domainEvents.ts`](../apps/backend/src/events/domainEvents.ts)                                                                              | `LEAD_CREATED`, `LEAD_ASSIGNED`, `LEAD_REASSIGNED`, `LEAD_STATUS_CHANGED`, `ACTIVITY_LOGGED` |
+| Welcome alerts       | [`welcomeNotification.service.ts`](../apps/backend/src/services/welcomeNotification.service.ts)                                                 | `WELCOME_CHANGE_PASSWORD` — created on user/org-admin/platform-admin provisioning and ensured on login |
 | Emitters             | [`lead.service.ts`](../apps/backend/src/services/lead.service.ts), [`activity.service.ts`](../apps/backend/src/services/activity.service.ts) | Publish after successful DB writes                                                           |
 | Event bus            | [`eventBus.ts`](../apps/backend/src/lib/eventBus.ts)                                                                                         | In-process Node `EventEmitter`; fire-and-forget async handlers                               |
 | Handler registration | [`registerHandlers.ts`](../apps/backend/src/lib/registerHandlers.ts)                                                                         | Wired at server startup                                                                      |
@@ -464,11 +473,16 @@ Handler errors are caught and logged (`safeHandler`); they do not propagate to t
 | `LEAD_STATUS_CHANGED` | Current assignee               | No assignee, or actor is assignee |
 | `ACTIVITY_LOGGED`     | Team leaders                     | Actor is already a team leader      |
 
-All notifications are gated by the `notifications` org module via `organizationModuleService.isModuleEnabled`.
+All lead-event notifications are gated by the `notifications` org module via `organizationModuleService.isModuleEnabled`. Welcome notifications bypass the module gate and are available to all authenticated users (including platform admins without an org context).
 
-### API endpoints
+### API access
 
-Base path: `/api/v1/notifications` (requires auth + `notifications` module).
+Base path: `/api/v1/notifications` (requires auth).
+
+| Caller            | Gating                                                                 |
+| ----------------- | ---------------------------------------------------------------------- |
+| Org user          | `notifications` module must be enabled ([`requireNotificationsAccess.ts`](../apps/backend/src/middleware/requireNotificationsAccess.ts)) |
+| Platform user     | No module gate — org context is absent                                 |
 
 | Method  | Path            | Purpose                                                   |
 | ------- | --------------- | --------------------------------------------------------- |
@@ -513,7 +527,12 @@ sequenceDiagram
 | Focus refresh    | Re-fetches unread count on `window.focus`                                                                                |
 | Dropdown         | Fetches latest 10 on open (not on every poll)                                                                            |
 | Full page        | [`NotificationsPage.tsx`](../apps/frontend/src/features/notifications/pages/NotificationsPage.tsx) with URL query params |
-| UI gating        | Bell shown only when authenticated, org context exists, and `notifications` module is enabled                            |
+| UI gating        | Bell shown when authenticated and (`notifications` module enabled **or** no org context) |
+| Navigation       | Welcome notifications link to `/account` via [`notificationNavigation.ts`](../apps/frontend/src/features/notifications/notificationNavigation.ts) |
+
+### Password change on first login
+
+Users created with a default password (org admin during org provisioning, org users, team members, platform admins) are stored with `must_change_password = true`. On login, [`auth.service.ts`](../apps/backend/src/services/auth.service.ts) ensures a welcome notification exists. Users change their password from **Account** (`/account`) via `POST /api/v1/auth/change-password`, which clears the flag.
 
 ### Limitations
 
