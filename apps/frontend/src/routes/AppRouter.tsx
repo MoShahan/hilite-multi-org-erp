@@ -7,6 +7,7 @@ import { GuestRoute } from "@/features/auth/components/GuestRoute";
 import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
 import { RequirePermission } from "@/features/auth/components/RequirePermission";
 import { AppLayout } from "@/layouts/AppLayout";
+import { DASHBOARD_PERMISSIONS } from "@/constants/permissions";
 import { DefaultLandingRedirect } from "@/routes/DefaultLandingRedirect";
 
 const LoginPage = lazy(() =>
@@ -153,9 +154,14 @@ export const AppRouter = () => {
             <Route
               path="/dashboard"
               element={
-                <AppLayout>
-                  <DashboardPage />
-                </AppLayout>
+                <RequirePermission
+                  permissions={[...DASHBOARD_PERMISSIONS]}
+                  mode="any"
+                >
+                  <AppLayout>
+                    <DashboardPage />
+                  </AppLayout>
+                </RequirePermission>
               }
             />
             <Route
@@ -171,10 +177,7 @@ export const AppRouter = () => {
             <Route
               path="/roles"
               element={
-                <RequirePermission
-                  permissions={["roles:read", "roles:read:team"]}
-                  mode="any"
-                >
+                <RequirePermission permissions={["roles:write"]} mode="any">
                   <AppLayout>
                     <RolesPage />
                   </AppLayout>
