@@ -11,6 +11,7 @@ import {
 } from "../repositories/team.repository";
 import { authUserRepository } from "../repositories/user.repository";
 import { auditService } from "./audit.service";
+import { welcomeNotificationService } from "./welcomeNotification.service";
 import { assertPasswordStrength } from "../lib/password";
 import { authorizeTeamMemberAccess } from "../lib/teamAccess";
 import type { AuditMutationContext } from "../types/audit";
@@ -441,6 +442,12 @@ export const teamService = {
           requestContext: auditContext.requestContext,
         });
       }
+
+      await welcomeNotificationService.notifyNewUser(
+        member.user.id,
+        orgId,
+        member.user.name,
+      );
 
       return { member: toTeamMember(member) };
     } catch (error) {

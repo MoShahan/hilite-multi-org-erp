@@ -55,6 +55,7 @@ enum NotificationType {
   LEAD_REASSIGNED
   LEAD_STATUS_CHANGED
   ACTIVITY_LOGGED
+  WELCOME_CHANGE_PASSWORD
 }
 
 enum ModuleKey {
@@ -130,8 +131,9 @@ model User {
   email          String              @unique
   name           String
   phoneNumber    String?             @map("phone_number")
-  passwordHash   String              @map("password_hash")
-  status         UserStatus          @default(ACTIVE)
+  passwordHash        String              @map("password_hash")
+  mustChangePassword  Boolean             @default(false) @map("must_change_password")
+  status              UserStatus          @default(ACTIVE)
   organizationId String?             @map("organization_id")
   organization   Organization?       @relation(fields: [organizationId], references: [id])
   createdAt      DateTime            @default(now()) @map("created_at")

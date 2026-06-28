@@ -131,6 +131,7 @@ export const organizationRepository = {
           name: data.orgAdmin.name,
           email: data.orgAdmin.email,
           passwordHash: data.orgAdmin.passwordHash,
+          mustChangePassword: true,
           status: UserStatus.ACTIVE,
           organizationId: organization.id,
         },

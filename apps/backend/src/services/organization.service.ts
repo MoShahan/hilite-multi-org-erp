@@ -8,6 +8,7 @@ import {
 } from "../repositories/organization.repository";
 import { authUserRepository } from "../repositories/user.repository";
 import { auditService } from "./audit.service";
+import { welcomeNotificationService } from "./welcomeNotification.service";
 import type { AuditMutationContext } from "../types/audit";
 import type {
   CreateOrganizationInput,
@@ -291,6 +292,18 @@ export const organizationService = {
         },
         requestContext: auditContext.requestContext,
       });
+    }
+
+    const orgAdminUser = await authUserRepository.findByEmail(
+      validated.orgAdmin.email,
+    );
+
+    if (orgAdminUser) {
+      await welcomeNotificationService.notifyNewUser(
+        orgAdminUser.id,
+        organization.id,
+        orgAdminUser.name,
+      );
     }
 
     return toOrganizationResponse(organization);
