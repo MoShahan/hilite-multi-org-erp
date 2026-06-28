@@ -6,7 +6,7 @@ info:
     name: ISC
   description: |
     REST API for **HiLite Sales OS** — a multi-tenant Sales ERP platform with organization isolation,
-    role-based access control (RBAC), module toggles, and event-driven notifications.
+    role-based access control (RBAC), module toggles, platform admin management, and event-driven notifications.
 
     ## Base URL
 
@@ -1344,6 +1344,128 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
 
+  /api/v1/platform/users:
+    get:
+      tags: [Platform]
+      summary: List platform admins
+      description: Returns a paginated list of platform administrator accounts. Requires `platform:users:read`.
+      operationId: listPlatformUsers
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/search"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/UserStatusFilter"
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [name, email, status, createdAt]
+            default: createdAt
+        - $ref: "#/components/parameters/sortOrder"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/pageSize"
+      responses:
+        "200":
+          description: Paginated platform admin list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/PaginatedPlatformUsersResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags: [Platform]
+      summary: Create platform admin
+      description: |
+        Creates a new platform administrator with the `platform_admin` role.
+        The user is created with `must_change_password = true` and receives a welcome notification.
+        Requires `platform:users:write`.
+      operationId: createPlatformUser
+      security:
+        - accessTokenCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePlatformUserRequest"
+      responses:
+        "201":
+          description: Platform admin created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [user]
+                        properties:
+                          user:
+                            $ref: "#/components/schemas/PlatformUserResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/v1/platform/users/{id}/status:
+    patch:
+      tags: [Platform]
+      summary: Update platform admin status
+      description: |
+        Activates or deactivates a platform administrator.
+        Cannot deactivate yourself or the last active platform admin.
+        Requires `platform:users:write`.
+      operationId: updatePlatformUserStatus
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/idPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserStatusRequest"
+      responses:
+        "200":
+          description: Platform admin status updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [user]
+                        properties:
+                          user:
+                            $ref: "#/components/schemas/PlatformUserResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /api/v1/platform/organizations:
     get:
       tags: [Platform]
@@ -1981,6 +2103,7 @@ components:
         - ORG_UPDATED
         - ORG_STATUS_CHANGED
         - ORG_MODULES_UPDATED
+        - PLATFORM_USER_CREATED
 
     AuthRole:
       type: object
@@ -3091,3 +3214,46 @@ components:
           example:
             sales_erp: true
             dashboards: false
+
+    PlatformUserResponse:
+      type: object
+      required: [id, name, email, status, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        status:
+          $ref: "#/components/schemas/UserStatus"
+        createdAt:
+          type: string
+          format: date-time
+
+    PaginatedPlatformUsersResponse:
+      type: object
+      required: [users, meta]
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlatformUserResponse"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    CreatePlatformUserRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          description: Must meet password strength requirements
