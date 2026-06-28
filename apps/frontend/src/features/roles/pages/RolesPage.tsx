@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PERMISSIONS } from "@/constants/permissions";
 import { selectHasPermission } from "@/features/auth/authSelectors";
 import { ApiClientError } from "@/lib/api-client";
+import { TABLE_SKELETON_ROW_COUNT } from "@/lib/pagination";
 
 import { CreateRoleDialog } from "../components/CreateRoleDialog";
 import { DeleteRoleDialog } from "../components/DeleteRoleDialog";
@@ -127,7 +128,7 @@ export const RolesPage = () => {
             {isLoading ? (
               <>
                 <div className="space-y-2 border-r p-4">
-                  {Array.from({ length: 5 }).map((_, index) => (
+                  {Array.from({ length: TABLE_SKELETON_ROW_COUNT }).map((_, index) => (
                     <Skeleton key={index} className="h-10 w-full rounded-lg" />
                   ))}
                 </div>

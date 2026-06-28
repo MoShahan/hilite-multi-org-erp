@@ -138,8 +138,8 @@ export const OrganizationsListToolbar = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 rounded-xl border bg-muted/30 p-3 lg:flex-row lg:items-center">
-        <div className="relative flex-1">
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-muted/30 p-3">
+        <div className="relative min-w-0 flex-1 basis-[180px]">
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={searchInput}
@@ -161,10 +161,12 @@ export const OrganizationsListToolbar = ({
             </button>
           ) : null}
         </div>
-        <StatusFilter
-          value={query.status}
-          onChange={(status) => onQueryChange({ status, page: 1 })}
-        />
+        <div className="shrink-0">
+          <StatusFilter
+            value={query.status}
+            onChange={(status) => onQueryChange({ status, page: 1 })}
+          />
+        </div>
       </div>
       <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
         {total === 0
