@@ -3,8 +3,13 @@ import { activityService } from "../services/activity.service";
 import { leadService } from "../services/lead.service";
 import { requireAuthUser } from "../lib/requireAuthUser";
 import { getAuditRequestContext } from "../lib/auditRequestContext";
-import type { AssignLeadInput, CreateLeadInput, UpdateLeadInput } from "../types/lead";
+import type {
+  AssignLeadInput,
+  CreateLeadInput,
+  UpdateLeadInput,
+} from "../types/lead";
 import type { CreateActivityInput } from "../types/activity";
+import { AppError } from "../utils/AppError";
 
 const getRouteId = (req: Request) => {
   const id = req.params.id;
