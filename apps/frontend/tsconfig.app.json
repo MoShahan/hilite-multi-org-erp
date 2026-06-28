@@ -24,6 +24,5 @@
       "@hilite/shared/*": ["../../packages/shared/src/*"]
     }
   },
-  "include": ["src"],
-  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
+  "include": ["src"]
 }
