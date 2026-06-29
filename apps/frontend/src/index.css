@@ -154,7 +154,3 @@ input.password-input::-webkit-credentials-auto-fill-button,
 input.password-input::-webkit-strong-password-auto-fill-button {
   display: none !important;
 }
-
-.password-input-masked {
-  -webkit-text-security: disc;
-}

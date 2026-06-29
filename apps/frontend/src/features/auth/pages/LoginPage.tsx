@@ -165,7 +165,7 @@ export const LoginPage = () => {
                           <Input
                             type="email"
                             placeholder="you@company.com"
-                            autoComplete="email"
+                            autoComplete="username"
                             className="h-10"
                             {...field}
                           />

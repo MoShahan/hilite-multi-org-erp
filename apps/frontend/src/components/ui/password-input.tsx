@@ -5,10 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-const supportsMaskedText =
-  typeof CSS !== "undefined" &&
-  CSS.supports("-webkit-text-security", "disc");
-
 type PasswordInputProps = Omit<React.ComponentProps<typeof Input>, "type"> & {
   resetToken?: unknown;
 };
@@ -24,18 +20,12 @@ const PasswordInput = ({
     setVisible(false);
   }, [resetToken]);
 
-  const useTextMask = supportsMaskedText && !visible;
-
   return (
     <div className="relative">
       <Input
-        type={visible || useTextMask ? "text" : "password"}
+        type={visible ? "text" : "password"}
         data-slot="password-input"
-        className={cn(
-          "password-input pr-10",
-          useTextMask && "password-input-masked",
-          className,
-        )}
+        className={cn("password-input pr-10", className)}
         {...props}
       />
       <Button
