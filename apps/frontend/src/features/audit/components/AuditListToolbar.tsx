@@ -54,8 +54,8 @@ export const AuditListToolbar = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-muted/30 p-3">
-        <div className="relative min-w-0 flex-1 basis-[180px]">
+      <div className="flex flex-nowrap items-center gap-2 rounded-xl border bg-muted/30 p-3">
+        <div className="relative w-[30%] min-w-0 shrink-0">
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={searchInput}
@@ -80,64 +80,70 @@ export const AuditListToolbar = ({
             </button>
           ) : null}
         </div>
-        <Select
-          value={query.action}
-          onValueChange={(value) =>
-            onPatchQuery({
-              action: value as AuditListQuery["action"],
-              page: 1,
-            })
-          }
-        >
-          <SelectTrigger className="w-44 shrink-0 bg-background/80">
-            <SelectValue placeholder="Action" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">All actions</SelectItem>
-            {AUDIT_ACTION_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={query.entityType}
-          onValueChange={(value) =>
-            onPatchQuery({
-              entityType: value as AuditListQuery["entityType"],
-              page: 1,
-            })
-          }
-        >
-          <SelectTrigger className="w-44 shrink-0 bg-background/80">
-            <SelectValue placeholder="Entity type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">All entities</SelectItem>
-            {AUDIT_ENTITY_TYPE_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Input
-          type="date"
-          value={query.from}
-          onChange={(event) =>
-            onPatchQuery({ from: event.target.value, page: 1 })
-          }
-          className="w-40 shrink-0 bg-background/80 shadow-sm"
-        />
-        <Input
-          type="date"
-          value={query.to}
-          onChange={(event) =>
-            onPatchQuery({ to: event.target.value, page: 1 })
-          }
-          className="w-40 shrink-0 bg-background/80 shadow-sm"
-        />
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <div className="min-w-0 flex-1">
+            <Select
+              value={query.action}
+              onValueChange={(value) =>
+                onPatchQuery({
+                  action: value as AuditListQuery["action"],
+                  page: 1,
+                })
+              }
+            >
+              <SelectTrigger className="h-9 w-full min-w-0 bg-background/80 text-xs">
+                <SelectValue placeholder="Action" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All actions</SelectItem>
+                {AUDIT_ACTION_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="min-w-0 flex-1">
+            <Select
+              value={query.entityType}
+              onValueChange={(value) =>
+                onPatchQuery({
+                  entityType: value as AuditListQuery["entityType"],
+                  page: 1,
+                })
+              }
+            >
+              <SelectTrigger className="h-9 w-full min-w-0 bg-background/80 text-xs">
+                <SelectValue placeholder="Entity type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All entities</SelectItem>
+                {AUDIT_ENTITY_TYPE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Input
+            type="date"
+            value={query.from}
+            onChange={(event) =>
+              onPatchQuery({ from: event.target.value, page: 1 })
+            }
+            className="h-9 min-w-0 flex-1 bg-background/80 px-2 text-xs shadow-sm"
+          />
+          <Input
+            type="date"
+            value={query.to}
+            onChange={(event) =>
+              onPatchQuery({ to: event.target.value, page: 1 })
+            }
+            className="h-9 min-w-0 flex-1 bg-background/80 px-2 text-xs shadow-sm"
+          />
+        </div>
         {hasActiveFilters ? (
           <Button
             variant="ghost"
