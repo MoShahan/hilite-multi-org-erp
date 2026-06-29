@@ -23,6 +23,7 @@ type TeamMembersListToolbarProps = {
   query: TeamMemberListQuery;
   total: number;
   roles: TeamMemberRoleOption[];
+  showRoleFilter: boolean;
   onQueryChange: (patch: Partial<TeamMemberListQuery>) => void;
   onClearFilters: () => void;
 };
@@ -31,6 +32,7 @@ export const TeamMembersListToolbar = ({
   query,
   total,
   roles,
+  showRoleFilter,
   onQueryChange,
   onClearFilters,
 }: TeamMembersListToolbarProps) => {
@@ -82,27 +84,29 @@ export const TeamMembersListToolbar = ({
             </button>
           ) : null}
         </div>
-        <Select
-          value={query.roleId || "all"}
-          onValueChange={(value) =>
-            onQueryChange({
-              roleId: value === "all" ? "" : value,
-              page: 1,
-            })
-          }
-        >
-          <SelectTrigger className="w-44 shrink-0 bg-background/80">
-            <SelectValue placeholder="All roles" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All roles</SelectItem>
-            {roles.map((role) => (
-              <SelectItem key={role.id} value={role.id}>
-                {role.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {showRoleFilter ? (
+          <Select
+            value={query.roleId || "all"}
+            onValueChange={(value) =>
+              onQueryChange({
+                roleId: value === "all" ? "" : value,
+                page: 1,
+              })
+            }
+          >
+            <SelectTrigger className="w-44 shrink-0 bg-background/80">
+              <SelectValue placeholder="All roles" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All roles</SelectItem>
+              {roles.map((role) => (
+                <SelectItem key={role.id} value={role.id}>
+                  {role.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : null}
         {hasFilters ? (
           <Button variant="outline" onClick={onClearFilters} className="shrink-0">
             Clear filters

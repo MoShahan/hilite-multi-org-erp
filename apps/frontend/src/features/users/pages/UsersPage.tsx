@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PERMISSIONS } from "@/constants/permissions";
 import {
   selectAuthUser,
+  selectHasAnyPermission,
   selectHasPermission,
 } from "@/features/auth/authSelectors";
 import { rolesService } from "@/features/roles/rolesService";
@@ -51,6 +52,15 @@ export const UsersPage = () => {
   const dispatch = useAppDispatch();
   const canCreateUser = useAppSelector(selectHasPermission(PERMISSIONS.USERS_WRITE));
   const canManageStatus = useAppSelector(selectHasPermission(PERMISSIONS.USERS_WRITE));
+  const canReadRoles = useAppSelector(
+    selectHasAnyPermission([
+      PERMISSIONS.ROLES_READ,
+      PERMISSIONS.ROLES_READ_TEAM,
+    ]),
+  );
+  const canReadTeams = useAppSelector(
+    selectHasPermission(PERMISSIONS.TEAMS_READ),
+  );
   const currentUser = useAppSelector(selectAuthUser);
   const isUpdatingStatus = useAppSelector(selectIsUsersMutating);
   const { query, patchQuery, clearFilters, refetch } = useUserListQuery();
@@ -67,25 +77,51 @@ export const UsersPage = () => {
   const [teams, setTeams] = useState<TeamFilterOption[]>([]);
 
   useEffect(() => {
-    const loadFilterOptions = async () => {
+    if (!canReadRoles) return;
+
+    const loadRoles = async () => {
       try {
-        const [rolesResult, teamsResult] = await Promise.all([
-          rolesService.listRoleOptions(),
-          teamsService.listTeamOptions(),
-        ]);
-        setRoles(rolesResult.roles);
-        setTeams(teamsResult.teams);
+        const result = await rolesService.listRoleOptions();
+        setRoles(result.roles);
       } catch (error) {
         if (error instanceof ApiClientError) {
           toast.error(error.message);
         } else {
-          toast.error("Failed to load filter options");
+          toast.error("Failed to load roles");
         }
       }
     };
 
-    void loadFilterOptions();
-  }, []);
+    void loadRoles();
+  }, [canReadRoles]);
+
+  useEffect(() => {
+    if (!canReadTeams) return;
+
+    const loadTeams = async () => {
+      try {
+        const result = await teamsService.listTeamOptions();
+        setTeams(result.teams);
+      } catch (error) {
+        if (error instanceof ApiClientError) {
+          toast.error(error.message);
+        } else {
+          toast.error("Failed to load teams");
+        }
+      }
+    };
+
+    void loadTeams();
+  }, [canReadTeams]);
+
+  useEffect(() => {
+    const patch: Partial<typeof query> = {};
+    if (!canReadRoles && query.roleId) patch.roleId = "";
+    if (!canReadTeams && query.teamId) patch.teamId = "";
+    if (Object.keys(patch).length > 0) {
+      patchQuery(patch);
+    }
+  }, [canReadRoles, canReadTeams, query.roleId, query.teamId, patchQuery]);
 
   const handleStatusAction = (user: User) => {
     setSelectedUser(user);
@@ -169,6 +205,8 @@ export const UsersPage = () => {
           total={total}
           roles={roles}
           teams={teams}
+          showRoleFilter={canReadRoles}
+          showTeamFilter={canReadTeams}
           onQueryChange={patchQuery}
         />
 

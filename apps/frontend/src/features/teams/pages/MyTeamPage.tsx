@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PERMISSIONS } from "@/constants/permissions";
 import {
   selectAuthUser,
+  selectHasAnyPermission,
   selectHasPermission,
 } from "@/features/auth/authSelectors";
 import { rolesService } from "@/features/roles/rolesService";
@@ -32,6 +33,12 @@ import type { TeamMemberRoleOption } from "../teamsTypes";
 export const MyTeamPage = () => {
   const authUser = useAppSelector(selectAuthUser);
   const canAddMember = useAppSelector(selectHasPermission(PERMISSIONS.USERS_WRITE_TEAM));
+  const canReadRoles = useAppSelector(
+    selectHasAnyPermission([
+      PERMISSIONS.ROLES_READ,
+      PERMISSIONS.ROLES_READ_TEAM,
+    ]),
+  );
   const teamId = authUser?.team?.id;
   const teamName = authUser?.team?.name;
 
@@ -47,6 +54,8 @@ export const MyTeamPage = () => {
   const [roles, setRoles] = useState<TeamMemberRoleOption[]>([]);
 
   useEffect(() => {
+    if (!canReadRoles) return;
+
     const loadRoles = async () => {
       try {
         const result = await rolesService.listRoleOptions({ assignableFrom: "team" });
@@ -62,7 +71,13 @@ export const MyTeamPage = () => {
     };
 
     void loadRoles();
-  }, []);
+  }, [canReadRoles]);
+
+  useEffect(() => {
+    if (!canReadRoles && query.roleId) {
+      patchQuery({ roleId: "" });
+    }
+  }, [canReadRoles, query.roleId, patchQuery]);
 
   const handleSortChange = (
     sortBy: typeof query.sortBy,
@@ -133,6 +148,7 @@ export const MyTeamPage = () => {
           query={query}
           total={total}
           roles={roles}
+          showRoleFilter={canReadRoles}
           onQueryChange={patchQuery}
           onClearFilters={clearFilters}
         />

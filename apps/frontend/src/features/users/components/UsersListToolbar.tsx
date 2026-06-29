@@ -23,6 +23,8 @@ type UsersListToolbarProps = {
   total: number;
   roles: OrganizationRoleOption[];
   teams: TeamFilterOption[];
+  showRoleFilter: boolean;
+  showTeamFilter: boolean;
   onQueryChange: (patch: Partial<UserListQuery>) => void;
 };
 
@@ -114,6 +116,8 @@ export const UsersListToolbar = ({
   total,
   roles,
   teams,
+  showRoleFilter,
+  showTeamFilter,
   onQueryChange,
 }: UsersListToolbarProps) => {
   const [searchInput, setSearchInput] = useState(query.search);
@@ -169,49 +173,53 @@ export const UsersListToolbar = ({
             onChange={(status) => onQueryChange({ status, page: 1 })}
           />
         </div>
-        <Select
-          value={query.roleId || "all"}
-          onValueChange={(value) =>
-            onQueryChange({
-              roleId: value === "all" ? "" : value,
-              page: 1,
-            })
-          }
-        >
-          <SelectTrigger className="w-40 shrink-0 bg-background/80">
-            <SelectValue placeholder="All roles" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All roles</SelectItem>
-            {roles.map((role) => (
-              <SelectItem key={role.id} value={role.id}>
-                {role.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={query.teamId || "all"}
-          onValueChange={(value) =>
-            onQueryChange({
-              teamId: value === "all" ? "" : value,
-              page: 1,
-            })
-          }
-        >
-          <SelectTrigger className="w-40 shrink-0 bg-background/80">
-            <SelectValue placeholder="All teams" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All teams</SelectItem>
-            <SelectItem value="none">No team</SelectItem>
-            {teams.map((team) => (
-              <SelectItem key={team.id} value={team.id}>
-                {team.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {showRoleFilter ? (
+          <Select
+            value={query.roleId || "all"}
+            onValueChange={(value) =>
+              onQueryChange({
+                roleId: value === "all" ? "" : value,
+                page: 1,
+              })
+            }
+          >
+            <SelectTrigger className="w-40 shrink-0 bg-background/80">
+              <SelectValue placeholder="All roles" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All roles</SelectItem>
+              {roles.map((role) => (
+                <SelectItem key={role.id} value={role.id}>
+                  {role.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : null}
+        {showTeamFilter ? (
+          <Select
+            value={query.teamId || "all"}
+            onValueChange={(value) =>
+              onQueryChange({
+                teamId: value === "all" ? "" : value,
+                page: 1,
+              })
+            }
+          >
+            <SelectTrigger className="w-40 shrink-0 bg-background/80">
+              <SelectValue placeholder="All teams" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All teams</SelectItem>
+              <SelectItem value="none">No team</SelectItem>
+              {teams.map((team) => (
+                <SelectItem key={team.id} value={team.id}>
+                  {team.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : null}
       </div>
       <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
         {total === 0
