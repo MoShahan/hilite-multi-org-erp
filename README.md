@@ -14,13 +14,12 @@ User identity is global (one email per person); org access is modeled via `organ
 From the repository root:
 
 ```powershell
-npm install
 copy apps\backend\.env.example apps\backend\.env
 copy apps\frontend\.env.example apps\frontend\.env
 npm run setup
 ```
 
-`npm run setup` runs `npm install` (workspace root), starts PostgreSQL, runs migrations, regenerates the Prisma client (fallback if migrate did not), and seeds development data.
+`npm run setup` runs `npm ci` (workspace root), starts PostgreSQL, runs migrations, regenerates the Prisma client (fallback if migrate did not), and seeds development data.
 
 This repo uses npm workspaces. Shared constants, types, and Zod schemas live in `packages/shared` (`@hilite/shared`) and are consumed by both apps.
 
