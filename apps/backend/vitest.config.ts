@@ -9,5 +9,10 @@ export default defineConfig({
   },
   test: {
     globals: false,
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.ts"],
+      exclude: ["src/**/*.test.ts", "src/index.ts"],
+    },
   },
 });
