@@ -5,6 +5,7 @@ import {
   selectCanAccessNotifications,
   selectIsAuthenticated,
 } from "@/features/auth/authSelectors";
+
 import { fetchUnreadCount } from "../notificationsSlice";
 
 const POLL_INTERVAL_MS = 60_000;

@@ -1,6 +1,7 @@
-import { PermissionScope } from "../generated/prisma/client";
 import { getPermissionCatalogEntry } from "../constants/permissionMembership";
+import { PermissionScope } from "../generated/prisma/client";
 import { permissionRepository } from "../repositories/permission.repository";
+
 import type { ListPermissionsResponse } from "../types/permission";
 
 export const permissionService = {

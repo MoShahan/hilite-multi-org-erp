@@ -1,13 +1,15 @@
+import { OrganizationStatus, UserStatus } from "../generated/prisma/client";
+import { organizationModuleService } from "../services/organizationModule.service";
+import { AppError } from "../utils/AppError";
+
+import { flattenAuthUser, toAuthMembership } from "./authContext";
+
 import type {
   AuthContext,
   AuthMeResponse,
   AuthOrganization,
   AuthUserIdentity,
 } from "../types/auth";
-import { flattenAuthUser, toAuthMembership } from "./authContext";
-import { organizationModuleService } from "../services/organizationModule.service";
-import { AppError } from "../utils/AppError";
-import { OrganizationStatus, UserStatus } from "../generated/prisma/client";
 
 type MembershipWithRelations = {
   status: UserStatus;

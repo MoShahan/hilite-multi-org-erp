@@ -5,16 +5,16 @@ import { Link, Navigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  selectAuthUser,
-  selectHasAnyPermission,
-  selectHasModule,
-} from "@/features/auth/authSelectors";
 import { ORG_MODULE_KEYS } from "@/constants/orgModules";
 import {
   DASHBOARD_PERMISSIONS,
   LEADS_READ_PERMISSIONS,
 } from "@/constants/permissions";
+import {
+  selectAuthUser,
+  selectHasAnyPermission,
+  selectHasModule,
+} from "@/features/auth/authSelectors";
 import { formatRoleLabel } from "@/lib/format";
 
 import { CustomizeDashboardSheet } from "../components/CustomizeDashboardSheet";

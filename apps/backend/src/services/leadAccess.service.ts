@@ -1,9 +1,12 @@
 import { TERMINAL_LEAD_STAGES } from "@hilite/shared";
-import { LeadStatus, UserStatus } from "../generated/prisma/client";
+
 import { PERMISSIONS } from "../constants/permissions";
-import type { AuthUser } from "../types/auth";
-import { AppError } from "../utils/AppError";
+import { LeadStatus, UserStatus } from "../generated/prisma/client";
 import { prisma } from "../lib/prisma";
+import { AppError } from "../utils/AppError";
+
+import type { AuthUser } from "../types/auth";
+
 
 type LeadAccessRecord = {
   id: string;

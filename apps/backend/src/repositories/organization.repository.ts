@@ -4,13 +4,11 @@ import {
   type Organization,
   type Prisma,
 } from "../generated/prisma/client";
-import {
-  assignPlatformRoleBySlug,
-  seedDefaultRolesForOrg,
-} from "../lib/roleSeeding";
 import { assignOrgMembershipBySlug } from "../lib/orgMembership";
-import { seedDefaultModulesForOrg } from "../lib/seedOrganizationModules";
 import { prisma } from "../lib/prisma";
+import { seedDefaultRolesForOrg } from "../lib/roleSeeding";
+import { seedDefaultModulesForOrg } from "../lib/seedOrganizationModules";
+
 import type {
   OrganizationListSortBy,
   OrganizationListSortOrder,

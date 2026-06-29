@@ -1,4 +1,6 @@
 import { Router } from "express";
+
+import { PERMISSIONS } from "../constants/permissions";
 import {
   createRole,
   deleteRole,
@@ -7,7 +9,6 @@ import {
   listRoles,
   updateRole,
 } from "../controllers/role.controller";
-import { PERMISSIONS } from "../constants/permissions";
 import { authenticate } from "../middleware/authenticate";
 import { requireAnyPermission } from "../middleware/requireAnyPermission";
 import { requirePermission } from "../middleware/requirePermission";

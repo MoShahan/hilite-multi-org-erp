@@ -1,26 +1,29 @@
-import { PermissionScope, RoleMembershipScope } from "../generated/prisma/client";
-import { isOrgWidePermission } from "../constants/permissionMembership";
 import { PROTECTED_ROLE_SLUGS } from "../constants/defaultRoles";
+import { isOrgWidePermission } from "../constants/permissionMembership";
+import { PermissionScope, RoleMembershipScope } from "../generated/prisma/client";
 import { buildActorSnapshot, buildChangeSet } from "../lib/auditHelpers";
-import { permissionRepository } from "../repositories/permission.repository";
 import {
-  roleRepository,
-  type RoleWithPermissions,
-} from "../repositories/role.repository";
+  authorizeRoleDetailAccess,
+  authorizeRoleListAccess,
+} from "../lib/roleAccess";
+import { getRoleAssignmentRules } from "../lib/roleAssignmentRules";
 import {
   parseRoleMembershipScopeQuery,
   toApiRoleMembershipScope,
   toPrismaRoleMembershipScope,
 } from "../lib/roleMembershipScope";
-import { getRoleAssignmentRules } from "../lib/roleAssignmentRules";
+import { permissionRepository } from "../repositories/permission.repository";
 import {
-  authorizeRoleDetailAccess,
-  authorizeRoleListAccess,
-} from "../lib/roleAccess";
+  roleRepository,
+  type RoleWithPermissions,
+} from "../repositories/role.repository";
+import { AppError } from "../utils/AppError";
+
 import { auditService } from "./audit.service";
+
+import type { RoleMembershipScopeValue } from "../constants/defaultRoles";
 import type { AuditMutationContext } from "../types/audit";
 import type { AuthUser } from "../types/auth";
-import type { RoleMembershipScopeValue } from "../constants/defaultRoles";
 import type {
   CreateRoleInput,
   ListRolesQuery,
@@ -31,7 +34,6 @@ import type {
   RoleResponse,
   UpdateRoleInput,
 } from "../types/role";
-import { AppError } from "../utils/AppError";
 
 const SLUG_PATTERN = /^[a-z0-9_]+$/;
 

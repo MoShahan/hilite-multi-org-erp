@@ -4,12 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { PermissionToggleRow } from "./PermissionToggleRow";
 import {
   getMembershipScopeLabel,
   isPermissionDisabledForRole,
   isTeamGrantPermission,
 } from "../permissionScopeUtils";
+
+import { PermissionToggleRow } from "./PermissionToggleRow";
 
 import type { PermissionCatalogItem, Role } from "../rolesTypes";
 

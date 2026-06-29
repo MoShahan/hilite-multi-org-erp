@@ -1,5 +1,6 @@
-import type { Prisma } from "../generated/prisma/client";
 import { prisma } from "../lib/prisma";
+
+import type { Prisma } from "../generated/prisma/client";
 import type { ParsedListActivitiesQuery } from "../types/activity";
 
 const activityInclude = {

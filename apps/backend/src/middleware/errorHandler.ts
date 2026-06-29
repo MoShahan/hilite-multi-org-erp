@@ -1,7 +1,8 @@
-import type { ErrorRequestHandler } from "express";
 import { logger } from "../lib/logger";
-import type { ApiErrorResponse } from "../types/api-response";
 import { AppError } from "../utils/AppError";
+
+import type { ApiErrorResponse } from "../types/api-response";
+import type { ErrorRequestHandler } from "express";
 
 export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   const isAppError = err instanceof AppError;

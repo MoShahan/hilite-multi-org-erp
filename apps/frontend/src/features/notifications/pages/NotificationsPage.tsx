@@ -14,6 +14,7 @@ import { NotificationItem } from "../components/NotificationItem";
 import { NotificationsListToolbar } from "../components/NotificationsListToolbar";
 import { useNotificationListQuery } from "../hooks/useNotificationListQuery";
 import { hasActiveListFilters } from "../notificationListParams";
+import { getNotificationDestination } from "../notificationNavigation";
 import {
   selectNotifications,
   selectNotificationsListError,
@@ -23,7 +24,6 @@ import {
 import { markNotificationRead } from "../notificationsSlice";
 
 import type { Notification } from "../notificationsTypes";
-import { getNotificationDestination } from "../notificationNavigation";
 
 export const NotificationsPage = () => {
   const dispatch = useAppDispatch();

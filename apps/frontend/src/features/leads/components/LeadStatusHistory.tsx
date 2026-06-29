@@ -1,10 +1,11 @@
 import { ArrowRight } from "lucide-react";
 
-import { formatDateTime } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatDateTime } from "@/lib/format";
+
+import { LeadStatusBadge } from "./LeadStatusBadge";
 
 import type { LeadStatusHistoryEntry } from "../leadsTypes";
-import { LeadStatusBadge } from "./LeadStatusBadge";
 
 type LeadStatusHistoryProps = {
   entries: LeadStatusHistoryEntry[];

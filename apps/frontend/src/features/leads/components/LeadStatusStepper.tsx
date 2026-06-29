@@ -2,13 +2,14 @@ import { Check } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import { LEAD_STATUS_BADGE_STYLES } from "./LeadStatusBadge";
 import {
   getLinearStageIndex,
   isTerminalLeadStatus,
   LEAD_STATUS_LABELS,
   LINEAR_LEAD_STAGES,
 } from "../leadStatusPipeline";
+
+import { LEAD_STATUS_BADGE_STYLES } from "./LeadStatusBadge";
 
 import type { LeadStatus } from "../leadsTypes";
 

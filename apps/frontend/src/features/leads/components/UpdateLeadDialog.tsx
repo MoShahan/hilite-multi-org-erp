@@ -23,8 +23,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-import { updateLead } from "../leadsSlice";
 import { updateLeadSchema, type UpdateLeadFormValues } from "../leadFormSchema";
+import { updateLead } from "../leadsSlice";
 
 import type { Lead } from "../leadsTypes";
 

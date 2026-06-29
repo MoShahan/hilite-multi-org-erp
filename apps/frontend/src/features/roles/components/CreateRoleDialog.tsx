@@ -1,8 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -22,15 +22,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import { ApiClientError } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
 
-import { PermissionToggleRow } from "./PermissionToggleRow";
 import {
   filterPermissionsForCreateRole,
   isTeamGrantPermission,
 } from "../permissionScopeUtils";
 import { rolesService } from "../rolesService";
+
+import { PermissionToggleRow } from "./PermissionToggleRow";
 
 import type {
   MembershipScope,

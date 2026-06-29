@@ -10,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import { formatDateTime } from "@/lib/format";
 
 import { AuditActionBadge, AuditDetailRow } from "./AuditDetailRow";

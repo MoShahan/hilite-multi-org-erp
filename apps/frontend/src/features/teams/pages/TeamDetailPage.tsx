@@ -14,8 +14,8 @@ import {
 } from "@/features/auth/authSelectors";
 import { rolesService } from "@/features/roles/rolesService";
 import { UpdateUserStatusDialog } from "@/features/users/components/UpdateUserStatusDialog";
-import { updateUserStatus } from "@/features/users/usersSlice";
 import { selectIsUsersMutating } from "@/features/users/usersSelectors";
+import { updateUserStatus } from "@/features/users/usersSlice";
 import { ApiClientError } from "@/lib/api-client";
 import { PAGE_SIZE_OPTIONS, TABLE_SKELETON_ROW_COUNT } from "@/lib/pagination";
 
@@ -24,7 +24,6 @@ import { TeamMembersListToolbar } from "../components/TeamMembersListToolbar";
 import { TeamMembersTable } from "../components/TeamMembersTable";
 import { useTeamMemberListQuery } from "../hooks/useTeamMemberListQuery";
 import { hasActiveMemberListFilters } from "../teamMemberListParams";
-import { clearSelectedTeam, fetchTeam } from "../teamsSlice";
 import {
   selectSelectedTeam,
   selectTeamDetailError,
@@ -34,6 +33,7 @@ import {
   selectTeamMembersMeta,
   selectTeamMembersStatus,
 } from "../teamsSelectors";
+import { clearSelectedTeam, fetchTeam } from "../teamsSlice";
 
 import type { TeamMember, TeamMemberRoleOption } from "../teamsTypes";
 

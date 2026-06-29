@@ -1,11 +1,6 @@
-import type { ReactNode } from "react";
 
 import { DASHBOARD_WIDGET_KEYS, type DashboardWidgetKey } from "../../dashboardLayoutTypes";
-import type {
-  DashboardSummaryResponse,
-  OrgDashboardSummary,
-  TeamDashboardSummary,
-} from "../../dashboardTypes";
+
 import { AssigneeLeaderboardWidget } from "./AssigneeLeaderboardWidget";
 import { AssigneePerformanceChartWidget } from "./AssigneePerformanceChartWidget";
 import { ConversionChartWidget } from "./ConversionChartWidget";
@@ -20,6 +15,13 @@ import { TopExecutivesWidget } from "./TopExecutivesWidget";
 import { TopTeamsChartWidget } from "./TopTeamsChartWidget";
 import { TopTeamsWidget } from "./TopTeamsWidget";
 import { WinRateChartWidget } from "./WinRateChartWidget";
+
+import type {
+  DashboardSummaryResponse,
+  OrgDashboardSummary,
+  TeamDashboardSummary,
+} from "../../dashboardTypes";
+import type { ReactNode } from "react";
 
 export const renderDashboardWidget = (
   key: DashboardWidgetKey,

@@ -3,14 +3,14 @@ import {
   isAllowedPageSize,
 } from "@/lib/pagination";
 
-import type { MembershipScope } from "@/features/roles/rolesTypes";
-
 import type {
   UserListQuery,
   UserListSortBy,
   UserListSortOrder,
   UserListStatusFilter,
 } from "./usersTypes";
+import type { MembershipScope } from "@/features/roles/rolesTypes";
+
 
 export const DEFAULT_LIST_QUERY: UserListQuery = {
   search: "",

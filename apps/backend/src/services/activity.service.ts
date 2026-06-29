@@ -1,13 +1,19 @@
 import { ActivityType } from "../generated/prisma/client";
-import { eventBus } from "../lib/eventBus";
 import { buildActorSnapshot } from "../lib/auditHelpers";
+import { eventBus } from "../lib/eventBus";
 import {
   activityRepository,
   type ActivityRecord,
 } from "../repositories/activity.repository";
 import { leadRepository } from "../repositories/lead.repository";
 import { auditService } from "../services/audit.service";
-import type { AuditMutationContext } from "../types/audit";
+import { AppError } from "../utils/AppError";
+
+import {
+  assertCanCreateActivity,
+  assertCanReadLead,
+} from "./leadAccess.service";
+
 import type {
   ActivityResponse,
   CreateActivityInput,
@@ -15,12 +21,9 @@ import type {
   PaginatedActivitiesResponse,
   ParsedListActivitiesQuery,
 } from "../types/activity";
-import { AppError } from "../utils/AppError";
+import type { AuditMutationContext } from "../types/audit";
 import type { AuthUser } from "../types/auth";
-import {
-  assertCanCreateActivity,
-  assertCanReadLead,
-} from "./leadAccess.service";
+
 
 const DEFAULT_LIST_QUERY = {
   page: 1,

@@ -10,11 +10,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 import {
   AUDIT_ACTION_OPTIONS,
   AUDIT_ENTITY_TYPE_OPTIONS,
 } from "@/features/audit/auditTypes";
+import { cn } from "@/lib/utils";
 
 import type { OrganizationOption, PlatformAuditListQuery } from "../platformTypes";
 

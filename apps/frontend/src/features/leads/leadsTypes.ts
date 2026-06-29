@@ -1,6 +1,10 @@
-export type { ActivityType, LeadStatus } from "@hilite/shared";
+import {
+  ACTIVITY_TYPE_LABELS,
+  type ActivityType,
+  type LeadStatus,
+} from "@hilite/shared";
 
-import type { ActivityType, LeadStatus } from "@hilite/shared";
+export type { ActivityType, LeadStatus };
 
 export type LeadUserSummary = {
   id: string;
@@ -169,8 +173,6 @@ export type LeadsState = {
 };
 
 export { LEAD_STATUS_FILTER_OPTIONS } from "./leadStatusPipeline";
-
-import { ACTIVITY_TYPE_LABELS } from "@hilite/shared";
 
 export const ACTIVITY_TYPE_OPTIONS: { value: ActivityType; label: string }[] =
   (Object.entries(ACTIVITY_TYPE_LABELS) as [ActivityType, string][]).map(

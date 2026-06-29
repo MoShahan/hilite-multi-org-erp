@@ -3,12 +3,12 @@ import { useSearchParams } from "react-router-dom";
 
 import { useAppDispatch } from "@/app/hooks";
 
+import { fetchPlatformUsers } from "../platformSlice";
 import {
   clearPlatformUserListFilters,
   parsePlatformUserListParams,
   serializePlatformUserListParams,
 } from "../platformUserListParams";
-import { fetchPlatformUsers } from "../platformSlice";
 
 import type { PlatformUserListQuery } from "../platformTypes";
 

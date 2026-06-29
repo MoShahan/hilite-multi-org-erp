@@ -1,7 +1,8 @@
+import { AppError } from "../utils/AppError";
+
 import type { NextFunction, Request, Response } from "express";
 import type { ZodType } from "zod";
 
-import { AppError } from "../utils/AppError";
 
 const toValidationDetails = (error: {
   issues: { path: PropertyKey[]; message: string }[];

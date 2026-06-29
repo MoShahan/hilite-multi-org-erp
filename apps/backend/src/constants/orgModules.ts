@@ -1,9 +1,10 @@
-import { ModuleKey } from "../generated/prisma/client";
 import {
   ALL_ORG_MODULE_KEYS,
   ORG_MODULE_KEYS,
   type OrgModuleKey,
 } from "@hilite/shared";
+
+import { ModuleKey } from "../generated/prisma/client";
 
 export { ALL_ORG_MODULE_KEYS, ORG_MODULE_KEYS, type OrgModuleKey };
 

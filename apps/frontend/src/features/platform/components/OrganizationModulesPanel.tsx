@@ -8,8 +8,9 @@ import { PERMISSIONS } from "@/constants/permissions";
 import { selectHasPermission } from "@/features/auth/authSelectors";
 import { ApiClientError } from "@/lib/api-client";
 
-import { OrgModuleToggleRow } from "./OrgModuleToggleRow";
 import { platformService } from "../platformService";
+
+import { OrgModuleToggleRow } from "./OrgModuleToggleRow";
 
 import type {
   OrganizationModulesMap,

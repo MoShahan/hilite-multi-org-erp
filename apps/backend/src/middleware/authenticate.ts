@@ -1,9 +1,10 @@
-import type { NextFunction, Request, Response } from "express";
 import { ACCESS_TOKEN_COOKIE } from "../config/cookie";
 import { verifyAccessToken } from "../lib/jwt";
 import { authService } from "../services/auth.service";
 import "../types/express";
 import { AppError } from "../utils/AppError";
+
+import type { NextFunction, Request, Response } from "express";
 
 export const authenticate = async (
   req: Request,

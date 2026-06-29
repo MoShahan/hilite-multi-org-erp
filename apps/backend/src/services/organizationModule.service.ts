@@ -7,14 +7,16 @@ import {
 } from "../constants/orgModules";
 import { buildActorSnapshot } from "../lib/auditHelpers";
 import { organizationModuleRepository } from "../repositories/organizationModule.repository";
+import { AppError } from "../utils/AppError";
+
 import { auditService } from "./audit.service";
+
 import type { AuditMutationContext } from "../types/audit";
 import type {
   OrgModulesMap,
   OrgModulesResponse,
   UpdateOrgModulesInput,
 } from "../types/organizationModule";
-import { AppError } from "../utils/AppError";
 
 const buildDefaultModulesMap = (): OrgModulesMap =>
   Object.fromEntries(

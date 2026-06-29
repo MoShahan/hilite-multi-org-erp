@@ -1,8 +1,9 @@
-import type { Permission } from "./permissions";
 import {
   PERMISSION_CATALOG,
   type PermissionCatalogEntry,
 } from "./permissionCatalog";
+
+import type { Permission } from "./permissions";
 
 export type GrantScope = "team" | "org_wide";
 export type ApiGrantScope = GrantScope;

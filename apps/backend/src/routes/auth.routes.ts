@@ -1,9 +1,10 @@
-import { Router } from "express";
 import {
   changePasswordSchema,
   loginSchema,
   updateProfileSchema,
 } from "@hilite/shared";
+import { Router } from "express";
+
 import {
   changePassword,
   getMe,

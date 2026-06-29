@@ -1,8 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { Button } from "@/components/ui/button";
@@ -39,9 +39,9 @@ import {
 import { teamsService } from "@/features/teams/teamsService";
 import { ApiClientError } from "@/lib/api-client";
 
-import { createLead } from "../leadsSlice";
-import { leadsService } from "../leadsService";
 import { createLeadSchema } from "../leadFormSchema";
+import { leadsService } from "../leadsService";
+import { createLead } from "../leadsSlice";
 
 import type { AssigneeOption, TeamFilterOption } from "../leadsTypes";
 

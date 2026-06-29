@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 
-import type { ReactNode } from "react";
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+import { getNotificationDestination } from "../notificationNavigation";
 import {
   selectNotifications,
   selectNotificationsListStatus,
@@ -26,7 +27,7 @@ import {
 import { NotificationItem } from "./NotificationItem";
 
 import type { Notification } from "../notificationsTypes";
-import { getNotificationDestination } from "../notificationNavigation";
+import type { ReactNode } from "react";
 
 type NotificationDropdownProps = {
   open: boolean;

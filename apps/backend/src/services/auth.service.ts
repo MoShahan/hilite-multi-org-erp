@@ -1,30 +1,34 @@
 import { randomUUID } from "node:crypto";
+
 import bcrypt from "bcrypt";
-import { signAccessToken } from "../lib/jwt";
-import { toAuthContext, toAuthMeResponse } from "../lib/authUserMapper";
+
 import {
   assertActiveUser,
   assertUserHasAccess,
   resolveSessionOrgId,
 } from "../lib/authSession";
-import { parseOptionalPhoneNumber } from "../lib/phoneNumber";
+import { toAuthContext, toAuthMeResponse } from "../lib/authUserMapper";
+import { signAccessToken } from "../lib/jwt";
 import { assertPasswordStrength } from "../lib/password";
+import { parseOptionalPhoneNumber } from "../lib/phoneNumber";
 import {
   generateRefreshToken,
   getRefreshTokenExpiresAt,
   hashRefreshToken,
 } from "../lib/refreshToken";
+import { refreshTokenRepository } from "../repositories/refreshToken.repository";
+import { authUserRepository } from "../repositories/user.repository";
+import { AppError } from "../utils/AppError";
+
+import { welcomeNotificationService } from "./welcomeNotification.service";
+
+import type { AuditRequestContext } from "../types/audit";
 import type {
   AuthContext,
   AuthMeResponse,
   ChangePasswordInput,
   UpdateProfileInput,
 } from "../types/auth";
-import type { AuditRequestContext } from "../types/audit";
-import { AppError } from "../utils/AppError";
-import { refreshTokenRepository } from "../repositories/refreshToken.repository";
-import { authUserRepository } from "../repositories/user.repository";
-import { welcomeNotificationService } from "./welcomeNotification.service";
 
 type AuthUserRecord = NonNullable<
   Awaited<ReturnType<typeof authUserRepository.findByEmail>>

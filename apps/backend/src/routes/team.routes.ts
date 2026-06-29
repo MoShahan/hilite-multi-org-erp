@@ -1,5 +1,7 @@
-import { Router } from "express";
 import { createTeamSchema } from "@hilite/shared";
+import { Router } from "express";
+
+import { PERMISSIONS } from "../constants/permissions";
 import {
   createTeam,
   createTeamMember,
@@ -8,7 +10,6 @@ import {
   listTeamOptions,
   listTeams,
 } from "../controllers/team.controller";
-import { PERMISSIONS } from "../constants/permissions";
 import { authenticate } from "../middleware/authenticate";
 import { requireAnyPermission } from "../middleware/requireAnyPermission";
 import { requirePermission } from "../middleware/requirePermission";

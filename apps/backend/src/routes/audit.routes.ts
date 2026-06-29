@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { listOrgAuditLogs } from "../controllers/audit.controller";
+
 import { PERMISSIONS } from "../constants/permissions";
+import { listOrgAuditLogs } from "../controllers/audit.controller";
 import { authenticate } from "../middleware/authenticate";
 import { requirePermission } from "../middleware/requirePermission";
 

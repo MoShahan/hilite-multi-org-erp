@@ -1,6 +1,7 @@
 import { LeadStatus, type Prisma } from "../generated/prisma/client";
 import { sortLeadRowsByStatus } from "../lib/leadStatusSort";
 import { prisma } from "../lib/prisma";
+
 import type { ParsedListLeadsQuery } from "../types/lead";
 
 const leadInclude = {

@@ -8,11 +8,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import { formatDateTime } from "@/lib/format";
 
-import { DashboardWidgetCard } from "./DashboardWidgetCard";
 import { ACTIVITY_TYPE_LABELS } from "../dashboardTypes";
+
+import { DashboardWidgetCard } from "./DashboardWidgetCard";
 
 import type { RecentActivityItem } from "../dashboardTypes";
 

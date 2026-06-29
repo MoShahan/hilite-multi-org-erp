@@ -1,5 +1,6 @@
 import { NotificationType, UserStatus, type Notification } from "../generated/prisma/client";
 import { prisma } from "../lib/prisma";
+
 import type {
   CreateNotificationInput,
   ParsedListNotificationsQuery,

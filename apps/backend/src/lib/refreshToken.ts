@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 
 import { env } from "../config/env";
+
 import { parseDurationToMs } from "./duration";
 
 export const generateRefreshToken = (): string => {

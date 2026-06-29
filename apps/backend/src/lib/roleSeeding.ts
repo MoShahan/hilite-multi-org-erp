@@ -1,10 +1,12 @@
-import type { Prisma } from "../generated/prisma/client";
 import {
   DEFAULT_ORG_ROLES,
   PLATFORM_ROLE,
   type DefaultRoleDefinition,
 } from "../constants/defaultRoles";
+
 import { toPrismaRoleMembershipScope } from "./roleMembershipScope";
+
+import type { Prisma } from "../generated/prisma/client";
 
 type TransactionClient = Prisma.TransactionClient;
 

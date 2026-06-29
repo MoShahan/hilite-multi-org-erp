@@ -12,7 +12,6 @@ import { NavLink, useLocation } from "react-router-dom";
 
 import { useAppSelector } from "@/app/hooks";
 import { HiliteLogo } from "@/components/HiliteLogo";
-import { UserMenu } from "@/components/UserMenu";
 import {
   Sidebar,
   SidebarContent,
@@ -26,6 +25,9 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { UserMenu } from "@/components/UserMenu";
+import { ORG_MODULE_KEYS } from "@/constants/orgModules";
+import { LEADS_READ_PERMISSIONS, PERMISSIONS } from "@/constants/permissions";
 import {
   selectAuthUser,
   selectHasAnyPermission,
@@ -33,8 +35,6 @@ import {
   selectHasPermission,
   selectIsPlatformAdmin,
 } from "@/features/auth/authSelectors";
-import { ORG_MODULE_KEYS } from "@/constants/orgModules";
-import { LEADS_READ_PERMISSIONS, PERMISSIONS } from "@/constants/permissions";
 import { selectCanViewDashboard } from "@/lib/defaultLandingPath";
 
 export const AppSidebar = () => {

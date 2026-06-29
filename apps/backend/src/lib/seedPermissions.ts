@@ -1,5 +1,5 @@
-import { PermissionScope, type Prisma } from "../generated/prisma/client";
 import { PERMISSION_CATALOG } from "../constants/permissionCatalog";
+import { PermissionScope, type Prisma } from "../generated/prisma/client";
 
 type TransactionClient = Prisma.TransactionClient;
 

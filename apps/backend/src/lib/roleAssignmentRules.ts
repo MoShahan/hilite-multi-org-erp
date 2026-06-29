@@ -4,6 +4,7 @@ import {
   type AssignableFromValue,
 } from "../constants/defaultRoles";
 import { RoleMembershipScope } from "../generated/prisma/client";
+
 import { toApiRoleMembershipScope } from "./roleMembershipScope";
 
 export type RoleAssignmentRules = {

@@ -1,6 +1,7 @@
 import { NotificationType } from "../generated/prisma/client";
 import { logger } from "../lib/logger";
 import { notificationRepository } from "../repositories/notification.repository";
+
 import { notificationService } from "./notification.service";
 
 const ACCOUNT_ENTITY_TYPE = "account";

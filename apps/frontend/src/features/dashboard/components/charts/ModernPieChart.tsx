@@ -1,7 +1,7 @@
-import { useId, useState } from "react";
 import { useTheme } from "next-themes";
+import { useId, useState } from "react";
 import { Cell, Label, Pie, PieChart, Sector } from "recharts";
-import type { PieSectorDataItem, PieSectorShapeProps } from "recharts/types/polar/Pie";
+
 
 import {
   ChartContainer,
@@ -12,6 +12,8 @@ import {
 import { cn } from "@/lib/utils";
 
 import { pieGradientStyle, resolvePieGradient } from "./pieChartColors";
+
+import type { PieSectorDataItem, PieSectorShapeProps } from "recharts/types/polar/Pie";
 
 type ModernPieDatum = {
   key: string;

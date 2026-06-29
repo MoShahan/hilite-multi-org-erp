@@ -1,4 +1,3 @@
-import type { DashboardView } from "@hilite/shared";
 import {
   DASHBOARD_WIDGET_KEYS,
   type DashboardLayoutItem,
@@ -6,6 +5,8 @@ import {
   type DashboardWidgetKey,
   type DashboardWidgetWidth,
 } from "@hilite/shared";
+
+import type { DashboardView } from "@hilite/shared";
 
 export {
   DASHBOARD_WIDGET_KEYS,

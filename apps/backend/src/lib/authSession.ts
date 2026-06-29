@@ -1,7 +1,9 @@
 import { OrganizationStatus, UserStatus } from "../generated/prisma/client";
-import { resolveLoginOrgId } from "./orgMembership";
-import type { UserWithAuthRelations } from "./authUserMapper";
 import { AppError } from "../utils/AppError";
+
+import { resolveLoginOrgId } from "./orgMembership";
+
+import type { UserWithAuthRelations } from "./authUserMapper";
 
 export const resolveSessionOrgId = (
   user: UserWithAuthRelations,

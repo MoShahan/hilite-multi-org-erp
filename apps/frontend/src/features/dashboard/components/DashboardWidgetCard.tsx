@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 
 import {
   Card,
@@ -10,6 +9,8 @@ import {
 import { cn } from "@/lib/utils";
 
 import { dashboardWidgetCardClassName } from "./DashboardStatGrid";
+
+import type { ReactNode } from "react";
 
 type DashboardWidgetCardProps = {
   title: string;

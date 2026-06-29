@@ -1,5 +1,4 @@
 import type { OrgModuleKey } from "@/constants/orgModules";
-
 import type {
   AuditListMeta,
   AuditLog,

@@ -1,5 +1,5 @@
-import type { UserStatus } from "../generated/prisma/client";
 import type { RoleMembershipScopeValue } from "../constants/defaultRoles";
+import type { UserStatus } from "../generated/prisma/client";
 
 export type UserRoleSummary = {
   id: string;

@@ -6,13 +6,15 @@ import {
   isValidWidgetKeyForView,
 } from "../constants/dashboardWidgets";
 import { dashboardLayoutRepository } from "../repositories/dashboardLayout.repository";
-import type { DashboardLayoutResponse } from "../types/dashboardLayout";
-import type { AuthUser } from "../types/auth";
 import { AppError } from "../utils/AppError";
+
 import {
   resolveDashboardView,
   type DashboardView,
 } from "./dashboardAccess.service";
+
+import type { AuthUser } from "../types/auth";
+import type { DashboardLayoutResponse } from "../types/dashboardLayout";
 
 const parseStoredWidgets = (value: unknown): DashboardLayoutItem[] => {
   if (!Array.isArray(value)) {

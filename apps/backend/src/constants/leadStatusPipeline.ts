@@ -1,10 +1,11 @@
-import { LeadStatus } from "../generated/prisma/client";
 import {
   getAllowedNextStatuses as getSharedAllowedNextStatuses,
   LEAD_STATUS_LABELS,
   LINEAR_LEAD_STAGES,
   TERMINAL_LEAD_STAGES,
 } from "@hilite/shared";
+
+import { LeadStatus } from "../generated/prisma/client";
 import { AppError } from "../utils/AppError";
 
 export {

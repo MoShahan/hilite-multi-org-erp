@@ -1,24 +1,28 @@
 import bcrypt from "bcrypt";
-import { UserStatus } from "../generated/prisma/client";
-import type { RoleMembershipScopeValue } from "../constants/defaultRoles";
+
 import { PERMISSIONS } from "../constants/permissions";
+import { UserStatus } from "../generated/prisma/client";
 import { buildActorSnapshot } from "../lib/auditHelpers";
 import { assertPasswordStrength } from "../lib/password";
-import { parseRoleMembershipScopeQuery } from "../lib/roleMembershipScope";
 import {
   assertRoleAssignableFrom,
   getRoleAssignmentRules,
 } from "../lib/roleAssignmentRules";
+import { parseRoleMembershipScopeQuery } from "../lib/roleMembershipScope";
 import {
   authUserRepository,
   orgUserRepository,
   type OrgMemberListRecord,
 } from "../repositories/user.repository";
-import { getCallerTeamId } from "./leadAccess.service";
+import { AppError } from "../utils/AppError";
+
 import { auditService } from "./audit.service";
+import { getCallerTeamId } from "./leadAccess.service";
 import { welcomeNotificationService } from "./welcomeNotification.service";
-import type { AuthUser } from "../types/auth";
+
+import type { RoleMembershipScopeValue } from "../constants/defaultRoles";
 import type { AuditMutationContext } from "../types/audit";
+import type { AuthUser } from "../types/auth";
 import type {
   CreateUserInput,
   ListUserOptionsQuery,
@@ -35,7 +39,6 @@ import type {
   UserOptionsResponse,
   UpdateUserStatusInput,
 } from "../types/user";
-import { AppError } from "../utils/AppError";
 
 const SALT_ROUNDS = 10;
 

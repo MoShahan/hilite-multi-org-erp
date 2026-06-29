@@ -1,6 +1,7 @@
-import type { Prisma } from "../generated/prisma/client";
 import { UserStatus } from "../generated/prisma/client";
 import { AppError } from "../utils/AppError";
+
+import type { Prisma } from "../generated/prisma/client";
 
 type TransactionClient = Prisma.TransactionClient;
 

@@ -1,6 +1,8 @@
-import type { CookieOptions } from "express";
-import { env } from "./env";
 import { parseDurationToMs } from "../lib/duration";
+
+import { env } from "./env";
+
+import type { CookieOptions } from "express";
 
 export const ACCESS_TOKEN_COOKIE = "access_token";
 export const REFRESH_TOKEN_COOKIE = "refresh_token";

@@ -1,5 +1,14 @@
 import { LeadStatus } from "../generated/prisma/client";
 import { dashboardRepository } from "../repositories/dashboard.repository";
+import { AppError } from "../utils/AppError";
+
+import {
+  isNeedsAttentionStatus,
+  resolveDashboardLeadScope,
+  resolveDashboardView,
+} from "./dashboardAccess.service";
+
+import type { AuthUser } from "../types/auth";
 import type {
   AssigneeLeadStats,
   ConversionMetrics,
@@ -11,14 +20,6 @@ import type {
   TeamDashboardSummary,
   TeamLeadStats,
 } from "../types/dashboard";
-import type { AuthUser } from "../types/auth";
-import { AppError } from "../utils/AppError";
-import {
-  isClosedStatus,
-  isNeedsAttentionStatus,
-  resolveDashboardLeadScope,
-  resolveDashboardView,
-} from "./dashboardAccess.service";
 
 const ALL_STATUSES = Object.values(LeadStatus);
 

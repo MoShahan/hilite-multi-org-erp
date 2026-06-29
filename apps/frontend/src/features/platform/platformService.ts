@@ -1,10 +1,9 @@
+import { toPlatformAuditListApiParams } from "@/features/audit/auditListParams";
 import { apiClient, unwrapResponse } from "@/lib/api-client";
 
 import { toOrganizationListApiParams } from "./organizationListParams";
 import { toPlatformUserListApiParams } from "./platformUserListParams";
-import { toPlatformAuditListApiParams } from "@/features/audit/auditListParams";
 
-import type { ListAuditLogsResult } from "@/features/audit/auditTypes";
 import type {
   CreateOrganizationInput,
   CreatePlatformUserInput,
@@ -22,6 +21,7 @@ import type {
   UpdatePlatformUserStatusInput,
   UpdateOrganizationInput,
 } from "./platformTypes";
+import type { ListAuditLogsResult } from "@/features/audit/auditTypes";
 
 export const platformService = {
   listOrganizations: async (

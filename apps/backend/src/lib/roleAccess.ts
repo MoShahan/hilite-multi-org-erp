@@ -1,9 +1,12 @@
-import { RoleMembershipScope } from "../generated/prisma/client";
 import { PERMISSIONS } from "../constants/permissions";
+import { RoleMembershipScope } from "../generated/prisma/client";
+import { AppError } from "../utils/AppError";
+
 import { getRoleAssignmentRules } from "./roleAssignmentRules";
+
 import type { AuthUser } from "../types/auth";
 import type { ListRolesQuery } from "../types/role";
-import { AppError } from "../utils/AppError";
+
 
 const hasPermission = (user: AuthUser, permission: string) =>
   user.permissions.includes(permission);

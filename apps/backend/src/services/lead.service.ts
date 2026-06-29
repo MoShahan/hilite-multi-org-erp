@@ -1,14 +1,27 @@
-import { LeadStatus } from "../generated/prisma/client";
 import { assertValidStatusTransition } from "../constants/leadStatusPipeline";
-import { eventBus } from "../lib/eventBus";
+import { LeadStatus } from "../generated/prisma/client";
 import { buildActorSnapshot, buildChangeSet } from "../lib/auditHelpers";
-import { buildLeadStatusHistory } from "../lib/leadStatusHistory";
 import { parseOptionalEmail } from "../lib/email";
+import { eventBus } from "../lib/eventBus";
+import { buildLeadStatusHistory } from "../lib/leadStatusHistory";
 import { parseRequiredPhoneNumber } from "../lib/phoneNumber";
-import { leadRepository, type LeadRecord } from "../repositories/lead.repository";
 import { auditRepository } from "../repositories/audit.repository";
+import { leadRepository, type LeadRecord } from "../repositories/lead.repository";
 import { auditService } from "../services/audit.service";
+import { AppError } from "../utils/AppError";
+
+import {
+  assertAssigneeEligible,
+  assertCanReadLead,
+  assertCanReassignLead,
+  assertCanUpdateLeadStatus,
+  assertCanWriteLead,
+  resolveCreateTeamId,
+  resolveLeadListScope,
+} from "./leadAccess.service";
+
 import type { AuditMutationContext } from "../types/audit";
+import type { AuthUser } from "../types/auth";
 import type {
   AssignLeadInput,
   CreateLeadInput,
@@ -22,17 +35,6 @@ import type {
   LeadStatusHistoryResponse,
   UpdateLeadInput,
 } from "../types/lead";
-import { AppError } from "../utils/AppError";
-import {
-  assertAssigneeEligible,
-  assertCanReadLead,
-  assertCanReassignLead,
-  assertCanUpdateLeadStatus,
-  assertCanWriteLead,
-  resolveCreateTeamId,
-  resolveLeadListScope,
-} from "./leadAccess.service";
-import type { AuthUser } from "../types/auth";
 
 const DEFAULT_LIST_QUERY = {
   status: "ALL" as LeadListStatusFilter,

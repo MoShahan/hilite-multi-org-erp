@@ -1,5 +1,5 @@
-import { DashboardStatCard, DashboardStatGrid } from "../DashboardStatGrid";
 import { ConversionStatCard } from "../ConversionStatCard";
+import { DashboardStatCard, DashboardStatGrid } from "../DashboardStatGrid";
 
 import type { DashboardSummaryResponse } from "../../dashboardTypes";
 

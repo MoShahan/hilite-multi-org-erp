@@ -3,9 +3,9 @@ import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 import { z } from "zod";
 
-import { toast } from "sonner";
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { EntityAvatar } from "@/components/EntityAvatar";
@@ -27,25 +27,25 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import { ApiClientError } from "@/lib/api-client";
 import { formatDateTime } from "@/lib/format";
-import { Textarea } from "@/components/ui/textarea";
 
-import { OrganizationStatusBadge } from "../components/OrganizationStatusBadge";
 import { OrganizationModulesPanel } from "../components/OrganizationModulesPanel";
+import { OrganizationStatusBadge } from "../components/OrganizationStatusBadge";
 import { SuspendOrganizationDialog } from "../components/SuspendOrganizationDialog";
-import {
-  clearSelectedOrganization,
-  fetchOrganization,
-  updateOrganization,
-  updateOrganizationStatus,
-} from "../platformSlice";
 import {
   selectIsPlatformMutating,
   selectOrganizationDetailError,
   selectOrganizationDetailStatus,
   selectSelectedOrganization,
 } from "../platformSelectors";
+import {
+  clearSelectedOrganization,
+  fetchOrganization,
+  updateOrganization,
+  updateOrganizationStatus,
+} from "../platformSlice";
 
 const codePattern = /^[a-z0-9-]+$/;
 

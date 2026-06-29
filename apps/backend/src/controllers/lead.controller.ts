@@ -1,15 +1,15 @@
-import type { NextFunction, Request, Response } from "express";
+import { getAuditRequestContext } from "../lib/auditRequestContext";
+import { requireAuthUser } from "../lib/requireAuthUser";
 import { activityService } from "../services/activity.service";
 import { leadService } from "../services/lead.service";
-import { requireAuthUser } from "../lib/requireAuthUser";
-import { getAuditRequestContext } from "../lib/auditRequestContext";
+
+import type { CreateActivityInput } from "../types/activity";
 import type {
   AssignLeadInput,
   CreateLeadInput,
   UpdateLeadInput,
 } from "../types/lead";
-import type { CreateActivityInput } from "../types/activity";
-import { AppError } from "../utils/AppError";
+import type { NextFunction, Request, Response } from "express";
 
 const getRouteId = (req: Request) => {
   const id = req.params.id;

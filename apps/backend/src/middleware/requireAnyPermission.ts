@@ -1,7 +1,8 @@
-import type { NextFunction, Request, Response } from "express";
 import { getMembershipPermissions } from "../lib/authContext";
 import "../types/express";
 import { AppError } from "../utils/AppError";
+
+import type { NextFunction, Request, Response } from "express";
 
 export const requireAnyPermission =
   (...permissions: string[]) =>

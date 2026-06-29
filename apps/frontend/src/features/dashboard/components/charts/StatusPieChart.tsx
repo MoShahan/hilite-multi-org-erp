@@ -1,5 +1,5 @@
-import { DashboardWidgetCard } from "../DashboardWidgetCard";
 import { LEAD_STATUS_LABELS } from "../../dashboardTypes";
+import { DashboardWidgetCard } from "../DashboardWidgetCard";
 
 import { ModernPieChart } from "./ModernPieChart";
 import { buildStatusPieConfig } from "./pieChartColors";

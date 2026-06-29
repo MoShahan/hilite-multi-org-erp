@@ -1,5 +1,5 @@
-import type { RequestHandler, Response } from "express";
 import type { ApiSuccessResponse } from "../types/api-response";
+import type { RequestHandler, Response } from "express";
 
 const isFormattedResponse = (body: unknown): boolean => {
   return (

@@ -1,6 +1,6 @@
+import type { LeadUserSummary } from "./lead";
 import type { ActivityType } from "../generated/prisma/client";
 
-import type { LeadUserSummary } from "./lead";
 
 export type ActivityResponse = {
   id: string;

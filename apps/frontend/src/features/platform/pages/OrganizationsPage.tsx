@@ -1,6 +1,5 @@
 import { Building2, Plus } from "lucide-react";
 import { useState } from "react";
-
 import { toast } from "sonner";
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
@@ -16,13 +15,13 @@ import { OrganizationsTable } from "../components/OrganizationsTable";
 import { SuspendOrganizationDialog } from "../components/SuspendOrganizationDialog";
 import { useOrganizationListQuery } from "../hooks/useOrganizationListQuery";
 import { hasActiveListFilters } from "../organizationListParams";
-import { updateOrganizationStatus } from "../platformSlice";
 import {
   selectOrganizations,
   selectOrganizationsListError,
   selectOrganizationsListMeta,
   selectOrganizationsListStatus,
 } from "../platformSelectors";
+import { updateOrganizationStatus } from "../platformSlice";
 
 import type { Organization } from "../platformTypes";
 

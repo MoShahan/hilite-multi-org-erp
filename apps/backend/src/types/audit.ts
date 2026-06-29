@@ -1,5 +1,5 @@
-import type { AuditAction } from "../generated/prisma/client";
 import type { AuthUser } from "./auth";
+import type { AuditAction } from "../generated/prisma/client";
 
 export type AuditEntityType =
   | "auth"

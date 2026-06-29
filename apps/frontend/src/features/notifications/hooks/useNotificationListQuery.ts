@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import { selectHasModule } from "@/features/auth/authSelectors";
 import { ORG_MODULE_KEYS } from "@/constants/orgModules";
+import { selectHasModule } from "@/features/auth/authSelectors";
 
 import {
   clearListFilters,

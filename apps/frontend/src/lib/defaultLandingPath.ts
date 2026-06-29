@@ -1,15 +1,16 @@
-import type { RootState } from "@/app/store";
-import {
-  selectHasAnyPermission,
-  selectHasModule,
-  selectIsPlatformAdmin,
-} from "@/features/auth/authSelectors";
 import { ORG_MODULE_KEYS } from "@/constants/orgModules";
 import {
   DASHBOARD_PERMISSIONS,
   LEADS_READ_PERMISSIONS,
   PERMISSIONS,
 } from "@/constants/permissions";
+import {
+  selectHasAnyPermission,
+  selectHasModule,
+  selectIsPlatformAdmin,
+} from "@/features/auth/authSelectors";
+
+import type { RootState } from "@/app/store";
 
 export const selectCanViewDashboard = (state: RootState) =>
   selectHasModule(ORG_MODULE_KEYS.DASHBOARDS)(state) &&

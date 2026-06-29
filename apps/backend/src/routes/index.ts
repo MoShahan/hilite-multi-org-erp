@@ -1,14 +1,15 @@
 import { Router } from "express";
+
+import auditRoutes from "./audit.routes";
 import authRoutes from "./auth.routes";
+import dashboardRoutes from "./dashboard.routes";
+import leadRoutes from "./lead.routes";
+import notificationRoutes from "./notification.routes";
 import permissionRoutes from "./permission.routes";
 import platformRoutes from "./platform.routes";
 import roleRoutes from "./role.routes";
 import teamRoutes from "./team.routes";
 import userRoutes from "./user.routes";
-import leadRoutes from "./lead.routes";
-import notificationRoutes from "./notification.routes";
-import dashboardRoutes from "./dashboard.routes";
-import auditRoutes from "./audit.routes";
 
 const router = Router();
 

@@ -1,5 +1,5 @@
-import { PermissionScope } from "../generated/prisma/client";
 import { PERMISSION_CATALOG_ORDER } from "../constants/permissionCatalog";
+import { PermissionScope } from "../generated/prisma/client";
 import { prisma } from "../lib/prisma";
 
 export const permissionRepository = {

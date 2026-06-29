@@ -1,5 +1,6 @@
-import type { Prisma, RoleMembershipScope } from "../generated/prisma/client";
 import { prisma } from "../lib/prisma";
+
+import type { Prisma, RoleMembershipScope } from "../generated/prisma/client";
 
 const roleWithPermissionsInclude = {
   permissions: {

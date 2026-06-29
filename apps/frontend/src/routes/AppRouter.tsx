@@ -2,13 +2,13 @@ import { lazy, Suspense, type ReactNode } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import { PageSkeleton } from "@/components/PageSkeleton";
+import { DASHBOARD_PERMISSIONS } from "@/constants/permissions";
 import { AuthBootstrap } from "@/features/auth/components/AuthBootstrap";
-import { SessionExpiredHandler } from "@/features/auth/components/SessionExpiredHandler";
 import { GuestRoute } from "@/features/auth/components/GuestRoute";
 import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
 import { RequirePermission } from "@/features/auth/components/RequirePermission";
+import { SessionExpiredHandler } from "@/features/auth/components/SessionExpiredHandler";
 import { AppLayout } from "@/layouts/AppLayout";
-import { DASHBOARD_PERMISSIONS } from "@/constants/permissions";
 import { DefaultLandingRedirect } from "@/routes/DefaultLandingRedirect";
 
 const LoginPage = lazy(() =>

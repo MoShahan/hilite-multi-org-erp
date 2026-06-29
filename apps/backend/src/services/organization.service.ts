@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+
 import { OrganizationStatus } from "../generated/prisma/client";
 import { buildActorSnapshot, buildChangeSet } from "../lib/auditHelpers";
 import { assertPasswordStrength } from "../lib/password";
@@ -7,12 +8,14 @@ import {
   type OrganizationWithUserCount,
 } from "../repositories/organization.repository";
 import { authUserRepository } from "../repositories/user.repository";
+import { AppError } from "../utils/AppError";
+
 import { auditService } from "./audit.service";
 import { welcomeNotificationService } from "./welcomeNotification.service";
+
 import type { AuditMutationContext } from "../types/audit";
 import type {
   CreateOrganizationInput,
-  ListOrganizationsQuery,
   OrganizationListSortBy,
   OrganizationListSortOrder,
   OrganizationListStatusFilter,
@@ -24,7 +27,6 @@ import type {
   UpdateOrganizationInput,
   UpdateOrganizationStatusInput,
 } from "../types/organization";
-import { AppError } from "../utils/AppError";
 
 const SALT_ROUNDS = 10;
 const CODE_PATTERN = /^[a-z0-9-]+$/;

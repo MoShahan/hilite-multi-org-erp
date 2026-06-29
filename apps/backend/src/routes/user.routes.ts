@@ -1,7 +1,8 @@
-import { Router } from "express";
 import { createUserSchema } from "@hilite/shared";
-import { createUser, listUserOptions, listUsers, updateUserStatus } from "../controllers/user.controller";
+import { Router } from "express";
+
 import { PERMISSIONS } from "../constants/permissions";
+import { createUser, listUserOptions, listUsers, updateUserStatus } from "../controllers/user.controller";
 import { authenticate } from "../middleware/authenticate";
 import { requireAnyPermission } from "../middleware/requireAnyPermission";
 import { requirePermission } from "../middleware/requirePermission";

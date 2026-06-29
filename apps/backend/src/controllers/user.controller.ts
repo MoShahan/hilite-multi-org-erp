@@ -1,8 +1,9 @@
-import type { NextFunction, Request, Response } from "express";
-import { orgUserService } from "../services/user.service";
-import { requireAuthUser } from "../lib/requireAuthUser";
 import { getAuditRequestContext } from "../lib/auditRequestContext";
+import { requireAuthUser } from "../lib/requireAuthUser";
+import { orgUserService } from "../services/user.service";
+
 import type { CreateUserInput, UpdateUserStatusInput } from "../types/user";
+import type { NextFunction, Request, Response } from "express";
 
 const getRouteId = (req: Request) => {
   const id = req.params.id;

@@ -3,8 +3,8 @@ import { render, renderHook } from "@testing-library/react";
 import { Provider } from "react-redux";
 import { MemoryRouter } from "react-router-dom";
 
-import { authReducer } from "@/features/auth/authSlice";
 import { auditReducer } from "@/features/audit/auditSlice";
+import { authReducer } from "@/features/auth/authSlice";
 import { dashboardReducer } from "@/features/dashboard/dashboardSlice";
 import { leadsReducer } from "@/features/leads/leadsSlice";
 import { notificationsReducer } from "@/features/notifications/notificationsSlice";
@@ -13,8 +13,8 @@ import { teamsReducer } from "@/features/teams/teamsSlice";
 import { usersReducer } from "@/features/users/usersSlice";
 
 import type { RootState } from "@/app/store";
-import type { ReactElement, ReactNode } from "react";
 import type { RenderHookOptions, RenderHookResult } from "@testing-library/react";
+import type { ReactElement, ReactNode } from "react";
 
 type DeepPartial<T> = {
   [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];

@@ -1,8 +1,9 @@
-import type { NextFunction, Request, Response } from "express";
-import type { DashboardLayoutUpdateInput } from "@hilite/shared";
+import { requireAuthUser } from "../lib/requireAuthUser";
 import { dashboardService } from "../services/dashboard.service";
 import { dashboardLayoutService } from "../services/dashboardLayout.service";
-import { requireAuthUser } from "../lib/requireAuthUser";
+
+import type { DashboardLayoutUpdateInput } from "@hilite/shared";
+import type { NextFunction, Request, Response } from "express";
 
 export const getDashboardSummary = async (
   req: Request,

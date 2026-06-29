@@ -1,10 +1,11 @@
 import { apiClient, unwrapResponse } from "@/lib/api-client";
-import type { AuthMeResponse } from "@/features/auth/authTypes";
 
 import type {
   ChangePasswordPayload,
   UpdateProfilePayload,
 } from "./accountTypes";
+import type { AuthMeResponse } from "@/features/auth/authTypes";
+
 
 export const accountService = {
   updateProfile: async (

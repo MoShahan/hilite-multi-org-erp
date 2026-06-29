@@ -1,12 +1,15 @@
 import {
-  ActivityType,
-  LeadStatus,
-  NotificationType,
-} from "../generated/prisma/client";
-import {
   ACTIVITY_TYPE_NOTIFY_LABELS,
   LEAD_STATUS_LABELS,
 } from "@hilite/shared";
+
+import { ORG_MODULE_KEYS } from "../constants/orgModules";
+import { NotificationType } from "../generated/prisma/client";
+import { logger } from "../lib/logger";
+import { notificationRepository } from "../repositories/notification.repository";
+import { notificationService } from "../services/notification.service";
+import { organizationModuleService } from "../services/organizationModule.service";
+
 import type {
   ActivityLoggedEvent,
   LeadAssignedEvent,
@@ -14,11 +17,6 @@ import type {
   LeadReassignedEvent,
   LeadStatusChangedEvent,
 } from "../events/domainEvents";
-import { ORG_MODULE_KEYS } from "../constants/orgModules";
-import { logger } from "../lib/logger";
-import { notificationRepository } from "../repositories/notification.repository";
-import { notificationService } from "../services/notification.service";
-import { organizationModuleService } from "../services/organizationModule.service";
 import type { CreateNotificationInput } from "../types/notification";
 
 const LEAD_ENTITY_TYPE = "lead";

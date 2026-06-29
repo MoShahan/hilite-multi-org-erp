@@ -1,9 +1,10 @@
-import type { NextFunction, Request, Response } from "express";
 import { expect, vi, type Mock } from "vitest";
 
 import { OrganizationStatus } from "../generated/prisma/client";
-import type { AuthContext, AuthUser } from "../types/auth";
 import { AppError } from "../utils/AppError";
+
+import type { AuthContext, AuthUser } from "../types/auth";
+import type { NextFunction, Request, Response } from "express";
 
 export const baseAuthUser = (overrides?: Partial<AuthUser>): AuthUser => ({
   id: "user-1",

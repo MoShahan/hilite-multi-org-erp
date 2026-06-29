@@ -1,5 +1,7 @@
-import type { Notification } from "../generated/prisma/client";
 import { notificationRepository } from "../repositories/notification.repository";
+import { AppError } from "../utils/AppError";
+
+import type { Notification } from "../generated/prisma/client";
 import type {
   CreateNotificationInput,
   ListNotificationsQuery,
@@ -7,7 +9,7 @@ import type {
   ParsedListNotificationsQuery,
   UnreadCountResponse,
 } from "../types/notification";
-import { AppError } from "../utils/AppError";
+
 
 const DEFAULT_LIST_QUERY = {
   unreadOnly: false,

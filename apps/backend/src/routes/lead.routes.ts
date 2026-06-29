@@ -1,10 +1,13 @@
-import { Router } from "express";
 import {
   assignLeadSchema,
   createActivitySchema,
   createLeadSchema,
   updateLeadSchema,
 } from "@hilite/shared";
+import { Router } from "express";
+
+import { ORG_MODULE_KEYS } from "../constants/orgModules";
+import { PERMISSIONS } from "../constants/permissions";
 import {
   assignLead,
   createActivity,
@@ -15,8 +18,6 @@ import {
   listStatusHistory,
   updateLead,
 } from "../controllers/lead.controller";
-import { PERMISSIONS } from "../constants/permissions";
-import { ORG_MODULE_KEYS } from "../constants/orgModules";
 import { authenticate } from "../middleware/authenticate";
 import { requireAnyPermission } from "../middleware/requireAnyPermission";
 import { requireOrgModule } from "../middleware/requireOrgModule";

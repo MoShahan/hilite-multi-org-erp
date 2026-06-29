@@ -1,6 +1,7 @@
-import type { NextFunction, Request, Response } from "express";
 import { permissionService } from "../services/permission.service";
 import { AppError } from "../utils/AppError";
+
+import type { NextFunction, Request, Response } from "express";
 
 export const listPermissions = async (
   _req: Request,

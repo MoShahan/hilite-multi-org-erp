@@ -5,31 +5,24 @@ import { Link, Navigate, useLocation, useNavigate, useParams } from "react-route
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ORG_MODULE_KEYS } from "@/constants/orgModules";
+import { PERMISSIONS } from "@/constants/permissions";
 import {
   selectAuthUser,
   selectHasAnyPermission,
   selectHasModule,
   selectHasPermission,
 } from "@/features/auth/authSelectors";
-import { ORG_MODULE_KEYS } from "@/constants/orgModules";
-import { PERMISSIONS } from "@/constants/permissions";
 import { formatDateTime } from "@/lib/format";
 
 import { ActivityTimeline } from "../components/ActivityTimeline";
 import { AssignLeadDialog } from "../components/AssignLeadDialog";
-import { LogActivityDialog } from "../components/LogActivityDialog";
 import { LeadStatusAdvance } from "../components/LeadStatusAdvance";
 import { LeadStatusBadge } from "../components/LeadStatusBadge";
 import { LeadStatusHistory } from "../components/LeadStatusHistory";
 import { LeadStatusStepper } from "../components/LeadStatusStepper";
+import { LogActivityDialog } from "../components/LogActivityDialog";
 import { UpdateLeadDialog } from "../components/UpdateLeadDialog";
-import {
-  clearSelectedLead,
-  fetchActivities,
-  fetchLead,
-  fetchStatusHistory,
-} from "../leadsSlice";
-import { isTerminalLeadStatus } from "../leadStatusPipeline";
 import {
   selectActivities,
   selectActivitiesStatus,
@@ -40,6 +33,13 @@ import {
   selectStatusHistory,
   selectStatusHistoryStatus,
 } from "../leadsSelectors";
+import {
+  clearSelectedLead,
+  fetchActivities,
+  fetchLead,
+  fetchStatusHistory,
+} from "../leadsSlice";
+import { isTerminalLeadStatus } from "../leadStatusPipeline";
 
 export const LeadDetailPage = () => {
   const { id } = useParams<{ id: string }>();

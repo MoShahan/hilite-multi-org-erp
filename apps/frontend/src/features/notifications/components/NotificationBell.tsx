@@ -2,12 +2,13 @@ import { Bell } from "lucide-react";
 import { useState } from "react";
 
 import { useAppSelector } from "@/app/hooks";
+import { Button } from "@/components/ui/button";
 import {
   selectCanAccessNotifications,
   selectIsAuthenticated,
 } from "@/features/auth/authSelectors";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
 import { useNotificationPolling } from "../hooks/useNotificationPolling";
 import {
   selectHasUnreadNotifications,

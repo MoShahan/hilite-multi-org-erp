@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { notificationsService } from "./notificationsService";
 import { toNotificationListApiParams } from "./notificationListParams";
+import { notificationsService } from "./notificationsService";
 
 import type { NotificationListQuery, NotificationsState } from "./notificationsTypes";
 

@@ -1,17 +1,18 @@
+import { PERMISSIONS } from "../constants/permissions";
 import {
   UserStatus,
   type Prisma,
 } from "../generated/prisma/client";
-import { PERMISSIONS } from "../constants/permissions";
-import { prisma } from "../lib/prisma";
 import { userWithAuthInclude } from "../lib/authUserMapper";
 import { assignOrgMembership } from "../lib/orgMembership";
+import { prisma } from "../lib/prisma";
+import { toPrismaRoleMembershipScope } from "../lib/roleMembershipScope";
+
 import type {
   ParsedListUsersQuery,
   ParsedUserOptionsQuery,
   UserListFor,
 } from "../types/user";
-import { toPrismaRoleMembershipScope } from "../lib/roleMembershipScope";
 
 const membershipListInclude = {
   role: {

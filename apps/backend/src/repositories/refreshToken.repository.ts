@@ -1,6 +1,7 @@
-import type { Prisma } from "../generated/prisma/client";
 import { userWithAuthInclude } from "../lib/authUserMapper";
 import { prisma } from "../lib/prisma";
+
+import type { Prisma } from "../generated/prisma/client";
 
 const refreshTokenInclude = {
   user: {

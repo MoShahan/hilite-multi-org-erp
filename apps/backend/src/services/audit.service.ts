@@ -1,13 +1,15 @@
-import type { AuditAction } from "../generated/prisma/client";
-import { logger } from "../lib/logger";
 import {
   buildSummary,
   mergeRequestContext,
 } from "../lib/auditHelpers";
+import { logger } from "../lib/logger";
 import {
   auditRepository,
   type AuditLogRecord,
 } from "../repositories/audit.repository";
+import { AppError } from "../utils/AppError";
+
+import type { AuditAction } from "../generated/prisma/client";
 import type {
   AuditEntityType,
   AuditLogResponse,
@@ -17,7 +19,6 @@ import type {
   PaginatedAuditLogsResponse,
   ParsedListAuditLogsQuery,
 } from "../types/audit";
-import { AppError } from "../utils/AppError";
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 20;

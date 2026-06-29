@@ -1,13 +1,13 @@
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 import { useAppSelector } from "@/app/hooks";
-import { selectCanAccessNotifications } from "@/features/auth/authSelectors";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { selectCanAccessNotifications } from "@/features/auth/authSelectors";
+import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 import { AppSidebar } from "@/layouts/AppSidebar";
 
 import type { ReactNode } from "react";

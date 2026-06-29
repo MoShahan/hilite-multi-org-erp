@@ -5,13 +5,12 @@ import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { ListPagination } from "@/components/ListPagination";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AuditTable } from "@/features/audit/components/AuditTable";
 import { hasActivePlatformAuditListFilters } from "@/features/audit/auditListParams";
+import { AuditTable } from "@/features/audit/components/AuditTable";
 import { PAGE_SIZE_OPTIONS, TABLE_SKELETON_ROW_COUNT } from "@/lib/pagination";
 
 import { PlatformAuditListToolbar } from "../components/PlatformAuditListToolbar";
 import { usePlatformAuditListQuery } from "../hooks/usePlatformAuditListQuery";
-import { fetchOrganizationOptions } from "../platformSlice";
 import {
   selectOrganizationOptions,
   selectPlatformAuditListError,
@@ -19,6 +18,7 @@ import {
   selectPlatformAuditListStatus,
   selectPlatformAuditLogs,
 } from "../platformSelectors";
+import { fetchOrganizationOptions } from "../platformSlice";
 
 export const PlatformAuditPage = () => {
   const dispatch = useAppDispatch();

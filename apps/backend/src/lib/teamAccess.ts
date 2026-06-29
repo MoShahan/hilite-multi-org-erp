@@ -1,6 +1,7 @@
 import { PERMISSIONS } from "../constants/permissions";
-import type { AuthUser } from "../types/auth";
 import { AppError } from "../utils/AppError";
+
+import type { AuthUser } from "../types/auth";
 
 const hasPermission = (user: AuthUser, permission: string) =>
   user.permissions.includes(permission);

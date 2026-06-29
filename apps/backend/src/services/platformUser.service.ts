@@ -1,17 +1,21 @@
 import bcrypt from "bcrypt";
-import { UserStatus } from "../generated/prisma/client";
+
 import { PERMISSIONS } from "../constants/permissions";
+import { UserStatus } from "../generated/prisma/client";
 import { buildActorSnapshot } from "../lib/auditHelpers";
 import { assertPasswordStrength } from "../lib/password";
-import { authUserRepository } from "../repositories/user.repository";
 import {
   platformUserRepository,
   type PlatformUserRecord,
 } from "../repositories/platformUser.repository";
+import { authUserRepository } from "../repositories/user.repository";
+import { AppError } from "../utils/AppError";
+
 import { auditService } from "./audit.service";
 import { welcomeNotificationService } from "./welcomeNotification.service";
-import type { AuthUser } from "../types/auth";
+
 import type { AuditMutationContext } from "../types/audit";
+import type { AuthUser } from "../types/auth";
 import type {
   CreatePlatformUserInput,
   ListPlatformUsersQuery,
@@ -23,7 +27,7 @@ import type {
   PlatformUserResponse,
   UpdatePlatformUserStatusInput,
 } from "../types/platformUser";
-import { AppError } from "../utils/AppError";
+
 
 const SALT_ROUNDS = 10;
 

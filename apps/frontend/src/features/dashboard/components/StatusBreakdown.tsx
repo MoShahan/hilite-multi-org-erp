@@ -1,7 +1,8 @@
 import { cn } from "@/lib/utils";
 
-import { DashboardWidgetCard } from "./DashboardWidgetCard";
 import { LEAD_STATUS_LABELS } from "../dashboardTypes";
+
+import { DashboardWidgetCard } from "./DashboardWidgetCard";
 
 import type { StatusBreakdownItem } from "../dashboardTypes";
 

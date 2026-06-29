@@ -24,6 +24,10 @@ export default tseslint.config(
       },
     },
     rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_" },
+      ],
       "import/order": [
         "error",
         {
@@ -45,6 +49,12 @@ export default tseslint.config(
           },
         },
       ],
+    },
+  },
+  {
+    files: ["src/types/express.ts"],
+    rules: {
+      "@typescript-eslint/no-namespace": "off",
     },
   },
 );

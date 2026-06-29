@@ -1,7 +1,9 @@
-import type { Permission } from "@/constants/permissions";
-import { PERMISSIONS } from "@/constants/permissions";
-import type { RootState } from "@/app/store";
 import { ORG_MODULE_KEYS } from "@/constants/orgModules";
+import { PERMISSIONS } from "@/constants/permissions";
+
+import type { RootState } from "@/app/store";
+import type { Permission } from "@/constants/permissions";
+
 
 export const selectAuthUser = (state: RootState) => state.auth.user;
 

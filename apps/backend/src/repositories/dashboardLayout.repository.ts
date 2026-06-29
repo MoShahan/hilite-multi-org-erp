@@ -1,6 +1,7 @@
-import type { Prisma } from "../generated/prisma/client";
 import { prisma } from "../lib/prisma";
+
 import type { DashboardLayoutItem } from "../constants/dashboardWidgets";
+import type { Prisma } from "../generated/prisma/client";
 
 export const dashboardLayoutRepository = {
   findByUserId: (userId: string) =>

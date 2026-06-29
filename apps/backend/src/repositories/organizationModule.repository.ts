@@ -1,12 +1,13 @@
-import { ModuleKey, type Prisma } from "../generated/prisma/client";
 import {
   ALL_ORG_MODULE_KEYS,
   fromDbModuleKey,
   toDbModuleKey,
 } from "../constants/orgModules";
-import type { OrgModuleKey } from "../constants/orgModules";
+import { ModuleKey, type Prisma } from "../generated/prisma/client";
 import { prisma } from "../lib/prisma";
 import { seedDefaultModulesForOrg } from "../lib/seedOrganizationModules";
+
+import type { OrgModuleKey } from "../constants/orgModules";
 
 type TransactionClient = Prisma.TransactionClient;
 

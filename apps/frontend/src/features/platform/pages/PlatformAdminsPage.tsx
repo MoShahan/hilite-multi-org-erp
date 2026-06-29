@@ -6,20 +6,18 @@ import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { ListPagination } from "@/components/ListPagination";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PERMISSIONS } from "@/constants/permissions";
 import {
   selectAuthUser,
   selectHasPermission,
 } from "@/features/auth/authSelectors";
 import { UpdateUserStatusDialog } from "@/features/users/components/UpdateUserStatusDialog";
-import { PERMISSIONS } from "@/constants/permissions";
 import { PAGE_SIZE_OPTIONS, TABLE_SKELETON_ROW_COUNT } from "@/lib/pagination";
 
 import { CreatePlatformAdminDialog } from "../components/CreatePlatformAdminDialog";
 import { PlatformAdminsListToolbar } from "../components/PlatformAdminsListToolbar";
 import { PlatformAdminsTable } from "../components/PlatformAdminsTable";
 import { usePlatformUserListQuery } from "../hooks/usePlatformUserListQuery";
-import { hasActivePlatformUserListFilters } from "../platformUserListParams";
-import { updatePlatformUserStatus } from "../platformSlice";
 import {
   selectIsPlatformMutating,
   selectPlatformUsers,
@@ -27,6 +25,8 @@ import {
   selectPlatformUsersListMeta,
   selectPlatformUsersListStatus,
 } from "../platformSelectors";
+import { updatePlatformUserStatus } from "../platformSlice";
+import { hasActivePlatformUserListFilters } from "../platformUserListParams";
 
 import type { PlatformUser } from "../platformTypes";
 

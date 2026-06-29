@@ -1,13 +1,14 @@
-import { Router } from "express";
 import { dashboardLayoutUpdateSchema } from "@hilite/shared";
+import { Router } from "express";
+
+import { ORG_MODULE_KEYS } from "../constants/orgModules";
+import { PERMISSIONS } from "../constants/permissions";
 import {
   getDashboardLayout,
   getDashboardSummary,
   resetDashboardLayout,
   updateDashboardLayout,
 } from "../controllers/dashboard.controller";
-import { PERMISSIONS } from "../constants/permissions";
-import { ORG_MODULE_KEYS } from "../constants/orgModules";
 import { authenticate } from "../middleware/authenticate";
 import { requireAnyPermission } from "../middleware/requireAnyPermission";
 import { requireOrgModule } from "../middleware/requireOrgModule";

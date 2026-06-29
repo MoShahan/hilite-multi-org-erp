@@ -1,4 +1,3 @@
-import type { NextFunction, Request, Response } from "express";
 import {
   ACCESS_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
@@ -7,18 +6,20 @@ import {
   getRefreshTokenMaxAge,
   refreshTokenCookieOptions,
 } from "../config/cookie";
-import { auditService } from "../services/audit.service";
-import { authService } from "../services/auth.service";
-import { getAuditRequestContext } from "../lib/auditRequestContext";
 import { buildActorSnapshot } from "../lib/auditHelpers";
+import { getAuditRequestContext } from "../lib/auditRequestContext";
 import { flattenAuthUser } from "../lib/authContext";
 import { resolveSessionOrgId } from "../lib/authSession";
 import { verifyAccessToken } from "../lib/jwt";
 import { hashRefreshToken } from "../lib/refreshToken";
 import { refreshTokenRepository } from "../repositories/refreshToken.repository";
-import type { AuthContext, ChangePasswordInput, UpdateProfileInput } from "../types/auth";
+import { auditService } from "../services/audit.service";
+import { authService } from "../services/auth.service";
 import "../types/express";
 import { AppError } from "../utils/AppError";
+
+import type { AuthContext, ChangePasswordInput, UpdateProfileInput } from "../types/auth";
+import type { NextFunction, Request, Response } from "express";
 
 const setSessionCookies = (
   res: Response,

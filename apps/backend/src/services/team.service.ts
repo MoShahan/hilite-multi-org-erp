@@ -1,19 +1,23 @@
 import bcrypt from "bcrypt";
+
+import { buildActorSnapshot } from "../lib/auditHelpers";
+import { assertPasswordStrength } from "../lib/password";
 import {
   assertRoleAssignableFrom,
   getRoleAssignmentRules,
 } from "../lib/roleAssignmentRules";
-import { buildActorSnapshot } from "../lib/auditHelpers";
+import { authorizeTeamMemberAccess } from "../lib/teamAccess";
 import {
   teamRepository,
   type TeamMemberRecord,
   type TeamWithMemberCount,
 } from "../repositories/team.repository";
 import { authUserRepository } from "../repositories/user.repository";
+import { AppError } from "../utils/AppError";
+
 import { auditService } from "./audit.service";
 import { welcomeNotificationService } from "./welcomeNotification.service";
-import { assertPasswordStrength } from "../lib/password";
-import { authorizeTeamMemberAccess } from "../lib/teamAccess";
+
 import type { AuditMutationContext } from "../types/audit";
 import type { AuthUser } from "../types/auth";
 import type {
@@ -35,7 +39,6 @@ import type {
   TeamOptionsResponse,
   TeamSummary,
 } from "../types/team";
-import { AppError } from "../utils/AppError";
 
 const SALT_ROUNDS = 10;
 

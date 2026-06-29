@@ -1,6 +1,6 @@
+import type { ChartConfig } from "@/components/ui/chart";
 import type { LeadStatus } from "@/features/leads/leadsTypes";
 
-import type { ChartConfig } from "@/components/ui/chart";
 
 export type PieGradientStop = {
   start: string;

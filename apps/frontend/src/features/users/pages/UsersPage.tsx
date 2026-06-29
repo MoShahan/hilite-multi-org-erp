@@ -3,10 +3,10 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import { PERMISSIONS } from "@/constants/permissions";
 import { ListPagination } from "@/components/ListPagination";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PERMISSIONS } from "@/constants/permissions";
 import {
   selectAuthUser,
   selectHasPermission,
@@ -22,7 +22,6 @@ import { UsersListToolbar } from "../components/UsersListToolbar";
 import { UsersTable } from "../components/UsersTable";
 import { useUserListQuery } from "../hooks/useUserListQuery";
 import { hasActiveListFilters } from "../userListParams";
-import { updateUserStatus } from "../usersSlice";
 import {
   selectIsUsersMutating,
   selectUsers,
@@ -30,6 +29,7 @@ import {
   selectUsersListMeta,
   selectUsersListStatus,
 } from "../usersSelectors";
+import { updateUserStatus } from "../usersSlice";
 
 import type {
   OrganizationRoleOption,

@@ -1,8 +1,11 @@
-import { Router } from "express";
 import {
   createPlatformUserSchema,
   updatePlatformUserStatusSchema,
 } from "@hilite/shared";
+import { Router } from "express";
+
+import { PERMISSIONS } from "../constants/permissions";
+import { listPlatformAuditLogs } from "../controllers/audit.controller";
 import {
   createOrganization,
   getOrganization,
@@ -18,8 +21,6 @@ import {
   listPlatformUsers,
   updatePlatformUserStatus,
 } from "../controllers/platformUser.controller";
-import { listPlatformAuditLogs } from "../controllers/audit.controller";
-import { PERMISSIONS } from "../constants/permissions";
 import { authenticate } from "../middleware/authenticate";
 import { requirePermission } from "../middleware/requirePermission";
 import { validateBody } from "../middleware/validateBody";

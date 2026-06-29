@@ -1,5 +1,6 @@
-import { eventBus } from "./eventBus";
 import { registerNotificationHandlers } from "../handlers/notification.handler";
+
+import { eventBus } from "./eventBus";
 
 export const registerHandlers = (): void => {
   registerNotificationHandlers((event, handler) => {

@@ -1,3 +1,4 @@
+import { usersService } from "@/features/users/usersService";
 import { apiClient, unwrapResponse } from "@/lib/api-client";
 
 import { toLeadListApiParams } from "./leadListParams";
@@ -14,8 +15,6 @@ import type {
   LeadStatusHistoryResponse,
   UpdateLeadInput,
 } from "./leadsTypes";
-import { usersService } from "@/features/users/usersService";
-
 import type { UserOption } from "@/features/users/usersTypes";
 
 export const leadsService = {

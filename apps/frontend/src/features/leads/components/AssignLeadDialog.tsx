@@ -21,8 +21,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiClientError } from "@/lib/api-client";
 
-import { assignLead } from "../leadsSlice";
 import { leadsService } from "../leadsService";
+import { assignLead } from "../leadsSlice";
 
 import type { AssigneeOption, Lead } from "../leadsTypes";
 

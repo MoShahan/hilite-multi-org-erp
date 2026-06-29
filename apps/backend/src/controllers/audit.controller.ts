@@ -1,6 +1,6 @@
-import type { NextFunction, Request, Response } from "express";
 import { auditService } from "../services/audit.service";
-import { AppError } from "../utils/AppError";
+
+import type { NextFunction, Request, Response } from "express";
 
 export const listOrgAuditLogs = async (
   req: Request,

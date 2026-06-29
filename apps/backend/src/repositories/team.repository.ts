@@ -1,6 +1,7 @@
 import { UserStatus, type Prisma } from "../generated/prisma/client";
-import { prisma } from "../lib/prisma";
 import { assignOrgMembership } from "../lib/orgMembership";
+import { prisma } from "../lib/prisma";
+
 import type {
   ParsedListTeamMembersQuery,
   ParsedListTeamsQuery,

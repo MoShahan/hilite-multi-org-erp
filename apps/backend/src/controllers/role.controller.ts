@@ -1,9 +1,10 @@
-import type { NextFunction, Request, Response } from "express";
-import { roleService } from "../services/role.service";
-import { requireAuthUser } from "../lib/requireAuthUser";
 import { getAuditRequestContext } from "../lib/auditRequestContext";
-import type { CreateRoleInput, UpdateRoleInput } from "../types/role";
+import { requireAuthUser } from "../lib/requireAuthUser";
+import { roleService } from "../services/role.service";
 import { AppError } from "../utils/AppError";
+
+import type { CreateRoleInput, UpdateRoleInput } from "../types/role";
+import type { NextFunction, Request, Response } from "express";
 
 const getRoleId = (req: Request): string => {
   const { id } = req.params;

@@ -1,10 +1,12 @@
+import { groupWidgetsForRender } from "../dashboardLayoutUtils";
+
+import { renderDashboardWidget } from "./widgets/widgetRegistry";
+
 import type {
   DashboardLayoutResponse,
   DashboardWidgetKey,
 } from "../dashboardLayoutTypes";
 import type { DashboardSummaryResponse } from "../dashboardTypes";
-import { groupWidgetsForRender } from "../dashboardLayoutUtils";
-import { renderDashboardWidget } from "./widgets/widgetRegistry";
 
 type DashboardGridProps = {
   layout: DashboardLayoutResponse;

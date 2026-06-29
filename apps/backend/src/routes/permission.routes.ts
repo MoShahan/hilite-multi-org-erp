@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { listPermissions } from "../controllers/permission.controller";
+
 import { PERMISSIONS } from "../constants/permissions";
+import { listPermissions } from "../controllers/permission.controller";
 import { authenticate } from "../middleware/authenticate";
 import { requireAnyPermission } from "../middleware/requireAnyPermission";
 

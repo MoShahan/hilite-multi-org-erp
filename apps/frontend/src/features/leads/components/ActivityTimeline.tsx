@@ -1,5 +1,5 @@
-import { formatDateTime } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatDateTime } from "@/lib/format";
 
 import { ACTIVITY_TYPE_OPTIONS } from "../leadsTypes";
 

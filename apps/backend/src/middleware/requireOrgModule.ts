@@ -1,10 +1,11 @@
-import type { NextFunction, Request, Response } from "express";
 import {
   MODULE_DISABLED_MESSAGES,
   type OrgModuleKey,
 } from "../constants/orgModules";
 import "../types/express";
 import { AppError } from "../utils/AppError";
+
+import type { NextFunction, Request, Response } from "express";
 
 export const requireOrgModule =
   (moduleKey: OrgModuleKey) =>

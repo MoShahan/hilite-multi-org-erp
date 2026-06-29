@@ -1,8 +1,9 @@
-import type { DashboardView as SharedDashboardView } from "@hilite/shared";
-import { LeadStatus, type Prisma } from "../generated/prisma/client";
 import { PERMISSIONS } from "../constants/permissions";
-import type { AuthUser } from "../types/auth";
+import { LeadStatus, type Prisma } from "../generated/prisma/client";
 import { AppError } from "../utils/AppError";
+
+import type { AuthUser } from "../types/auth";
+import type { DashboardView as SharedDashboardView } from "@hilite/shared";
 
 export type DashboardView = SharedDashboardView;
 

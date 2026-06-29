@@ -1,4 +1,3 @@
-import type { LeadStatus } from "@hilite/shared";
 import {
   getAllowedNextStatuses,
   getLinearStageIndex,
@@ -7,6 +6,8 @@ import {
   LINEAR_LEAD_STAGES,
   TERMINAL_LEAD_STAGES,
 } from "@hilite/shared";
+
+import type { LeadStatus } from "@hilite/shared";
 
 export {
   getAllowedNextStatuses,

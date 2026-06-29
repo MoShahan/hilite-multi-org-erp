@@ -1,5 +1,6 @@
-import type { NextFunction, Request, Response } from "express";
 import { notificationService } from "../services/notification.service";
+
+import type { NextFunction, Request, Response } from "express";
 
 const getRouteId = (req: Request) => {
   const id = req.params.id;
