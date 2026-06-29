@@ -20,7 +20,10 @@
     "setup": "npm install && npm run db:up && npm run db:migrate && npm run db:generate && npm run db:seed",
     "test": "npm run test:backend && npm run test:frontend",
     "test:backend": "npm run test --prefix apps/backend",
-    "test:frontend": "npm run test:run --prefix apps/frontend"
+    "test:frontend": "npm run test:run --prefix apps/frontend",
+    "lint": "npm run lint:backend && npm run lint:frontend",
+    "lint:backend": "npm run lint --prefix apps/backend",
+    "lint:frontend": "npm run lint --prefix apps/frontend"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
