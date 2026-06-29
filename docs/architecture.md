@@ -487,6 +487,8 @@ Key files: [`orgMembership.ts`](../apps/backend/src/lib/orgMembership.ts), [`aut
 
 Notifications use an **event-driven write, REST read (polling)** model. There are no WebSockets, SSE, or external message queues in the MVP.
 
+The MVP uses domain events + in-process event bus + one notification handler + Postgres + REST polling. It deliberately avoids Redis, external pub/sub, message queues, and push channels to keep the stack simple for a single-node deployment, at the cost of durability, multi-instance support, and real-time delivery.
+
 ### Design rationale
 
 Domain services emit events (`LEAD_CREATED`, `LEAD_ASSIGNED`, etc.) without knowing subscribers. An in-process event bus dispatches to a notification handler that persists in-app alerts. Account welcome alerts are created synchronously by [`welcomeNotification.service.ts`](../apps/backend/src/services/welcomeNotification.service.ts) when users are provisioned with a default password or on first login while `must_change_password` is still set.
@@ -563,7 +565,7 @@ sequenceDiagram
   EventBus->>Handler: async handler
   Handler->>DB: INSERT notifications
 
-  Note over Frontend: Every 45s or on window focus
+  Note over Frontend: Every 60s
   Frontend->>API: GET /notifications/unread-count
   API->>DB: COUNT unread
   API-->>Frontend: count
@@ -576,8 +578,7 @@ sequenceDiagram
 
 | Concern          | Implementation                                                                                                           |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Polling interval | 45 seconds — [`useNotificationPolling.ts`](../apps/frontend/src/features/notifications/hooks/useNotificationPolling.ts)  |
-| Focus refresh    | Re-fetches unread count on `window.focus`                                                                                |
+| Polling interval | 60 seconds — [`useNotificationPolling.ts`](../apps/frontend/src/features/notifications/hooks/useNotificationPolling.ts)  |
 | Dropdown         | Fetches latest 10 on open (not on every poll)                                                                            |
 | Full page        | [`NotificationsPage.tsx`](../apps/frontend/src/features/notifications/pages/NotificationsPage.tsx) with URL query params |
 | UI gating        | Bell shown when authenticated and (`notifications` module enabled **or** no org context) |
@@ -592,7 +593,7 @@ Users created with a default password (org admin during org provisioning, org us
 - Events are **not durable** — a process crash between emit and DB write can lose notifications.
 - **No retry or dead-letter queue** — handler failures are logged only.
 - **No email or SMS channels** — in-app only.
-- **Polling latency** — users see new alerts within ~45 seconds (or immediately on tab focus / dropdown open).
+- **Polling latency** — users see new alerts within ~60 seconds (or immediately when opening the bell dropdown for the list).
 
 ---
 
@@ -607,7 +608,7 @@ The codebase is optimized for MVP delivery and single-instance local development
 | Deployment      | Docker Compose runs PostgreSQL only; no backend/frontend container or CI/CD                                                 |
 | API instances   | Single-node monolith; in-process event bus does not work across multiple instances                                          |
 | Notifications   | Fire-and-forget handlers; no retry; silent loss on crash or transient DB error                                              |
-| Client delivery | 45-second polling → `N_users / 45s` unread-count requests                                                                   |
+| Client delivery | 60-second polling → `N_users / 60s` unread-count requests                                                                   |
 | Caching         | None — every poll runs `COUNT(*)` against PostgreSQL                                                                        |
 | Rate limiting   | Not implemented on the API                                                                                                  |
 | Database        | Single Postgres; no read replicas or connection-pool tuning beyond defaults                                                 |

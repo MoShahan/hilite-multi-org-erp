@@ -493,7 +493,7 @@ Users with `activities:write` permission (default: **Executive**).
 
 ## 11. Notifications
 
-In-app notifications only. No email or SMS. Delivery uses **REST polling** (every 45 seconds + on window focus), not WebSockets.
+In-app notifications only. No email or SMS. Delivery uses **REST polling** (every 60 seconds), not WebSockets.
 
 ### Notification types
 
@@ -518,7 +518,7 @@ Clicking a notification **marks it as read** before navigation.
 ### Notification bell (header)
 
 - Visible when authenticated and (`notifications` module enabled **or** user is platform admin)
-- Polls unread count every **45 seconds** and on **window focus**
+- Polls unread count every **60 seconds**
 - Dropdown shows latest **10** notifications when opened (fetched on open, not on every poll)
 - **Mark all read** available in dropdown and full page
 
@@ -942,7 +942,7 @@ Includes cross-tenant events such as `PLATFORM_USER_CREATED`.
 | **Preview size** | Latest 10 notifications |
 | **Fetch** | On dropdown open only |
 | **Search / sort / pagination** | None in dropdown |
-| **Polling** | Unread count every 45 s + on window focus |
+| **Polling** | Unread count every 60 s |
 | **Link** | "See all notifications" → `/notifications` |
 
 ---
@@ -1019,7 +1019,7 @@ Items below are **not implemented** in the MVP but are documented as evolution p
 
 ### Notifications and real-time
 
-- WebSocket or SSE push instead of 45-second polling
+- WebSocket or SSE push instead of 60-second polling
 - Durable event queue (Redis, Bull, SQS) with retries and dead-letter handling
 - Email and SMS notification channels
 - Separate notification worker service
