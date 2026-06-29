@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { getMembershipPermissions } from "../lib/authContext";
 import "../types/express";
 import { AppError } from "../utils/AppError";
 
@@ -10,7 +11,7 @@ export const requireAnyPermission =
       return;
     }
 
-    const userPermissions = req.authUser.user.permissions;
+    const userPermissions = getMembershipPermissions(req.authUser);
     const hasPermission = permissions.some((permission) =>
       userPermissions.includes(permission),
     );

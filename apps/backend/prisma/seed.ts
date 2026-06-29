@@ -1,10 +1,11 @@
 import bcrypt from "bcrypt";
 import { OrganizationStatus, UserStatus } from "../src/generated/prisma/client";
 import {
-  assignRoleToUserBySlug,
+  assignPlatformRoleBySlug,
   seedDefaultRolesForOrg,
   seedPlatformRole,
 } from "../src/lib/roleSeeding";
+import { assignOrgMembershipBySlug } from "../src/lib/orgMembership";
 import { seedDefaultModulesForOrg } from "../src/lib/seedOrganizationModules";
 import { seedPermissions } from "../src/lib/seedPermissions";
 import { disconnectPrisma, prisma } from "../src/lib/prisma";
@@ -41,7 +42,7 @@ const main = async () => {
       },
     });
 
-    await assignRoleToUserBySlug(tx, platformAdmin.id, null, "platform_admin");
+    await assignPlatformRoleBySlug(tx, platformAdmin.id, "platform_admin");
 
     const orgAdmin = await tx.user.upsert({
       where: { email: "admin@hilitebuilders.com" },
@@ -51,11 +52,10 @@ const main = async () => {
         name: "Organization Admin",
         passwordHash: await bcrypt.hash("HBuilders@123", SALT_ROUNDS),
         status: UserStatus.ACTIVE,
-        organizationId: organization.id,
       },
     });
 
-    await assignRoleToUserBySlug(
+    await assignOrgMembershipBySlug(
       tx,
       orgAdmin.id,
       organization.id,

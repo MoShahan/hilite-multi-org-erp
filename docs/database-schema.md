@@ -4,12 +4,14 @@ PostgreSQL schema for Hilite ERP, managed with Prisma.
 
 **Source of truth:** [`apps/backend/prisma/schema.prisma`](../apps/backend/prisma/schema.prisma)
 
+Org user access is modeled via **`organization_members`** (not a column on `users`). Platform admins use **`user_roles`** only. See [Architecture — Multi-Org Readiness](architecture.md#multi-org-readiness).
+
 ## Overview
 
 | Domain             | Tables                                                                                                      | Purpose                                          |
 | ------------------ | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| Platform / Tenancy | `organizations`, `organization_modules`                                                                   | Multi-tenant orgs and feature toggles            |
-| Auth & RBAC        | `users`, `roles`, `permissions`, `role_permissions`, `user_roles`, `refresh_tokens`                         | Users, roles, permission grants, refresh sessions |
+| Platform / Tenancy | `organizations`, `organization_modules`, `organization_members`                                             | Multi-tenant orgs, feature toggles, membership   |
+| Auth & RBAC        | `users`, `roles`, `permissions`, `role_permissions`, `user_roles`, `refresh_tokens`                         | Global users, roles, platform role grants, sessions |
 | Teams              | `teams`, `team_members`                                                                                     | Org teams and membership                         |
 | Sales CRM          | `leads`, `activities`                                                                                       | Lead pipeline and activity log                   |
 | Notifications      | `notifications`                                                                                             | In-app alerts (lead events and account welcome)  |
@@ -17,7 +19,7 @@ PostgreSQL schema for Hilite ERP, managed with Prisma.
 | Dashboard          | `user_dashboard_layouts`                                                                                    | Per-user widget layout preferences               |
 
 **Database:** PostgreSQL  
-**Tables:** 15  
+**Tables:** 16  
 **ORM:** Prisma
 
 ---
@@ -118,7 +120,7 @@ Top-level tenant.
 | `created_at`  | TIMESTAMPTZ          | NOT NULL, default now           |
 | `updated_at`  | TIMESTAMPTZ          | NOT NULL                        |
 
-**Relations:** users, roles, teams, leads, notifications, organization_modules
+**Relations:** members, roles, teams, leads, notifications, organization_modules
 
 ---
 
@@ -139,6 +141,8 @@ Per-organization feature flags.
 
 ### `users`
 
+Global user identity (email, password, profile). Org access is via `organization_members`.
+
 | Column                 | Type         | Constraints                   |
 | ---------------------- | ------------ | ----------------------------- |
 | `id`                   | UUID         | PK                            |
@@ -148,13 +152,29 @@ Per-organization feature flags.
 | `password_hash`        | TEXT         | NOT NULL                      |
 | `must_change_password` | BOOLEAN      | NOT NULL, default `false`     |
 | `status`               | `UserStatus` | NOT NULL, default `ACTIVE`    |
-| `organization_id`      | UUID         | NULL, FK → `organizations.id` |
 | `created_at`           | TIMESTAMPTZ  | NOT NULL                      |
 | `updated_at`           | TIMESTAMPTZ  | NOT NULL                      |
 
-**Indexes:** `organization_id`
+**Notes:** New users provisioned with a default password are created with `must_change_password = true` and receive a `WELCOME_CHANGE_PASSWORD` notification. Platform admins have no `organization_members` rows.
 
-**Notes:** `organization_id` is nullable for platform-level users (e.g. platform admin). New users provisioned with a default password are created with `must_change_password = true` and receive a `WELCOME_CHANGE_PASSWORD` notification.
+---
+
+### `organization_members`
+
+Junction table: users ↔ organizations. Stores per-org role assignment (source of truth for org access).
+
+| Column            | Type         | Constraints                                         |
+| ----------------- | ------------ | --------------------------------------------------- |
+| `user_id`         | UUID         | PK, FK → `users.id` ON DELETE CASCADE              |
+| `organization_id` | UUID         | PK, FK → `organizations.id` ON DELETE CASCADE      |
+| `role_id`         | UUID         | NOT NULL, FK → `roles.id` ON DELETE CASCADE        |
+| `status`          | `UserStatus` | NOT NULL, default `ACTIVE`                          |
+| `joined_at`       | TIMESTAMPTZ  | NOT NULL, default now                               |
+
+**Primary key:** `(user_id, organization_id)`  
+**Indexes:** `organization_id`, `role_id`
+
+**Notes:** Today each org user has one membership row. The schema supports multiple memberships per user for future multi-org support.
 
 ---
 
@@ -269,14 +289,14 @@ Junction table: roles ↔ permissions.
 
 ### `user_roles`
 
-User ↔ role assignment.
+Platform-admin role assignment only. Org users get roles via `organization_members`.
 
 | Column    | Type | Constraints                           |
 | --------- | ---- | ------------------------------------- |
 | `user_id` | UUID | PK, FK → `users.id` ON DELETE CASCADE |
 | `role_id` | UUID | PK, FK → `roles.id` ON DELETE CASCADE |
 
-**Unique:** `user_id` — each user has at most one role.
+**Unique:** `user_id` — each platform admin has at most one role.
 
 ---
 
@@ -296,13 +316,15 @@ User ↔ role assignment.
 
 ### `team_members`
 
-Junction table: teams ↔ users.
+Junction table: teams ↔ users, scoped per organization.
 
-| Column    | Type | Constraints                           |
-| --------- | ---- | ------------------------------------- |
-| `team_id` | UUID | PK, FK → `teams.id` ON DELETE CASCADE |
-| `user_id` | UUID | PK, FK → `users.id` ON DELETE CASCADE |
+| Column            | Type | Constraints                                                              |
+| ----------------- | ---- | ------------------------------------------------------------------------ |
+| `team_id`         | UUID | PK, FK → `teams.id` ON DELETE CASCADE                                    |
+| `user_id`         | UUID | PK, FK → `users.id` ON DELETE CASCADE                                    |
+| `organization_id` | UUID | NOT NULL, FK → `organization_members` ON DELETE CASCADE                |
 
+**Unique:** `(user_id, organization_id)` — one team per user per org  
 **Indexes:** `user_id`
 
 ---
@@ -392,9 +414,11 @@ Append-only compliance and security audit trail.
 | ------------------------------------- | --------- |
 | Organization → child records          | CASCADE   |
 | Organization → notifications, audit_logs | SET NULL |
-| Role → role_permissions, user_roles   | CASCADE   |
+| Role → role_permissions, organization_members | CASCADE   |
+| Role → user_roles (platform only)             | CASCADE   |
 | Permission → role_permissions         | RESTRICT  |
-| Team → team_members                   | CASCADE   |
+| User → organization_members           | CASCADE   |
+| OrganizationMember → team_members     | CASCADE   |
 | Team → leads                          | RESTRICT  |
 | Lead → activities                     | CASCADE   |
 | Lead assignee → users                 | SET NULL  |
@@ -423,7 +447,8 @@ Defined in application code, not as separate DB tables.
 ## Relationship summary
 
 ```
-Organization (1) ──< (N) User
+Organization (1) ──< (N) OrganizationMember ──> (1) User
+OrganizationMember (N) ──> (1) Role
 Organization (1) ──< (N) Role
 Organization (1) ──< (N) Team
 Organization (1) ──< (N) Lead
@@ -431,12 +456,12 @@ Organization (1) ──< (N) Notification (optional FK)
 Organization (1) ──< (N) AuditLog (optional FK)
 Organization (1) ──< (N) OrganizationModule
 
-User (1) ──< (0..1) UserRole ──> (1) Role
+User (1) ──< (0..1) UserRole ──> (1) Role   [platform admins only]
 User (1) ──< (0..1) UserDashboardLayout
 User (1) ──< (N) RefreshToken
 Role (N) ──< (M) Permission  [via role_permissions]
 
-Team (N) ──< (M) User  [via team_members]
+OrganizationMember (1) ──< (0..1) TeamMember ──> (1) Team
 Team (1) ──< (N) Lead
 
 User (1) ──< (N) Lead [created_by]

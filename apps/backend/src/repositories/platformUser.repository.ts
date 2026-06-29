@@ -21,17 +21,21 @@ export type PlatformUserRecord = Prisma.UserGetPayload<{
   include: typeof platformUserInclude;
 }>;
 
+const platformUserWhere = {
+  memberships: { none: {} },
+  userRole: {
+    role: {
+      organizationId: null,
+      slug: PLATFORM_ROLE.slug,
+    },
+  },
+} satisfies Prisma.UserWhereInput;
+
 const buildWhere = (
   query: ParsedListPlatformUsersQuery,
 ): Prisma.UserWhereInput => {
   const where: Prisma.UserWhereInput = {
-    organizationId: null,
-    userRole: {
-      role: {
-        organizationId: null,
-        slug: PLATFORM_ROLE.slug,
-      },
-    },
+    ...platformUserWhere,
   };
 
   if (query.status && query.status !== "ALL") {
@@ -92,13 +96,7 @@ export const platformUserRepository = {
     return prisma.user.findFirst({
       where: {
         id: userId,
-        organizationId: null,
-        userRole: {
-          role: {
-            organizationId: null,
-            slug: PLATFORM_ROLE.slug,
-          },
-        },
+        ...platformUserWhere,
       },
       include: platformUserInclude,
     });
@@ -107,14 +105,8 @@ export const platformUserRepository = {
   countActivePlatformAdmins: (): Promise<number> => {
     return prisma.user.count({
       where: {
-        organizationId: null,
+        ...platformUserWhere,
         status: UserStatus.ACTIVE,
-        userRole: {
-          role: {
-            organizationId: null,
-            slug: PLATFORM_ROLE.slug,
-          },
-        },
       },
     });
   },

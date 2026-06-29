@@ -21,7 +21,6 @@ const mockMeResponse: AuthMeResponse = {
     role: { id: "role-1", name: "Org Admin", slug: "org_admin" },
     permissions: ["users:read"],
     status: "ACTIVE",
-    organizationId: "org-1",
     team: null,
   },
   organization: {

@@ -16,7 +16,6 @@ const baseUser = (overrides?: Partial<AuthUser>): AuthUser => ({
   name: "Team Lead",
   phoneNumber: null,
   status: "ACTIVE",
-  organizationId: "org-1",
   role: { id: "role-1", name: "Team Lead", slug: "team_lead" },
   permissions: [],
   team: { id: "team-a", name: "Team A" },

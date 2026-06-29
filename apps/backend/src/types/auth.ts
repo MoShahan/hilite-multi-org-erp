@@ -11,13 +11,22 @@ export type AuthTeam = {
   name: string;
 };
 
-export type AuthUser = {
+export type AuthUserIdentity = {
   id: string;
   email: string;
   name: string;
   phoneNumber: string | null;
   status: UserStatus;
-  organizationId: string | null;
+};
+
+export type AuthMembership = {
+  role: AuthRole;
+  permissions: string[];
+  team: AuthTeam | null;
+};
+
+/** Flattened user shape returned by /auth/me for API compatibility */
+export type AuthUser = AuthUserIdentity & {
   role: AuthRole | null;
   permissions: string[];
   team: AuthTeam | null;
@@ -31,8 +40,9 @@ export type AuthOrganization = {
 };
 
 export type AuthContext = {
-  user: AuthUser;
+  user: AuthUserIdentity;
   organization: AuthOrganization | null;
+  membership: AuthMembership | null;
   modules: string[];
 };
 

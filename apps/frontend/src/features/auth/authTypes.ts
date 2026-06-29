@@ -21,7 +21,6 @@ export type User = {
   role: AuthRole | null;
   permissions: string[];
   status: UserStatus;
-  organizationId: string | null;
   team: AuthTeam | null;
 };
 

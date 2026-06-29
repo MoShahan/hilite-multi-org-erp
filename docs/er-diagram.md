@@ -4,27 +4,33 @@ Entity-relationship diagram for the Hilite ERP PostgreSQL database.
 
 **Source of truth:** [`apps/backend/prisma/schema.prisma`](../apps/backend/prisma/schema.prisma)
 
+For membership and auth context, see [Architecture — Multi-Org Readiness](architecture.md#multi-org-readiness).
+
 ## Full diagram
 
 ```mermaid
 erDiagram
     organizations ||--o{ organization_modules : "enables"
-    organizations ||--o{ users : "has"
+    organizations ||--o{ organization_members : "has members"
     organizations ||--o{ roles : "defines"
     organizations ||--o{ teams : "has"
     organizations ||--o{ leads : "owns"
     organizations ||--o{ notifications : "scopes"
     organizations ||--o{ audit_logs : "scopes"
 
-    users ||--o| user_roles : "assigned"
+    users ||--o{ organization_members : "belongs to"
+    organization_members ||--o| team_members : "team in org"
+    organization_members }o--|| roles : "role in org"
+    users ||--o| user_roles : "platform role"
     users ||--o| user_dashboard_layouts : "customizes"
     users ||--o{ refresh_tokens : "has sessions"
-    roles ||--o{ user_roles : "grants"
+    roles ||--o{ user_roles : "grants platform"
+    roles ||--o{ organization_members : "assigned via"
     roles ||--o{ role_permissions : "includes"
     permissions ||--o{ role_permissions : "granted via"
 
     teams ||--o{ team_members : "contains"
-    users ||--o{ team_members : "belongs to"
+    users ||--o{ team_members : "on team"
     teams ||--o{ leads : "owns"
 
     users ||--o{ leads : "creates"
@@ -52,6 +58,14 @@ erDiagram
         datetime updated_at
     }
 
+    organization_members {
+        uuid user_id
+        uuid organization_id
+        uuid role_id
+        enum status
+        datetime joined_at
+    }
+
     users {
         uuid id
         string email
@@ -60,7 +74,6 @@ erDiagram
         string password_hash
         boolean must_change_password
         enum status
-        uuid organization_id
         datetime created_at
         datetime updated_at
     }
@@ -120,6 +133,7 @@ erDiagram
     team_members {
         uuid team_id
         uuid user_id
+        uuid organization_id
     }
 
     leads {
@@ -179,7 +193,8 @@ erDiagram
 ```mermaid
 erDiagram
     organizations ||--o{ organization_modules : "enables"
-    organizations ||--o{ users : "has"
+    organizations ||--o{ organization_members : "has members"
+    users ||--o{ organization_members : "member of"
     organizations ||--o{ roles : "defines"
     organizations ||--o{ teams : "has"
 ```
@@ -188,8 +203,10 @@ erDiagram
 
 ```mermaid
 erDiagram
-    users ||--o| user_roles : "has"
+    users ||--o| user_roles : "platform role"
     roles ||--o{ user_roles : "assigned to"
+    users ||--o{ organization_members : "org memberships"
+    organization_members }o--|| roles : "role per org"
     roles ||--o{ role_permissions : "grants"
     permissions ||--o{ role_permissions : "included in"
     organizations ||--o{ roles : "owns"
@@ -206,7 +223,7 @@ erDiagram
     leads ||--o{ activities : "has"
     users ||--o{ activities : "logged by"
     teams ||--o{ team_members : "contains"
-    users ||--o{ team_members : "member of"
+    organization_members ||--o| team_members : "team in org"
 ```
 
 ### Notifications and audit
@@ -223,7 +240,8 @@ erDiagram
 
 | From         | To                 | Cardinality | Junction / notes                                      |
 | ------------ | ------------------ | ----------- | ----------------------------------------------------- |
-| Organization | User               | 1:N         | `users.organization_id` (nullable for platform users) |
+| Organization | OrganizationMember | 1:N         | Per-org user access and role                          |
+| User         | OrganizationMember | 1:N         | One row per org (1 today; multi-org ready)            |
 | Organization | Role               | 1:N         | `roles.organization_id` (nullable for platform role)  |
 | Organization | Team               | 1:N         |                                                       |
 | Organization | Lead               | 1:N         |                                                       |
@@ -233,9 +251,10 @@ erDiagram
 | User         | RefreshToken       | 1:N         | Server-side refresh sessions                                |
 | User         | AuditLog           | 1:N         | As actor (`actor_id`, optional)                             |
 | Organization | OrganizationModule | 1:N         | Composite PK on `(organization_id, module_key)`       |
-| User         | Role               | N:1         | Via `user_roles`; one role per user                   |
+| User         | Role (platform)    | N:1         | Via `user_roles`; platform admins only                |
+| OrganizationMember | Role           | N:1         | Per-org role on membership row                        |
 | Role         | Permission         | N:M         | Via `role_permissions`                                |
-| Team         | User               | N:M         | Via `team_members`                                    |
+| Team         | User               | N:M         | Via `team_members`; unique per `(user_id, organization_id)` |
 | Team         | Lead               | 1:N         | Required FK on every lead                             |
 | User         | Lead               | 1:N         | As creator (`created_by_id`)                          |
 | User         | Lead               | 1:N         | As assignee (`assigned_to_id`, optional)              |
@@ -245,7 +264,9 @@ erDiagram
 
 ## Key constraints
 
-- **One role per user** — `user_roles.user_id` is unique.
+- **Org role per membership** — `organization_members.role_id` defines the user's role in that org.
+- **Platform role** — `user_roles` is for platform admins only (`user_id` unique).
+- **One team per org** — `team_members` unique on `(user_id, organization_id)`.
 - **Leads are team-scoped** — every lead requires a team; team delete is `RESTRICT` when leads exist.
 - **Protected references** — lead creator and activity author use `ON DELETE RESTRICT`.
 - **Optional assignee** — lead assignee uses `ON DELETE SET NULL`.

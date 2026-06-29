@@ -18,7 +18,7 @@ info:
 
     | Cookie | Purpose |
     |--------|---------|
-    | `access_token` | Short-lived JWT for authenticated requests |
+    | `access_token` | Short-lived JWT (`sub` = user ID, `orgId` = active organization or null for platform admins) |
     | `refresh_token` | Long-lived token for `POST /api/v1/auth/refresh` |
 
     1. Call `POST /api/v1/auth/login` with email and password — cookies are set automatically.
@@ -42,8 +42,11 @@ info:
 
     ## Multi-tenancy
 
-    Organization users never pass a tenant ID in URLs — the tenant is derived from the authenticated session.
-    Platform administrators (`organizationId: null`) access cross-tenant APIs under `/api/v1/platform/*`.
+    Organization users never pass a tenant ID in URLs — the active tenant is encoded in the JWT
+    `orgId` claim and resolved via `organization_members` on each request.
+    Platform administrators (no org membership) use `orgId: null` and access cross-tenant APIs under `/api/v1/platform/*`.
+
+    See [Architecture — Multi-Org Readiness](architecture.md#multi-org-readiness) for the membership model.
 
     ## Org modules
 
@@ -1797,7 +1800,7 @@ components:
       type: apiKey
       in: cookie
       name: access_token
-      description: Short-lived JWT set by `POST /api/v1/auth/login` or `POST /api/v1/auth/refresh`
+      description: Short-lived JWT (`sub`, `orgId`) set by `POST /api/v1/auth/login` or `POST /api/v1/auth/refresh`
     refreshTokenCookie:
       type: apiKey
       in: cookie
@@ -2138,7 +2141,11 @@ components:
 
     AuthUser:
       type: object
-      required: [id, email, name, status, organizationId, role, permissions, team]
+      description: |
+        Flattened user shape returned by `/auth/me`. Global identity fields plus role, permissions,
+        and team for the **active organization** (from JWT `orgId`). Org context is also on
+        `AuthMeResponse.organization`.
+      required: [id, email, name, status, role, permissions, team]
       properties:
         id:
           type: string
@@ -2153,10 +2160,6 @@ components:
           nullable: true
         status:
           $ref: "#/components/schemas/UserStatus"
-        organizationId:
-          type: string
-          format: uuid
-          nullable: true
         role:
           type: object
           nullable: true

@@ -1,5 +1,6 @@
 import { UserStatus, type Prisma } from "../generated/prisma/client";
 import { prisma } from "../lib/prisma";
+import { assignOrgMembership } from "../lib/orgMembership";
 import type {
   ParsedListTeamMembersQuery,
   ParsedListTeamsQuery,
@@ -22,17 +23,14 @@ export type TeamWithMemberCount = Prisma.TeamGetPayload<{
 }>;
 
 const memberListInclude = {
-  user: {
+  user: true,
+  membership: {
     include: {
-      userRole: {
-        include: {
-          role: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-            },
-          },
+      role: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
         },
       },
     },
@@ -78,7 +76,7 @@ const buildMemberOrderBy = (
   sortOrder: TeamMemberListSortOrder,
 ): Prisma.TeamMemberOrderByWithRelationInput => {
   if (sortBy === "role") {
-    return { user: { userRole: { role: { name: sortOrder } } } };
+    return { membership: { role: { name: sortOrder } } };
   }
 
   return { user: { [sortBy]: sortOrder } };
@@ -144,7 +142,7 @@ export const teamRepository = {
     }
 
     if (query.roleId) {
-      userWhere.userRole = { roleId: query.roleId };
+      where.membership = { roleId: query.roleId };
     }
 
     if (Object.keys(userWhere).length > 0) {
@@ -178,7 +176,6 @@ export const teamRepository = {
     return prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
-          organizationId: data.organizationId,
           name: data.name,
           email: data.email,
           passwordHash: data.passwordHash,
@@ -187,12 +184,18 @@ export const teamRepository = {
         },
       });
 
-      await tx.userRoleAssignment.create({
-        data: { userId: user.id, roleId: data.roleId },
+      await assignOrgMembership(tx, {
+        userId: user.id,
+        organizationId: data.organizationId,
+        roleId: data.roleId,
       });
 
       const membership = await tx.teamMember.create({
-        data: { teamId: data.teamId, userId: user.id },
+        data: {
+          teamId: data.teamId,
+          userId: user.id,
+          organizationId: data.organizationId,
+        },
         include: memberListInclude,
       });
 

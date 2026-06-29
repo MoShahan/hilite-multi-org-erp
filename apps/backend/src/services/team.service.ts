@@ -175,11 +175,11 @@ const toTeamMember = (record: TeamMemberRecord): TeamMember => ({
   name: record.user.name,
   email: record.user.email,
   status: record.user.status,
-  role: record.user.userRole?.role
+  role: record.membership?.role
     ? {
-        id: record.user.userRole.role.id,
-        name: record.user.userRole.role.name,
-        slug: record.user.userRole.role.slug,
+        id: record.membership.role.id,
+        name: record.membership.role.name,
+        slug: record.membership.role.slug,
       }
     : null,
   createdAt: record.user.createdAt.toISOString(),

@@ -5,9 +5,10 @@ import {
   type Prisma,
 } from "../generated/prisma/client";
 import {
-  assignRoleToUserBySlug,
+  assignPlatformRoleBySlug,
   seedDefaultRolesForOrg,
 } from "../lib/roleSeeding";
+import { assignOrgMembershipBySlug } from "../lib/orgMembership";
 import { seedDefaultModulesForOrg } from "../lib/seedOrganizationModules";
 import { prisma } from "../lib/prisma";
 import type {
@@ -19,13 +20,13 @@ import type {
 const organizationWithUserCount = {
   include: {
     _count: {
-      select: { users: true },
+      select: { members: true },
     },
   },
 } as const;
 
 export type OrganizationWithUserCount = Organization & {
-  _count: { users: number };
+  _count: { members: number };
 };
 
 const buildWhere = (
@@ -53,7 +54,7 @@ const buildOrderBy = (
   sortOrder: OrganizationListSortOrder,
 ): Prisma.OrganizationOrderByWithRelationInput => {
   if (sortBy === "userCount") {
-    return { users: { _count: sortOrder } };
+    return { members: { _count: sortOrder } };
   }
 
   return { [sortBy]: sortOrder };
@@ -133,11 +134,10 @@ export const organizationRepository = {
           passwordHash: data.orgAdmin.passwordHash,
           mustChangePassword: true,
           status: UserStatus.ACTIVE,
-          organizationId: organization.id,
         },
       });
 
-      await assignRoleToUserBySlug(
+      await assignOrgMembershipBySlug(
         tx,
         orgAdminUser.id,
         organization.id,

@@ -9,6 +9,7 @@ const roleWithPermissionsInclude = {
   },
   _count: {
     select: {
+      members: true,
       userRoles: true,
     },
   },

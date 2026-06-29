@@ -18,7 +18,10 @@ export const authenticate = async (
     }
 
     const payload = verifyAccessToken(token);
-    req.authUser = await authService.resolveAuthContext(payload.sub);
+    req.authUser = await authService.resolveAuthContext(
+      payload.sub,
+      payload.orgId,
+    );
     next();
   } catch (error) {
     if (error instanceof AppError) {

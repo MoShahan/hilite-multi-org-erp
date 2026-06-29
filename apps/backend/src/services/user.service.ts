@@ -12,7 +12,7 @@ import {
 import {
   authUserRepository,
   orgUserRepository,
-  type UserListRecord,
+  type OrgMemberListRecord,
 } from "../repositories/user.repository";
 import { getCallerTeamId } from "./leadAccess.service";
 import { auditService } from "./audit.service";
@@ -145,27 +145,21 @@ const parseListQuery = (rawQuery: Record<string, unknown>): ParsedListUsersQuery
   };
 };
 
-const toUserResponse = (user: UserListRecord): UserResponse => {
-  const teamMember = user.teamMembers[0];
-
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    status: user.status,
-    role: user.userRole?.role
-      ? {
-          id: user.userRole.role.id,
-          name: user.userRole.role.name,
-          slug: user.userRole.role.slug,
-        }
-      : null,
-    team: teamMember?.team
-      ? { id: teamMember.team.id, name: teamMember.team.name }
-      : null,
-    createdAt: user.createdAt.toISOString(),
-  };
-};
+const toUserResponse = (member: OrgMemberListRecord): UserResponse => ({
+  id: member.user.id,
+  name: member.user.name,
+  email: member.user.email,
+  status: member.status,
+  role: {
+    id: member.role.id,
+    name: member.role.name,
+    slug: member.role.slug,
+  },
+  team: member.teamMember?.team
+    ? { id: member.teamMember.team.id, name: member.teamMember.team.name }
+    : null,
+  createdAt: member.user.createdAt.toISOString(),
+});
 
 const requireOrganizationId = (organizationId: string | null | undefined) => {
   if (!organizationId) {
@@ -231,7 +225,7 @@ export const orgUserService = {
     const orgId = requireOrganizationId(organizationId);
     const query = parseListQuery(rawQuery);
     authorizeListUsers(authUser, query);
-    const { users, total } = await orgUserRepository.findManyPaginated(
+    const { members, total } = await orgUserRepository.findManyPaginated(
       orgId,
       query,
     );
@@ -239,7 +233,7 @@ export const orgUserService = {
     const totalPages = Math.max(1, Math.ceil(total / query.pageSize));
 
     return {
-      users: users.map(toUserResponse),
+      users: members.map(toUserResponse),
       meta: {
         page: query.page,
         pageSize: query.pageSize,
@@ -278,6 +272,16 @@ export const orgUserService = {
     if (!roleId) {
       throw AppError.badRequest("Role is required", [
         { field: "roleId", message: "Role is required" },
+      ]);
+    }
+
+    const existingMembership = await orgUserRepository.findMembershipByEmail(
+      email,
+      orgId,
+    );
+    if (existingMembership) {
+      throw AppError.badRequest("User is already a member of this organization", [
+        { field: "email", message: "This user already belongs to this organization" },
       ]);
     }
 
@@ -339,27 +343,33 @@ export const orgUserService = {
         actorId: auditContext.authUser.id,
         action: "USER_CREATED",
         entityType: "user",
-        entityId: user.id,
+        entityId: user.user.id,
         metadata: {
-          summary: `User created: ${user.name}`,
+          summary: `User created: ${user.user.name}`,
           actor: buildActorSnapshot(auditContext.authUser),
-          after: { name: user.name, email: user.email, status: user.status },
+          after: {
+            name: user.user.name,
+            email: user.user.email,
+            status: user.status,
+          },
           related: {
-            targetUser: { id: user.id, name: user.name, email: user.email },
-            role: user.userRole?.role
-              ? {
-                  id: user.userRole.role.id,
-                  name: user.userRole.role.name,
-                  slug: user.userRole.role.slug,
-                }
-              : undefined,
+            targetUser: {
+              id: user.user.id,
+              name: user.user.name,
+              email: user.user.email,
+            },
+            role: {
+              id: user.role.id,
+              name: user.role.name,
+              slug: user.role.slug,
+            },
           },
         },
         requestContext: auditContext.requestContext,
       });
     }
 
-    await welcomeNotificationService.notifyNewUser(user.id, orgId, user.name);
+    await welcomeNotificationService.notifyNewUser(user.user.id, orgId, user.user.name);
 
     return toUserResponse(user);
   },
@@ -402,7 +412,7 @@ export const orgUserService = {
 
     if (
       input.status === UserStatus.INACTIVE &&
-      existing.userRole?.role.slug === "org_admin"
+      existing.role.slug === "org_admin"
     ) {
       const activeOrgAdminCount = await orgUserRepository.countActiveByRoleSlug(
         orgId,
@@ -414,7 +424,11 @@ export const orgUserService = {
       }
     }
 
-    const user = await orgUserRepository.updateStatus(targetUserId, input.status);
+    const user = await orgUserRepository.updateStatus(
+      targetUserId,
+      orgId,
+      input.status,
+    );
 
     if (auditContext) {
       const action =
@@ -427,15 +441,19 @@ export const orgUserService = {
         actorId: auditContext.authUser.id,
         action,
         entityType: "user",
-        entityId: user.id,
+        entityId: user.user.id,
         metadata: {
-          summary: `${action === "USER_ACTIVATED" ? "User activated" : "User deactivated"}: ${user.name}`,
+          summary: `${action === "USER_ACTIVATED" ? "User activated" : "User deactivated"}: ${user.user.name}`,
           actor: buildActorSnapshot(auditContext.authUser),
           before: { status: existing.status },
           after: { status: input.status },
           changedFields: ["status"],
           related: {
-            targetUser: { id: user.id, name: user.name, email: user.email },
+            targetUser: {
+              id: user.user.id,
+              name: user.user.name,
+              email: user.user.email,
+            },
           },
         },
         requestContext: auditContext.requestContext,

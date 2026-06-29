@@ -5,23 +5,20 @@ import {
 import { PERMISSIONS } from "../constants/permissions";
 import { prisma } from "../lib/prisma";
 import { userWithAuthInclude } from "../lib/authUserMapper";
+import { assignOrgMembership } from "../lib/orgMembership";
 import type { ParsedListUsersQuery } from "../types/user";
 import { toPrismaRoleMembershipScope } from "../lib/roleMembershipScope";
 
-const userListInclude = {
-  userRole: {
-    include: {
-      role: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          membershipScope: true,
-        },
-      },
+const membershipListInclude = {
+  role: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      membershipScope: true,
     },
   },
-  teamMembers: {
+  teamMember: {
     include: {
       team: {
         select: {
@@ -30,38 +27,38 @@ const userListInclude = {
         },
       },
     },
-    take: 1,
   },
+  user: true,
 } as const;
 
-export type UserListRecord = Prisma.UserGetPayload<{
-  include: typeof userListInclude;
+export type OrgMemberListRecord = Prisma.OrganizationMemberGetPayload<{
+  include: typeof membershipListInclude;
 }>;
 
-const buildWhere = (
+const buildMembershipWhere = (
   organizationId: string,
   query: ParsedListUsersQuery,
-): Prisma.UserWhereInput => {
-  const where: Prisma.UserWhereInput = { organizationId };
+): Prisma.OrganizationMemberWhereInput => {
+  const where: Prisma.OrganizationMemberWhereInput = { organizationId };
 
   if (query.status && query.status !== "ALL") {
     where.status = query.status;
   }
 
   if (query.search) {
-    where.OR = [
-      { name: { contains: query.search, mode: "insensitive" } },
-      { email: { contains: query.search, mode: "insensitive" } },
-    ];
+    where.user = {
+      OR: [
+        { name: { contains: query.search, mode: "insensitive" } },
+        { email: { contains: query.search, mode: "insensitive" } },
+      ],
+    };
   }
 
-  if (query.roleId || query.membershipScope || query.for === "lead-assignment") {
-    const userRoleFilter: Prisma.UserRoleAssignmentWhereInput = {};
+  if (query.roleId) {
+    where.roleId = query.roleId;
+  }
 
-    if (query.roleId) {
-      userRoleFilter.roleId = query.roleId;
-    }
-
+  if (query.membershipScope || query.for === "lead-assignment") {
     const roleFilter: Prisma.RoleWhereInput = {};
 
     if (query.membershipScope) {
@@ -77,34 +74,38 @@ const buildWhere = (
     }
 
     if (Object.keys(roleFilter).length > 0) {
-      userRoleFilter.role = roleFilter;
+      where.role = roleFilter;
     }
-
-    where.userRole = userRoleFilter;
   }
 
   if (query.teamIdIsNone) {
-    where.teamMembers = { none: {} };
+    where.teamMember = { is: null };
   } else if (query.teamId) {
-    where.teamMembers = { some: { teamId: query.teamId } };
+    where.teamMember = { teamId: query.teamId };
   }
 
   return where;
 };
 
-const buildOrderBy = (
+const buildMembershipOrderBy = (
   sortBy: ParsedListUsersQuery["sortBy"],
   sortOrder: ParsedListUsersQuery["sortOrder"],
-): Prisma.UserOrderByWithRelationInput | Prisma.UserOrderByWithRelationInput[] => {
+):
+  | Prisma.OrganizationMemberOrderByWithRelationInput
+  | Prisma.OrganizationMemberOrderByWithRelationInput[] => {
   if (sortBy === "role") {
-    return { userRole: { role: { name: sortOrder } } };
+    return { role: { name: sortOrder } };
   }
 
   if (sortBy === "team") {
-    return { teamMembers: { _count: sortOrder } };
+    return { teamMember: { team: { name: sortOrder } } };
   }
 
-  return { [sortBy]: sortOrder };
+  if (sortBy === "name" || sortBy === "email") {
+    return { user: { [sortBy]: sortOrder } };
+  }
+
+  return { user: { createdAt: sortOrder } };
 };
 
 export const orgUserRepository = {
@@ -112,22 +113,22 @@ export const orgUserRepository = {
     organizationId: string,
     query: ParsedListUsersQuery,
   ) => {
-    const where = buildWhere(organizationId, query);
-    const orderBy = buildOrderBy(query.sortBy, query.sortOrder);
+    const where = buildMembershipWhere(organizationId, query);
+    const orderBy = buildMembershipOrderBy(query.sortBy, query.sortOrder);
     const skip = (query.page - 1) * query.pageSize;
 
-    const [users, total] = await Promise.all([
-      prisma.user.findMany({
+    const [members, total] = await Promise.all([
+      prisma.organizationMember.findMany({
         where,
         orderBy,
         skip,
         take: query.pageSize,
-        include: userListInclude,
+        include: membershipListInclude,
       }),
-      prisma.user.count({ where }),
+      prisma.organizationMember.count({ where }),
     ]);
 
-    return { users, total };
+    return { members, total };
   },
 
   createWithRole: async (data: {
@@ -136,11 +137,10 @@ export const orgUserRepository = {
     email: string;
     passwordHash: string;
     roleId: string;
-  }): Promise<UserListRecord> => {
+  }): Promise<OrgMemberListRecord> => {
     return prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
-          organizationId: data.organizationId,
           name: data.name,
           email: data.email,
           passwordHash: data.passwordHash,
@@ -149,16 +149,20 @@ export const orgUserRepository = {
         },
       });
 
-      await tx.userRoleAssignment.create({
-        data: {
-          userId: user.id,
-          roleId: data.roleId,
-        },
+      await assignOrgMembership(tx, {
+        userId: user.id,
+        organizationId: data.organizationId,
+        roleId: data.roleId,
       });
 
-      return tx.user.findUniqueOrThrow({
-        where: { id: user.id },
-        include: userListInclude,
+      return tx.organizationMember.findUniqueOrThrow({
+        where: {
+          userId_organizationId: {
+            userId: user.id,
+            organizationId: data.organizationId,
+          },
+        },
+        include: membershipListInclude,
       });
     });
   },
@@ -172,21 +176,49 @@ export const orgUserRepository = {
   findByIdForOrganization: (
     userId: string,
     organizationId: string,
-  ): Promise<UserListRecord | null> => {
-    return prisma.user.findFirst({
-      where: { id: userId, organizationId },
-      include: userListInclude,
+  ): Promise<OrgMemberListRecord | null> => {
+    return prisma.organizationMember.findUnique({
+      where: {
+        userId_organizationId: {
+          userId,
+          organizationId,
+        },
+      },
+      include: membershipListInclude,
     });
   },
 
-  updateStatus: (
+  findMembershipByEmail: (email: string, organizationId: string) => {
+    return prisma.organizationMember.findFirst({
+      where: {
+        organizationId,
+        user: { email },
+      },
+      select: { userId: true },
+    });
+  },
+
+  updateStatus: async (
     userId: string,
+    organizationId: string,
     status: UserStatus,
-  ): Promise<UserListRecord> => {
-    return prisma.user.update({
-      where: { id: userId },
-      data: { status },
-      include: userListInclude,
+  ): Promise<OrgMemberListRecord> => {
+    return prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: { status },
+      });
+
+      return tx.organizationMember.update({
+        where: {
+          userId_organizationId: {
+            userId,
+            organizationId,
+          },
+        },
+        data: { status },
+        include: membershipListInclude,
+      });
     });
   },
 
@@ -194,14 +226,12 @@ export const orgUserRepository = {
     organizationId: string,
     roleSlug: string,
   ): Promise<number> => {
-    return prisma.user.count({
+    return prisma.organizationMember.count({
       where: {
         organizationId,
         status: UserStatus.ACTIVE,
-        userRole: {
-          role: {
-            slug: roleSlug,
-          },
+        role: {
+          slug: roleSlug,
         },
       },
     });

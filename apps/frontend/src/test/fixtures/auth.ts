@@ -12,7 +12,6 @@ export const mockUser = (overrides?: Partial<User>): User => ({
   role: { id: "role-1", name: "Org Admin", slug: "org_admin" },
   permissions: ["users:read", "teams:read"],
   status: "ACTIVE",
-  organizationId: "org-1",
   team: null,
   ...overrides,
 });
@@ -46,7 +45,6 @@ export const platformAdminState = (): Pick<RootState, "auth"> => ({
   auth: mockAuthState({
     user: mockUser({
       permissions: ["platform:orgs:read"],
-      organizationId: null,
     }),
     status: "authenticated",
   }),

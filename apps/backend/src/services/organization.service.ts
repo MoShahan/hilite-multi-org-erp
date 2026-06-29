@@ -122,7 +122,7 @@ const toOrganizationResponse = (
   logoUrl: organization.logoUrl,
   description: organization.description,
   status: organization.status,
-  userCount: organization._count.users,
+  userCount: organization._count.members,
   createdAt: organization.createdAt.toISOString(),
   updatedAt: organization.updatedAt.toISOString(),
 });

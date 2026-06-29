@@ -104,9 +104,9 @@ model Organization {
   status      OrganizationStatus @default(ACTIVE)
   createdAt   DateTime           @default(now()) @map("created_at")
   updatedAt   DateTime           @updatedAt @map("updated_at")
-  users       User[]
-  roles       Role[]
-  teams       Team[]
+  members         OrganizationMember[]
+  roles           Role[]
+  teams           Team[]
   leads           Lead[]
   notifications   Notification[]
   modules         OrganizationModule[]
@@ -127,29 +127,45 @@ model OrganizationModule {
 }
 
 model User {
-  id             String              @id @default(uuid())
-  email          String              @unique
-  name           String
-  phoneNumber    String?             @map("phone_number")
+  id                  String              @id @default(uuid())
+  email               String              @unique
+  name                String
+  phoneNumber         String?             @map("phone_number")
   passwordHash        String              @map("password_hash")
   mustChangePassword  Boolean             @default(false) @map("must_change_password")
   status              UserStatus          @default(ACTIVE)
-  organizationId String?             @map("organization_id")
-  organization   Organization?       @relation(fields: [organizationId], references: [id])
-  createdAt      DateTime            @default(now()) @map("created_at")
-  updatedAt      DateTime            @updatedAt @map("updated_at")
-  userRole       UserRoleAssignment?
-  teamMembers    TeamMember[]
-  createdLeads   Lead[]              @relation("LeadCreatedBy")
-  assignedLeads  Lead[]              @relation("LeadAssignedTo")
-  activities     Activity[]
-  notifications  Notification[]
+  createdAt           DateTime            @default(now()) @map("created_at")
+  updatedAt           DateTime            @updatedAt @map("updated_at")
+  userRole            UserRoleAssignment?
+  memberships         OrganizationMember[]
+  teamMembers         TeamMember[]
+  createdLeads        Lead[]              @relation("LeadCreatedBy")
+  assignedLeads       Lead[]              @relation("LeadAssignedTo")
+  activities          Activity[]
+  notifications       Notification[]
   auditLogs           AuditLog[]
   refreshTokens       RefreshToken[]
   dashboardLayout     UserDashboardLayout?
 
-  @@index([organizationId])
   @@map("users")
+}
+
+model OrganizationMember {
+  userId         String     @map("user_id")
+  organizationId String     @map("organization_id")
+  roleId         String     @map("role_id")
+  status         UserStatus @default(ACTIVE)
+  joinedAt       DateTime   @default(now()) @map("joined_at")
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role         Role         @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  teamMember   TeamMember?
+
+  @@id([userId, organizationId])
+  @@index([organizationId])
+  @@index([roleId])
+  @@map("organization_members")
 }
 
 model UserDashboardLayout {
@@ -190,6 +206,7 @@ model Role {
   updatedAt      DateTime             @updatedAt @map("updated_at")
   permissions    RolePermission[]
   userRoles      UserRoleAssignment[]
+  members        OrganizationMember[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -242,12 +259,15 @@ model Team {
 }
 
 model TeamMember {
-  teamId String @map("team_id")
-  userId String @map("user_id")
-  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teamId         String @map("team_id")
+  userId         String @map("user_id")
+  organizationId String @map("organization_id")
+  team           Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user           User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  membership     OrganizationMember @relation(fields: [userId, organizationId], references: [userId, organizationId], onDelete: Cascade)
 
   @@id([teamId, userId])
+  @@unique([userId, organizationId])
   @@index([userId])
   @@map("team_members")
 }

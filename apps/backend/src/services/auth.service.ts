@@ -1,12 +1,12 @@
 import { randomUUID } from "node:crypto";
 import bcrypt from "bcrypt";
-import { OrganizationStatus, UserStatus } from "../generated/prisma/client";
 import { signAccessToken } from "../lib/jwt";
+import { toAuthContext, toAuthMeResponse } from "../lib/authUserMapper";
 import {
-  assertUserHasRole,
-  toAuthContext,
-  toAuthMeResponse,
-} from "../lib/authUserMapper";
+  assertActiveUser,
+  assertUserHasAccess,
+  resolveSessionOrgId,
+} from "../lib/authSession";
 import { parseOptionalPhoneNumber } from "../lib/phoneNumber";
 import { assertPasswordStrength } from "../lib/password";
 import {
@@ -36,22 +36,6 @@ export type SessionTokens = {
   context: AuthContext;
 };
 
-const assertActiveUser = (user: AuthUserRecord) => {
-  if (user.status !== UserStatus.ACTIVE) {
-    throw new AppError(403, "ACCOUNT_INACTIVE", "Your account is inactive");
-  }
-
-  if (user.organizationId) {
-    if (!user.organization) {
-      throw new AppError(403, "ORG_SUSPENDED", "Your organization is suspended");
-    }
-
-    if (user.organization.status !== OrganizationStatus.ACTIVE) {
-      throw new AppError(403, "ORG_SUSPENDED", "Your organization is suspended");
-    }
-  }
-};
-
 const toRequestMetadata = (requestContext?: AuditRequestContext) => ({
   userAgent: requestContext?.userAgent,
   ip: requestContext?.ip,
@@ -59,35 +43,53 @@ const toRequestMetadata = (requestContext?: AuditRequestContext) => ({
 
 const SALT_ROUNDS = 10;
 
+const issueSessionForUser = async (
+  user: AuthUserRecord,
+  organizationId: string | null,
+  requestContext?: AuditRequestContext,
+): Promise<SessionTokens> => {
+  const accessToken = signAccessToken({
+    sub: user.id,
+    orgId: organizationId,
+  });
+  const refreshTokenRaw = generateRefreshToken();
+  const requestMetadata = toRequestMetadata(requestContext);
+
+  await refreshTokenRepository.create({
+    userId: user.id,
+    tokenHash: hashRefreshToken(refreshTokenRaw),
+    familyId: randomUUID(),
+    expiresAt: getRefreshTokenExpiresAt(),
+    ...requestMetadata,
+  });
+
+  return {
+    accessToken,
+    refreshTokenRaw,
+    context: await toAuthContext(user, organizationId),
+  };
+};
+
 export const authService = {
-  buildToken: (user: AuthUserRecord) => {
+  buildToken: (user: AuthUserRecord, organizationId?: string | null) => {
+    const orgId = resolveSessionOrgId(user, organizationId);
+
     return signAccessToken({
       sub: user.id,
-      orgId: user.organizationId,
+      orgId,
     });
   },
 
   issueSession: async (
     user: AuthUserRecord,
     requestContext?: AuditRequestContext,
+    organizationId?: string | null,
   ): Promise<SessionTokens> => {
-    const accessToken = authService.buildToken(user);
-    const refreshTokenRaw = generateRefreshToken();
-    const requestMetadata = toRequestMetadata(requestContext);
+    const orgId = resolveSessionOrgId(user, organizationId);
+    assertActiveUser(user, orgId);
+    assertUserHasAccess(user, orgId);
 
-    await refreshTokenRepository.create({
-      userId: user.id,
-      tokenHash: hashRefreshToken(refreshTokenRaw),
-      familyId: randomUUID(),
-      expiresAt: getRefreshTokenExpiresAt(),
-      ...requestMetadata,
-    });
-
-    return {
-      accessToken,
-      refreshTokenRaw,
-      context: await toAuthContext(user),
-    };
+    return issueSessionForUser(user, orgId, requestContext);
   },
 
   login: async (
@@ -107,22 +109,24 @@ export const authService = {
       throw AppError.unauthorized("Invalid email or password");
     }
 
-    assertActiveUser(user);
-    assertUserHasRole(user);
+    const orgId = resolveSessionOrgId(user);
+    assertActiveUser(user, orgId);
+    assertUserHasAccess(user, orgId);
 
     await welcomeNotificationService.ensureOnLogin(
       user.id,
-      user.organizationId,
+      orgId,
       user.name,
       user.mustChangePassword,
     );
 
-    return authService.issueSession(user, requestContext);
+    return issueSessionForUser(user, orgId, requestContext);
   },
 
   refreshSession: async (
     rawRefreshToken: string,
     requestContext?: AuditRequestContext,
+    organizationId?: string | null,
   ): Promise<SessionTokens> => {
     const tokenHash = hashRefreshToken(rawRefreshToken);
     const existing = await refreshTokenRepository.findByHash(tokenHash);
@@ -144,8 +148,9 @@ export const authService = {
       throw new AppError(401, "REFRESH_TOKEN_INVALID", "Refresh token expired");
     }
 
-    assertActiveUser(existing.user);
-    assertUserHasRole(existing.user);
+    const orgId = resolveSessionOrgId(existing.user, organizationId);
+    assertActiveUser(existing.user, orgId);
+    assertUserHasAccess(existing.user, orgId);
 
     await refreshTokenRepository.revokeById(existing.id);
 
@@ -161,9 +166,9 @@ export const authService = {
     });
 
     return {
-      accessToken: authService.buildToken(existing.user),
+      accessToken: authService.buildToken(existing.user, orgId),
       refreshTokenRaw,
-      context: await toAuthContext(existing.user),
+      context: await toAuthContext(existing.user, orgId),
     };
   },
 
@@ -179,32 +184,39 @@ export const authService = {
     return existing.user;
   },
 
-  getMe: async (userId: string): Promise<AuthMeResponse> => {
+  getMe: async (
+    userId: string,
+    organizationId: string | null,
+  ): Promise<AuthMeResponse> => {
     const user = await authUserRepository.findById(userId);
 
     if (!user) {
       throw AppError.unauthorized();
     }
 
-    assertActiveUser(user);
+    assertActiveUser(user, organizationId);
 
-    return toAuthMeResponse(await toAuthContext(user));
+    return toAuthMeResponse(await toAuthContext(user, organizationId));
   },
 
-  resolveAuthContext: async (userId: string) => {
+  resolveAuthContext: async (
+    userId: string,
+    organizationId: string | null,
+  ) => {
     const user = await authUserRepository.findById(userId);
 
     if (!user) {
       throw AppError.unauthorized();
     }
 
-    assertActiveUser(user);
+    assertActiveUser(user, organizationId);
 
-    return toAuthContext(user);
+    return toAuthContext(user, organizationId);
   },
 
   updateProfile: async (
     userId: string,
+    organizationId: string | null,
     input: UpdateProfileInput,
   ): Promise<AuthMeResponse> => {
     const name = input.name?.trim();
@@ -222,10 +234,10 @@ export const authService = {
       throw AppError.unauthorized();
     }
 
-    assertActiveUser(existing);
+    assertActiveUser(existing, organizationId);
 
     if (existing.name === name && existing.phoneNumber === phoneNumber) {
-      return toAuthMeResponse(await toAuthContext(existing));
+      return toAuthMeResponse(await toAuthContext(existing, organizationId));
     }
 
     const user = await authUserRepository.updateProfile(userId, {
@@ -233,7 +245,7 @@ export const authService = {
       phoneNumber,
     });
 
-    return toAuthMeResponse(await toAuthContext(user));
+    return toAuthMeResponse(await toAuthContext(user, organizationId));
   },
 
   changePassword: async (
@@ -257,7 +269,8 @@ export const authService = {
       throw AppError.unauthorized();
     }
 
-    assertActiveUser(user);
+    const orgId = resolveSessionOrgId(user);
+    assertActiveUser(user, orgId);
 
     const isPasswordValid = await bcrypt.compare(
       currentPassword,

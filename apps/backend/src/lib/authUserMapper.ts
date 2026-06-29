@@ -1,21 +1,38 @@
-import type { AuthContext, AuthMeResponse, AuthRole, AuthUser } from "../types/auth";
+import type {
+  AuthContext,
+  AuthMeResponse,
+  AuthOrganization,
+  AuthUserIdentity,
+} from "../types/auth";
+import { flattenAuthUser, toAuthMembership } from "./authContext";
 import { organizationModuleService } from "../services/organizationModule.service";
 import { AppError } from "../utils/AppError";
+import { OrganizationStatus, UserStatus } from "../generated/prisma/client";
 
-type UserWithAuthRelations = {
-  id: string;
-  email: string;
-  name: string;
-  phoneNumber: string | null;
-  status: AuthUser["status"];
-  organizationId: string | null;
-  organization: AuthContext["organization"];
-  teamMembers: {
+type MembershipWithRelations = {
+  status: UserStatus;
+  organization: {
+    id: string;
+    name: string;
+    code: string;
+    status: OrganizationStatus;
+  };
+  role: {
+    id: string;
+    name: string;
+    slug: string;
+    permissions: { permissionKey: string }[];
+  };
+  teamMember: {
     team: {
       id: string;
       name: string;
     };
-  }[];
+  } | null;
+};
+
+export type UserWithAuthRelations = AuthUserIdentity & {
+  memberships: MembershipWithRelations[];
   userRole: {
     role: {
       id: string;
@@ -27,12 +44,20 @@ type UserWithAuthRelations = {
 };
 
 export const userWithAuthInclude = {
-  organization: true,
-  teamMembers: {
+  memberships: {
     include: {
-      team: true,
+      organization: true,
+      role: {
+        include: {
+          permissions: true,
+        },
+      },
+      teamMember: {
+        include: {
+          team: true,
+        },
+      },
     },
-    take: 1,
   },
   userRole: {
     include: {
@@ -45,41 +70,18 @@ export const userWithAuthInclude = {
   },
 } as const;
 
-const toAuthRole = (
-  role: NonNullable<UserWithAuthRelations["userRole"]>["role"],
-): AuthRole => ({
-  id: role.id,
-  name: role.name,
-  slug: role.slug,
+const toAuthOrganization = (
+  organization: MembershipWithRelations["organization"],
+): AuthOrganization => ({
+  id: organization.id,
+  name: organization.name,
+  code: organization.code,
+  status: organization.status,
 });
 
-const toAuthUser = (user: UserWithAuthRelations): AuthUser => {
-  const roleRecord = user.userRole?.role ?? null;
-  const permissions = roleRecord
-    ? roleRecord.permissions.map((entry) => entry.permissionKey)
-    : [];
-
-  const teamMember = user.teamMembers[0] ?? null;
-
-  return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    phoneNumber: user.phoneNumber,
-    status: user.status,
-    organizationId: user.organizationId,
-    role: roleRecord ? toAuthRole(roleRecord) : null,
-    permissions,
-    team: teamMember
-      ? {
-          id: teamMember.team.id,
-          name: teamMember.team.name,
-        }
-      : null,
-  };
-};
-
-export const assertUserHasRole = (user: UserWithAuthRelations) => {
+const toPlatformAuthContext = async (
+  user: UserWithAuthRelations,
+): Promise<AuthContext> => {
   if (!user.userRole?.role) {
     throw new AppError(
       403,
@@ -87,34 +89,78 @@ export const assertUserHasRole = (user: UserWithAuthRelations) => {
       "Your account does not have a role assigned",
     );
   }
+
+  const role = user.userRole.role;
+
+  return {
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      phoneNumber: user.phoneNumber,
+      status: user.status,
+    },
+    organization: null,
+    membership: {
+      role: {
+        id: role.id,
+        name: role.name,
+        slug: role.slug,
+      },
+      permissions: role.permissions.map((entry) => entry.permissionKey),
+      team: null,
+    },
+    modules: await organizationModuleService.getEnabledModuleKeys(null),
+  };
+};
+
+const toOrgAuthContext = async (
+  user: UserWithAuthRelations,
+  organizationId: string,
+): Promise<AuthContext> => {
+  const membership = user.memberships.find(
+    (entry) => entry.organization.id === organizationId,
+  );
+
+  if (!membership) {
+    throw AppError.unauthorized();
+  }
+
+  if (membership.status !== UserStatus.ACTIVE) {
+    throw new AppError(403, "ACCOUNT_INACTIVE", "Your account is inactive");
+  }
+
+  if (membership.organization.status !== OrganizationStatus.ACTIVE) {
+    throw new AppError(403, "ORG_SUSPENDED", "Your organization is suspended");
+  }
+
+  return {
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      phoneNumber: user.phoneNumber,
+      status: user.status,
+    },
+    organization: toAuthOrganization(membership.organization),
+    membership: toAuthMembership(membership),
+    modules: await organizationModuleService.getEnabledModuleKeys(organizationId),
+  };
 };
 
 export const toAuthContext = async (
   user: UserWithAuthRelations,
+  organizationId: string | null,
 ): Promise<AuthContext> => {
-  assertUserHasRole(user);
+  if (organizationId === null) {
+    return toPlatformAuthContext(user);
+  }
 
-  const authUser = toAuthUser(user);
-  const modules = await organizationModuleService.getEnabledModuleKeys(
-    user.organizationId,
-  );
-
-  return {
-    user: authUser,
-    organization: user.organization
-      ? {
-          id: user.organization.id,
-          name: user.organization.name,
-          code: user.organization.code,
-          status: user.organization.status,
-        }
-      : null,
-    modules,
-  };
+  return toOrgAuthContext(user, organizationId);
 };
 
 export const toAuthMeResponse = (context: AuthContext): AuthMeResponse => ({
-  user: context.user,
+  user: flattenAuthUser(context),
   organization: context.organization,
   modules: context.modules,
 });

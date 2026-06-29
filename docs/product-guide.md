@@ -6,7 +6,7 @@ Complete product reference for **HILITE Sales OS** — a multi-tenant sales ERP 
 
 **Related technical docs:**
 
-- [Architecture](architecture.md) — system design, auth, notifications pipeline, scaling
+- [Architecture](architecture.md) — system design, auth, multi-org readiness, notifications pipeline, scaling
 - [Database schema](database-schema.md) — table-level reference
 - [ER diagram](er-diagram.md) — entity relationships
 - [OpenAPI specification](openapi.yaml) — REST API contract
@@ -47,7 +47,7 @@ HILITE Sales OS is a **multi-tenant sales platform**. Each **organization** (ten
 | ---------- | ----------- |
 | **Multi-tenancy** | Shared database with row-level isolation per organization |
 | **Authentication** | Email/password login with httpOnly cookie sessions (access + refresh tokens) |
-| **RBAC** | One role per user; permissions enforced on API and mirrored in UI |
+| **RBAC** | One role per org membership (platform admins: one platform role); permissions enforced on API and mirrored in UI |
 | **Teams** | Org teams with member management |
 | **Sales CRM** | Lead pipeline with assignment, status workflow, and activity logging |
 | **Dashboards** | Role-scoped analytics with customizable widget layouts |
@@ -72,15 +72,15 @@ See [Future scope](#17-future-scope) for planned evolution.
 ### Platform users
 
 - **Who:** Platform administrators (`platform_admin` role)
-- **`organizationId`:** `null` — not tied to any tenant
+- **Org membership:** None — no `organization_members` rows
 - **Access:** Cross-tenant APIs under `/platform/*`, platform audit, notifications (always available, no org module gate)
 - **Typical tasks:** Provision organizations, suspend tenants, toggle feature modules, manage other platform admins
 
 ### Organization users
 
 - **Who:** Everyone inside a tenant (org admin, executives, team leaders, etc.)
-- **`organizationId`:** Set — tenant is implicit from login context
-- **Access:** Org-scoped APIs (`/users`, `/teams`, `/leads`, etc.)
+- **Org membership:** At least one `organization_members` row (exactly one in the MVP)
+- **Access:** Org-scoped APIs (`/users`, `/teams`, `/leads`, etc.); active tenant comes from the session JWT (`orgId`)
 - **Typical tasks:** Manage users/teams, work leads, view dashboards, read org audit
 
 ### Organization lifecycle
@@ -100,8 +100,8 @@ Platform admins suspend or reactivate organizations from the organization list o
 
 A **platform administrator** is a user account with:
 
-- No organization assignment (`organizationId = null`)
-- The built-in **`platform_admin`** role
+- No organization membership rows
+- The built-in **`platform_admin`** role (stored in `user_roles`, not on a membership)
 - Permissions to manage the entire platform across all tenants
 
 Platform admins operate in the **Platform** section of the sidebar. They do not see org-scoped items (Users, Teams, Leads) unless they also had an org account — in the current product, platform admins are platform-only users.
@@ -149,8 +149,8 @@ A platform admin with `platform:users:write`:
 
 **What happens on create:**
 
-- User record created with `organizationId = null`
-- `platform_admin` role assigned
+- Global user record created (email, name, password)
+- `platform_admin` role assigned via `user_roles`
 - `must_change_password = true` — user must change password after first login
 - **Welcome notification** (`WELCOME_CHANGE_PASSWORD`) created, linking to `/account`
 - **Audit event** `PLATFORM_USER_CREATED` logged to platform audit
@@ -185,7 +185,7 @@ Platform admins with `platform:orgs:write` create tenants from **Platform → Or
 - Organization row created (status `ACTIVE`)
 - Default org roles seeded (`org_admin`, `executive`, `team_lead`, `sales_manager`, `director`)
 - All three feature modules enabled (`sales_erp`, `dashboards`, `notifications`)
-- Org admin user created and assigned `org_admin` role
+- Org admin user created with an `organization_members` row and `org_admin` role
 - Org admin receives welcome notification and `must_change_password = true`
 - Audit event `ORG_CREATED` logged
 
@@ -242,7 +242,7 @@ The app supports **light**, **dark**, and **system** themes via the header toggl
 
 ## 6. Roles and default permissions
 
-Each user has **exactly one role**. Built-in role slugs are **protected** and cannot be deleted. Org admins can create **custom roles** by selecting permissions from the catalog.
+Each org user has **one role per organization** (stored on their `organization_members` row). Platform admins have a single platform role. Built-in role slugs are **protected** and cannot be deleted. Org admins can create **custom roles** by selecting permissions from the catalog.
 
 ### Role summary
 
@@ -1048,7 +1048,8 @@ Items below are **not implemented** in the MVP but are documented as evolution p
 - SSO / OAuth login
 - Fine-grained custom roles UI for org admins (partially exists)
 - Webhook integrations for external CRMs
-- Multi-role per user (currently one role only)
+- **Multi-org users** — same email in multiple organizations with different roles/teams per org (schema ready; see [Architecture — Multi-Org Readiness](architecture.md#multi-org-readiness))
+- Org picker and switch-organization after login
 
 ---
 
@@ -1057,9 +1058,10 @@ Items below are **not implemented** in the MVP but are documented as evolution p
 | Term | Definition |
 | ---- | ---------- |
 | **Organization** | A tenant; isolated slice of users, teams, and leads |
-| **Platform admin** | Cross-tenant administrator with no org assignment |
+| **Organization member** | A user's membership in an org, including their role in that org |
+| **Platform admin** | Cross-tenant administrator with no org membership |
 | **Module** | Per-org feature toggle (`sales_erp`, `dashboards`, `notifications`) |
-| **Role** | Named permission bundle assigned to one user |
+| **Role** | Named permission bundle; one per org membership (or one platform role) |
 | **Permission** | Atomic capability key (e.g. `leads:read:team`) |
 | **Team** | Group of org users; leads belong to a team |
 | **Lead** | Sales prospect/opportunity in the CRM pipeline |

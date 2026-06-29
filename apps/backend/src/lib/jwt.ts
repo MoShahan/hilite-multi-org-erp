@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { env } from "../config/env";
 
+/** Active organization tenant encoded in the access token. */
 export type AccessTokenPayload = {
   sub: string;
   orgId: string | null;

@@ -11,7 +11,8 @@ import { auditService } from "../services/audit.service";
 import { authService } from "../services/auth.service";
 import { getAuditRequestContext } from "../lib/auditRequestContext";
 import { buildActorSnapshot } from "../lib/auditHelpers";
-import { toAuthContext } from "../lib/authUserMapper";
+import { flattenAuthUser } from "../lib/authContext";
+import { resolveSessionOrgId } from "../lib/authSession";
 import { verifyAccessToken } from "../lib/jwt";
 import { hashRefreshToken } from "../lib/refreshToken";
 import { refreshTokenRepository } from "../repositories/refreshToken.repository";
@@ -41,7 +42,7 @@ export const clearSessionCookies = (res: Response) => {
 
 const buildAuthAuditMetadata = (context: AuthContext, summary: string) => ({
   summary,
-  actor: buildActorSnapshot(context.user),
+  actor: buildActorSnapshot(flattenAuthUser(context)),
   organization: context.organization
     ? {
         id: context.organization.id,
@@ -120,8 +121,23 @@ export const refresh = async (
       throw new AppError(401, "REFRESH_TOKEN_INVALID", "Refresh token missing");
     }
 
-    const { accessToken, refreshTokenRaw, context } =
-      await authService.refreshSession(refreshToken, requestContext);
+    const accessToken = req.cookies[ACCESS_TOKEN_COOKIE] as string | undefined;
+    let tokenOrgId: string | null | undefined;
+
+    if (accessToken) {
+      try {
+        tokenOrgId = verifyAccessToken(accessToken).orgId;
+      } catch {
+        // Access token expired or invalid.
+      }
+    }
+
+    const { accessToken: newAccessToken, refreshTokenRaw, context } =
+      await authService.refreshSession(
+        refreshToken,
+        requestContext,
+        tokenOrgId,
+      );
 
     auditService.log({
       organizationId: context.organization?.id ?? null,
@@ -133,7 +149,7 @@ export const refresh = async (
       requestContext,
     });
 
-    setSessionCookies(res, accessToken, refreshTokenRaw);
+    setSessionCookies(res, newAccessToken, refreshTokenRaw);
 
     return res.json({ message: "Token refreshed" });
   } catch (error) {
@@ -144,7 +160,11 @@ export const refresh = async (
         );
 
         if (existing) {
-          const context = await toAuthContext(existing.user);
+          const orgId = resolveSessionOrgId(existing.user);
+          const context = await authService.resolveAuthContext(
+            existing.user.id,
+            orgId,
+          );
 
           auditService.log({
             organizationId: context.organization?.id ?? null,
@@ -184,7 +204,10 @@ export const getMe = async (req: Request, res: Response) => {
     throw AppError.unauthorized();
   }
 
-  const me = await authService.getMe(req.authUser.user.id);
+  const me = await authService.getMe(
+    req.authUser.user.id,
+    req.authUser.organization?.id ?? null,
+  );
 
   return res.json(me);
 };
@@ -205,6 +228,7 @@ export const updateMe = async (
     const previousPhoneNumber = req.authUser.user.phoneNumber;
     const me = await authService.updateProfile(
       req.authUser.user.id,
+      req.authUser.organization?.id ?? null,
       req.body as UpdateProfileInput,
     );
 
@@ -227,11 +251,7 @@ export const updateMe = async (
         entityId: me.user.id,
         metadata: {
           ...buildAuthAuditMetadata(
-            {
-              user: me.user,
-              organization: me.organization,
-              modules: me.modules,
-            },
+            req.authUser,
             `Profile updated: ${me.user.name}`,
           ),
           before: {
@@ -277,14 +297,15 @@ export const changePassword = async (
       action: "AUTH_PASSWORD_CHANGED",
       entityType: "auth",
       entityId: req.authUser.user.id,
-      metadata: buildAuthAuditMetadata(
-        {
-          user: req.authUser.user,
-          organization: req.authUser.organization,
-          modules: req.authUser.modules,
-        },
-        "Password changed",
-      ),
+          metadata: buildAuthAuditMetadata(
+            {
+              user: flattenAuthUser(req.authUser),
+              organization: req.authUser.organization,
+              membership: req.authUser.membership,
+              modules: req.authUser.modules,
+            },
+            "Password changed",
+          ),
       requestContext,
     });
 
@@ -305,7 +326,10 @@ export const logout = async (req: Request, res: Response) => {
     if (accessToken) {
       try {
         const payload = verifyAccessToken(accessToken);
-        context = await authService.resolveAuthContext(payload.sub);
+        context = await authService.resolveAuthContext(
+          payload.sub,
+          payload.orgId,
+        );
       } catch {
         // Access token expired or invalid.
       }
@@ -316,7 +340,8 @@ export const logout = async (req: Request, res: Response) => {
         const user = await authService.revokeSession(refreshToken);
 
         if (user) {
-          context = await authService.resolveAuthContext(user.id);
+          const orgId = resolveSessionOrgId(user);
+          context = await authService.resolveAuthContext(user.id, orgId);
         }
       } else {
         await authService.revokeSession(refreshToken);

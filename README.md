@@ -2,6 +2,8 @@
 
 A multi-tenant Sales ERP MVP built for the HILITE technical assessment. The platform supports multiple organizations with isolated users, teams, leads, and dashboards — plus platform administration, RBAC, and event-driven notifications.
 
+User identity is global (one email per person); org access is modeled via `organization_members` so the same user can belong to multiple organizations in the future. See [Multi-Org Readiness](docs/architecture.md#multi-org-readiness).
+
 ## Prerequisites
 
 - **Node.js** 20 or later
@@ -94,6 +96,6 @@ The UI uses an Apple-inspired design with **light**, **dark**, and **system** mo
 
 - [Product guide](docs/product-guide.md) — features, roles, permissions, notifications, audit, dashboards, and UI reference
 - [API specification (OpenAPI)](docs/openapi.yaml) — import into [Swagger Editor](https://editor.swagger.io) to browse and try endpoints
-- [Architecture](docs/architecture.md) — system design, auth, tenancy, notifications, scaling
+- [Architecture](docs/architecture.md) — system design, auth, tenancy, multi-org readiness, notifications, scaling
 - [Database schema](docs/database-schema.md)
 - [ER diagram](docs/er-diagram.md)

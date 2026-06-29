@@ -34,19 +34,18 @@ export const notificationRepository = {
     organizationId: string,
   ): Promise<string[]> => {
     const members = await prisma.teamMember.findMany({
-      where: { teamId },
+      where: { teamId, organizationId },
       select: {
         user: {
           select: {
             id: true,
             status: true,
-            organizationId: true,
-            userRole: {
-              select: {
-                role: {
-                  select: { slug: true },
-                },
-              },
+          },
+        },
+        membership: {
+          select: {
+            role: {
+              select: { slug: true },
             },
           },
         },
@@ -56,9 +55,8 @@ export const notificationRepository = {
     return members
       .filter(
         (member) =>
-          member.user.organizationId === organizationId &&
           member.user.status === UserStatus.ACTIVE &&
-          member.user.userRole?.role.slug === "team_lead",
+          member.membership.role.slug === "team_lead",
       )
       .map((member) => member.user.id);
   },

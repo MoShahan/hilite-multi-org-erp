@@ -43,7 +43,7 @@ const normalizeSlug = (slug: string): string => {
 
 const toRoleResponse = (role: RoleWithPermissions): RoleResponse => {
   const isProtected = PROTECTED_ROLE_SLUGS.has(role.slug);
-  const userCount = role._count.userRoles;
+  const userCount = role._count.members;
   const assignmentRules = getRoleAssignmentRules(role);
 
   return {
@@ -324,7 +324,7 @@ export const roleService = {
       throw AppError.badRequest("This role cannot be deleted");
     }
 
-    if (role._count.userRoles > 0) {
+    if (role._count.members > 0) {
       throw AppError.badRequest("Cannot delete a role that is assigned to users");
     }
 

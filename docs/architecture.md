@@ -4,14 +4,14 @@ System architecture for HILITE Sales OS — a multi-tenant Sales ERP MVP.
 
 **Related documentation:**
 
-- [Database schema](database-schema.md) — table-level reference (note: `audit_logs` is documented here; see Multi-Tenant Design)
+- [Database schema](database-schema.md) — table-level reference (includes `organization_members`; see Multi-Tenant Design and Multi-Org Readiness)
 - [ER diagram](er-diagram.md) — entity relationships
 
 ---
 
 ## Introduction
 
-HILITE Sales OS is a multi-tenant sales platform that supports multiple organizations with isolated users, teams, leads, and dashboards. Platform administrators manage organizations and other platform admins cross-tenant; org administrators configure users, roles, and teams within their tenant.
+HILITE Sales OS is a multi-tenant sales platform that supports multiple organizations with isolated users, teams, leads, and dashboards. User identity is global (one email per person); org access is modeled via `organization_members` so the same user can belong to multiple organizations in the future. Platform administrators manage organizations cross-tenant; org administrators configure users, roles, and teams within their tenant.
 
 | Layer    | Technology                                                                         |
 | -------- | ---------------------------------------------------------------------------------- |
@@ -164,7 +164,7 @@ Enforced by [`requireOrgModule.ts`](../apps/backend/src/middleware/requireOrgMod
 
 ### Boundary rules
 
-1. **Platform vs org** — Platform users (`organizationId: null`) access cross-tenant APIs under `/api/v1/platform/*` and receive notifications without an org module gate. Org users never pass a tenant ID in URLs; the tenant is implicit from the authenticated user context.
+1. **Platform vs org** — Platform users (no `organization_members` rows) access cross-tenant APIs under `/api/v1/platform/*` and receive notifications without an org module gate. Org users never pass a tenant ID in URLs; the tenant is implicit from JWT `orgId` in the authenticated session.
 2. **UI gating is advisory** — Frontend route guards and sidebar visibility improve UX. The backend middleware and service-layer scoping are authoritative.
 3. **Audit vs notifications** — Audit logs are written synchronously by domain services for compliance ([`audit.service.ts`](../apps/backend/src/services/audit.service.ts)). Notifications are async, event-driven user alerts ([`notification.handler.ts`](../apps/backend/src/handlers/notification.handler.ts)).
 
@@ -273,7 +273,7 @@ sequenceDiagram
 
 ### Security notes
 
-- **JWT `orgId` is informational only.** On every request, `authenticate` resolves the full context from the database using `sub` (user ID). Role and permission changes take effect immediately without re-login.
+- **JWT `orgId` is the active tenant.** The access token carries `{ sub: userId, orgId }`. `authenticate` resolves full context from the database using both values — org users load their `organization_members` row for that org; platform admins use `orgId: null`. Role and permission changes take effect on the next request without re-login.
 - **Cookie-based auth** mitigates XSS token theft compared to `localStorage`, but requires aligned `FRONTEND_URL`, CORS credentials, and `COOKIE_SECURE` in production.
 
 ---
@@ -306,7 +306,7 @@ flowchart TD
 | `requireAnyPermission` | [`requireAnyPermission.ts`](../apps/backend/src/middleware/requireAnyPermission.ts) | Caller must have **any** listed permission (OR)    |
 | `requireOrgModule`     | [`requireOrgModule.ts`](../apps/backend/src/middleware/requireOrgModule.ts)         | Org must have the feature module enabled           |
 
-`AuthContext` shape: [`types/auth.ts`](../apps/backend/src/types/auth.ts) — `user`, `organization`, `modules`.
+`AuthContext` shape: [`types/auth.ts`](../apps/backend/src/types/auth.ts) — `user` (global identity), `organization` (active tenant), `membership` (role, permissions, team for that org), `modules`.
 
 ### Layer 2 — Service data scoping
 
@@ -327,13 +327,17 @@ Cross-tenant record access returns `404 Not found` (not `403`) to avoid leaking 
 ### RBAC data model
 
 ```
-User ──(1:1)── UserRoleAssignment ── Role ──(M:N)── Permission
-  │                              │
-  └── organizationId             └── membershipScope: TEAM | ORGANIZATION
-  └── TeamMember (0..1 team)
+User (global identity: email, password, name, phone)
+  │
+  ├── Platform admin: UserRoleAssignment ── Role (platform) ── Permission
+  │
+  └── Org user: OrganizationMember ── Role (per org) ── Permission
+                    └── TeamMember (0..1 per org)
 ```
 
-- **One role per user** — `UserRoleAssignment` has a unique constraint on `userId`.
+- **Org access** — `organization_members` is the source of truth for which orgs a user belongs to and their role in each org.
+- **Platform admins** — No `organization_members` rows; role stored in `user_roles` (one platform role per user).
+- **Team membership** — Scoped per org via `team_members` unique on `(user_id, organization_id)`.
 - **Permissions** — Global catalog with scope `PLATFORM` or `ORGANIZATION`. Keys defined in [`permissions.ts`](../apps/backend/src/constants/permissions.ts); metadata in [`permissionCatalog.ts`](../apps/backend/src/constants/permissionCatalog.ts).
 - **Role management** — [`role.service.ts`](../apps/backend/src/services/role.service.ts) validates permission keys and enforces team vs org-wide grant rules.
 
@@ -343,7 +347,7 @@ Seeded from [`defaultRoles.ts`](../apps/backend/src/constants/defaultRoles.ts):
 
 | Role             | Scope                             | Typical permissions                                                                 |
 | ---------------- | --------------------------------- | ----------------------------------------------------------------------------------- |
-| `platform_admin` | Platform (`organizationId: null`) | `platform:orgs:*`, `platform:users:*`, `platform:audit:read`                        |
+| `platform_admin` | Platform (no org membership) | `platform:orgs:*`, `platform:users:*`, `platform:audit:read`                        |
 | `org_admin`      | Organization                      | Users, teams, roles (read/write); org-wide leads; `audit:read`                      |
 | `executive`      | Team (requires team membership)   | Own leads, status write, activities, `dashboard:me`                                 |
 | `team_lead`      | Team (requires team membership)   | Team users/leads in team, team status write, `dashboard:team`                         |
@@ -385,7 +389,7 @@ flowchart LR
   Service --> Repo["WHERE organizationId = ..."]
 ```
 
-1. JWT is verified; user ID (`sub`) loads full context from the database.
+1. JWT is verified; `sub` + `orgId` load membership context from the database.
 2. Controllers pass `req.authUser.organization.id` into services.
 3. Services call `requireOrganizationId()` — platform users without an org context receive `403 Organization context is required`.
 4. Repositories scope every query with `organizationId`.
@@ -398,18 +402,17 @@ flowchart LR
 | `notifications`                   | Nullable                | Set for org-scoped alerts; `null` for platform user alerts   |
 | `organization_modules`            | Required (composite PK) | Per-org feature toggles                                      |
 | `audit_logs`                      | Nullable                | `null` for platform-wide events                              |
-| `users`                           | Nullable                | `null` = platform admin                                      |
-| `roles`                           | Nullable                | `null` = platform-level role                                 |
+| `organization_members`            | Required (composite PK) | User ↔ org membership and per-org role                       |
 | `user_dashboard_layouts`          | Via user FK             | Scoped to individual user, not tenant                          |
 
 `activities` are scoped indirectly via `Lead → organizationId`. See [`schema.prisma`](../apps/backend/prisma/schema.prisma) and [ER diagram](er-diagram.md).
 
 ### Platform vs org users
 
-| User type      | `organizationId` | API scope                         | Cross-tenant access                |
-| -------------- | ---------------- | --------------------------------- | ---------------------------------- |
-| Platform admin | `null`           | `/api/v1/platform/*`, notifications | Yes, with `platform:*` permissions |
-| Org user       | Set              | `/api/v1/{users,teams,leads,...}` | No — implicit tenant from auth     |
+| User type      | Membership                         | API scope                         | Cross-tenant access                |
+| -------------- | ---------------------------------- | --------------------------------- | ---------------------------------- |
+| Platform admin | No `organization_members` rows     | `/api/v1/platform/*`, notifications | Yes, with `platform:*` permissions |
+| Org user       | One `organization_members` row today | `/api/v1/{users,teams,leads,...}` | No — implicit tenant from JWT `orgId` |
 
 Platform administrators are managed via `GET/POST /api/v1/platform/users` and `PATCH /api/v1/platform/users/:id/status` ([`platformUser.service.ts`](../apps/backend/src/services/platformUser.service.ts)). New platform admins are created with `must_change_password = true` and receive a welcome notification.
 
@@ -422,11 +425,61 @@ New organizations are created in a single transaction in [`organization.reposito
 1. Create `Organization`
 2. Seed default roles (`seedDefaultRolesForOrg`)
 3. Seed default modules (`seedDefaultModulesForOrg`)
-4. Create org admin user and assign `org_admin` role
+4. Create org admin user and `organization_members` row with `org_admin` role
 
 ### Suspension
 
 Organizations with `status: SUSPENDED` block login for all org users. Enforced in [`auth.service.ts`](../apps/backend/src/services/auth.service.ts) during login and context resolution.
+
+---
+
+## Multi-Org Readiness
+
+The data model and auth pipeline are designed so a single user can belong to multiple organizations in the future, without a breaking schema migration.
+
+### Design decisions
+
+| Decision | Implementation today |
+| -------- | -------------------- |
+| Same email across orgs | `users.email` is globally unique; org access is via `organization_members` |
+| Different role per org | `organization_members.role_id` |
+| Different team per org | `team_members` unique on `(user_id, organization_id)` |
+| Zero orgs | Platform admins only — no membership rows |
+| Profile (name, phone) | Global on `users` |
+
+### Current behavior (single-org MVP)
+
+- Each org user has exactly one `organization_members` row.
+- Login issues a JWT with that org's `orgId`.
+- No org picker or switch-org endpoint yet.
+
+### Auth model
+
+```mermaid
+flowchart TB
+  subgraph global [Global identity]
+    User["User: email, password, name, phone"]
+  end
+  subgraph platform [Platform admin]
+    User --> PlatformRole["user_roles"]
+  end
+  subgraph orgPath [Org user path]
+    User --> Member["organization_members"]
+    Member --> Role["Role per org"]
+    Member --> TeamMember["team_members per org"]
+  end
+  JWT["JWT sub + orgId"] --> Member
+```
+
+Key files: [`orgMembership.ts`](../apps/backend/src/lib/orgMembership.ts), [`authUserMapper.ts`](../apps/backend/src/lib/authUserMapper.ts), [`authSession.ts`](../apps/backend/src/lib/authSession.ts).
+
+### Future work (not yet built)
+
+- Org picker after login when user has multiple memberships
+- `POST /auth/switch-organization` to re-issue JWT with a new `orgId`
+- List all memberships on `/auth/me`
+- Invite existing email to a second org (add membership row only)
+- Per-org user deactivation via `organization_members.status`
 
 ---
 

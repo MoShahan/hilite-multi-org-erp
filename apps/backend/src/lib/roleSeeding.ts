@@ -75,15 +75,14 @@ export const seedDefaultRolesForOrg = async (
   return roles;
 };
 
-export const assignRoleToUserBySlug = async (
+export const assignPlatformRoleBySlug = async (
   tx: TransactionClient,
   userId: string,
-  organizationId: string | null,
   slug: string,
 ) => {
   const role = await tx.role.findFirst({
     where: {
-      organizationId,
+      organizationId: null,
       slug,
     },
   });
@@ -100,3 +99,6 @@ export const assignRoleToUserBySlug = async (
 
   return role;
 };
+
+/** @deprecated Use assignPlatformRoleBySlug or assignOrgMembershipBySlug */
+export const assignRoleToUserBySlug = assignPlatformRoleBySlug;

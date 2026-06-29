@@ -218,21 +218,19 @@ export const assertAssigneeEligible = async (
   teamId: string,
   organizationId: string,
 ) => {
-  const assignee = await prisma.user.findFirst({
+  const assignee = await prisma.organizationMember.findFirst({
     where: {
-      id: assigneeId,
+      userId: assigneeId,
       organizationId,
       status: UserStatus.ACTIVE,
-      teamMembers: { some: { teamId } },
-      userRole: {
-        role: {
-          permissions: {
-            some: { permissionKey: PERMISSIONS.LEADS_ASSIGNABLE },
-          },
+      teamMember: { teamId },
+      role: {
+        permissions: {
+          some: { permissionKey: PERMISSIONS.LEADS_ASSIGNABLE },
         },
       },
     },
-    select: { id: true },
+    select: { userId: true },
   });
 
   if (!assignee) {

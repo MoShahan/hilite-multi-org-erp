@@ -21,7 +21,6 @@ const meUser: AuthUser = {
   name: "Me User",
   phoneNumber: null,
   status: "ACTIVE",
-  organizationId: "org-1",
   role: { id: "role-1", name: "Executive", slug: "executive" },
   permissions: ["dashboard:me"],
   team: { id: "team-1", name: "North" },

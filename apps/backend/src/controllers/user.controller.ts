@@ -22,7 +22,7 @@ export const listUsers = async (
   try {
     const result = await orgUserService.listUsers(
       req.authUser?.organization?.id ?? null,
-      req.authUser!.user,
+      requireAuthUser(req),
       req.query as Record<string, unknown>,
     );
     return res.json(result);
