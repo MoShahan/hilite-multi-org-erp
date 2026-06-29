@@ -5,6 +5,7 @@ import type {
   ListRolesOptions,
   PermissionCatalogItem,
   Role,
+  RoleOptionsResult,
   UpdateRoleInput,
 } from "./rolesTypes";
 
@@ -30,6 +31,22 @@ export const rolesService = {
     });
     const data = unwrapResponse<{ roles: Role[] }>(response);
     return data.roles;
+  },
+
+  listRoleOptions: async (
+    options: ListRolesOptions = {},
+  ): Promise<RoleOptionsResult> => {
+    const params: Record<string, string> = {};
+    if (options.membershipScope) {
+      params.membershipScope = options.membershipScope;
+    }
+    if (options.assignableFrom) {
+      params.assignableFrom = options.assignableFrom;
+    }
+    const response = await apiClient.get("/api/v1/roles/options", {
+      params: Object.keys(params).length > 0 ? params : undefined,
+    });
+    return unwrapResponse<RoleOptionsResult>(response);
   },
 
   getRole: async (id: string): Promise<Role> => {

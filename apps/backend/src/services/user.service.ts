@@ -21,14 +21,18 @@ import type { AuthUser } from "../types/auth";
 import type { AuditMutationContext } from "../types/audit";
 import type {
   CreateUserInput,
+  ListUserOptionsQuery,
   ListUsersQuery,
   PaginatedUsersResponse,
   ParsedListUsersQuery,
+  ParsedUserOptionsQuery,
   UserListFor,
   UserListSortBy,
   UserListSortOrder,
   UserListStatusFilter,
+  UserOption,
   UserResponse,
+  UserOptionsResponse,
   UpdateUserStatusInput,
 } from "../types/user";
 import { AppError } from "../utils/AppError";
@@ -60,7 +64,9 @@ const STATUS_FILTER_VALUES: UserListStatusFilter[] = [
   "INACTIVE",
 ];
 
-const USER_LIST_FOR_VALUES: UserListFor[] = ["lead-assignment"];
+const USER_LIST_FOR_VALUES: UserListFor[] = ["lead-assignment", "filter"];
+
+const OPTIONS_LIMIT = 100;
 
 const hasPermission = (user: AuthUser, permission: string) =>
   user.permissions.includes(permission);
@@ -95,11 +101,6 @@ const parseListQuery = (rawQuery: Record<string, unknown>): ParsedListUsersQuery
   const membershipScopeRaw = parseQueryValue(rawQuery.membershipScope);
   const teamIdRaw = parseQueryValue(rawQuery.teamId);
   const roleId = parseQueryValue(rawQuery.roleId);
-  const forRaw = parseQueryValue(rawQuery.for);
-
-  const forParam = USER_LIST_FOR_VALUES.includes(forRaw as UserListFor)
-    ? (forRaw as UserListFor)
-    : undefined;
 
   const status = STATUS_FILTER_VALUES.includes(
     statusRaw as UserListStatusFilter,
@@ -137,7 +138,6 @@ const parseListQuery = (rawQuery: Record<string, unknown>): ParsedListUsersQuery
     membershipScope,
     teamId,
     teamIdIsNone,
-    for: forParam,
     sortBy,
     sortOrder,
     page,
@@ -170,6 +170,51 @@ const requireOrganizationId = (organizationId: string | null | undefined) => {
 };
 
 const authorizeListUsers = (authUser: AuthUser, query: ParsedListUsersQuery) => {
+  const canReadOrg = hasPermission(authUser, PERMISSIONS.USERS_READ);
+  const canReadTeam = hasPermission(authUser, PERMISSIONS.USERS_READ_TEAM);
+
+  if (!canReadOrg && !canReadTeam) {
+    throw AppError.forbidden("You do not have permission to view users");
+  }
+
+  if (!canReadOrg && canReadTeam) {
+    const callerTeamId = getCallerTeamId(authUser);
+    if (!callerTeamId) {
+      throw AppError.forbidden("Team context is required to view team users");
+    }
+
+    query.teamId = callerTeamId;
+    query.teamIdIsNone = false;
+  }
+};
+
+const parseUserOptionsQuery = (
+  rawQuery: Record<string, unknown>,
+): ParsedUserOptionsQuery => {
+  const forRaw = parseQueryValue(rawQuery.for);
+  const forParam = USER_LIST_FOR_VALUES.includes(forRaw as UserListFor)
+    ? (forRaw as UserListFor)
+    : "filter";
+
+  const teamIdRaw = parseQueryValue(rawQuery.teamId);
+  const teamIdIsNone = teamIdRaw === "none";
+  const teamId =
+    teamIdRaw && teamIdRaw !== "none" ? teamIdRaw : undefined;
+  const search = parseQueryValue(rawQuery.search)?.trim();
+
+  return {
+    for: forParam,
+    teamId,
+    teamIdIsNone,
+    search: search || undefined,
+    status: UserStatus.ACTIVE,
+  };
+};
+
+const authorizeUserOptions = (
+  authUser: AuthUser,
+  query: ParsedUserOptionsQuery,
+) => {
   if (query.for === "lead-assignment") {
     if (!hasPermission(authUser, PERMISSIONS.LEADS_WRITE)) {
       throw AppError.forbidden("You do not have permission to list assignable users");
@@ -189,10 +234,6 @@ const authorizeListUsers = (authUser: AuthUser, query: ParsedListUsersQuery) => 
       if (!callerTeamId || query.teamId !== callerTeamId) {
         throw AppError.forbidden("You can only list assignable users on your team");
       }
-    }
-
-    if (query.status === "ALL" || query.status === "INACTIVE") {
-      query.status = UserStatus.ACTIVE;
     }
 
     return;
@@ -215,6 +256,14 @@ const authorizeListUsers = (authUser: AuthUser, query: ParsedListUsersQuery) => 
     query.teamIdIsNone = false;
   }
 };
+
+const toUserOption = (member: {
+  user: { id: string; name: string; email: string };
+}): UserOption => ({
+  id: member.user.id,
+  name: member.user.name,
+  email: member.user.email,
+});
 
 export const orgUserService = {
   listUsers: async (
@@ -240,6 +289,26 @@ export const orgUserService = {
         total,
         totalPages,
       },
+    };
+  },
+
+  listUserOptions: async (
+    organizationId: string | null,
+    authUser: AuthUser,
+    rawQuery: Record<string, unknown>,
+  ): Promise<UserOptionsResponse> => {
+    const orgId = requireOrganizationId(organizationId);
+    const query = parseUserOptionsQuery(rawQuery);
+    authorizeUserOptions(authUser, query);
+
+    const members = await orgUserRepository.findManyOptions(
+      orgId,
+      query,
+      OPTIONS_LIMIT,
+    );
+
+    return {
+      users: members.map(toUserOption),
     };
   },
 
@@ -464,4 +533,4 @@ export const orgUserService = {
   },
 };
 
-export type { ListUsersQuery };
+export type { ListUsersQuery, ListUserOptionsQuery };

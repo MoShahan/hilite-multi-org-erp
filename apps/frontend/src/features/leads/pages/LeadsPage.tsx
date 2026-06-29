@@ -75,17 +75,8 @@ export const LeadsPage = () => {
 
     const loadTeams = async () => {
       try {
-        const result = await teamsService.listTeams({
-          search: "",
-          membership: "ALL",
-          sortBy: "name",
-          sortOrder: "asc",
-          page: 1,
-          pageSize: 100,
-        });
-        setTeams(
-          result.teams.map((team) => ({ id: team.id, name: team.name })),
-        );
+        const result = await teamsService.listTeamOptions();
+        setTeams(result.teams);
       } catch (error) {
         if (error instanceof ApiClientError) {
           toast.error(error.message);
@@ -103,24 +94,11 @@ export const LeadsPage = () => {
 
     const loadAssignees = async () => {
       try {
-        const result = await usersService.listUsers({
-          search: "",
-          status: "ACTIVE",
-          roleId: "",
-          membershipScope: "ALL",
-          teamId: query.teamId,
-          sortBy: "name",
-          sortOrder: "asc",
-          page: 1,
-          pageSize: 100,
+        const result = await usersService.listUserOptions({
+          for: "filter",
+          ...(query.teamId ? { teamId: query.teamId } : {}),
         });
-        setAssignees(
-          result.users.map((user) => ({
-            id: user.id,
-            name: user.name,
-            email: user.email,
-          })),
-        );
+        setAssignees(result.users);
       } catch (error) {
         if (error instanceof ApiClientError) {
           toast.error(error.message);

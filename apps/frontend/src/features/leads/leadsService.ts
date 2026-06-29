@@ -14,7 +14,9 @@ import type {
   LeadStatusHistoryResponse,
   UpdateLeadInput,
 } from "./leadsTypes";
-import type { ListUsersResult } from "@/features/users/usersTypes";
+import { usersService } from "@/features/users/usersService";
+
+import type { UserOption } from "@/features/users/usersTypes";
 
 export const leadsService = {
   listLeads: async (query: LeadListQuery): Promise<ListLeadsResult> => {
@@ -84,18 +86,11 @@ export const leadsService = {
     return unwrapResponse<Activity>(response);
   },
 
-  listAssignableUsers: async (teamId: string): Promise<ListUsersResult> => {
-    const response = await apiClient.get("/api/v1/users", {
-      params: {
-        for: "lead-assignment",
-        teamId,
-        status: "ACTIVE",
-        page: 1,
-        pageSize: 100,
-        sortBy: "name",
-        sortOrder: "asc",
-      },
+  listAssignableUsers: async (teamId: string): Promise<UserOption[]> => {
+    const result = await usersService.listUserOptions({
+      for: "lead-assignment",
+      teamId,
     });
-    return unwrapResponse<ListUsersResult>(response);
+    return result.users;
   },
 };

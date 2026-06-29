@@ -30,6 +30,22 @@ export const listTeams = async (
   }
 };
 
+export const listTeamOptions = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const result = await teamService.listTeamOptions(
+      req.authUser?.organization?.id ?? null,
+      req.query as Record<string, unknown>,
+    );
+    return res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const createTeam = async (
   req: Request,
   res: Response,

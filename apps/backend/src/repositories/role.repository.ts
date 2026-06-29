@@ -36,6 +36,24 @@ export const roleRepository = {
     });
   },
 
+  findManyOptions: (
+    organizationId: string,
+    filters: { membershipScope?: RoleMembershipScope } = {},
+    limit = 100,
+  ) => {
+    return prisma.role.findMany({
+      where: {
+        organizationId,
+        ...(filters.membershipScope
+          ? { membershipScope: filters.membershipScope }
+          : {}),
+      },
+      select: { id: true, name: true, slug: true, membershipScope: true },
+      orderBy: [{ name: "asc" }],
+      take: limit,
+    });
+  },
+
   findByIdForOrganization: (
     id: string,
     organizationId: string,

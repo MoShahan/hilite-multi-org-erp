@@ -80,6 +80,24 @@ export const organizationRepository = {
     return { organizations, total };
   },
 
+  findManyOptions: (
+    status?: ParsedListOrganizationsQuery["status"],
+    limit = 100,
+  ) => {
+    const where: Prisma.OrganizationWhereInput = {};
+
+    if (status && status !== "ALL") {
+      where.status = status;
+    }
+
+    return prisma.organization.findMany({
+      where,
+      select: { id: true, name: true, code: true },
+      orderBy: { name: "asc" },
+      take: limit,
+    });
+  },
+
   findMany: (): Promise<OrganizationWithUserCount[]> => {
     return prisma.organization.findMany({
       ...organizationWithUserCount,

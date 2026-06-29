@@ -32,6 +32,19 @@ export type ListTeamsResult = {
   meta: TeamListMeta;
 };
 
+export type TeamOption = {
+  id: string;
+  name: string;
+};
+
+export type ListTeamOptionsQuery = {
+  search?: string;
+};
+
+export type TeamOptionsResult = {
+  teams: TeamOption[];
+};
+
 export type CreateTeamInput = {
   name: string;
 };

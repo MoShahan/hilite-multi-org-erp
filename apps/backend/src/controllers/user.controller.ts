@@ -31,6 +31,23 @@ export const listUsers = async (
   }
 };
 
+export const listUserOptions = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const result = await orgUserService.listUserOptions(
+      req.authUser?.organization?.id ?? null,
+      requireAuthUser(req),
+      req.query as Record<string, unknown>,
+    );
+    return res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const createUser = async (
   req: Request,
   res: Response,

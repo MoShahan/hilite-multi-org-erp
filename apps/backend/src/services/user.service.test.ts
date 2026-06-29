@@ -10,6 +10,7 @@ vi.mock("../repositories/user.repository", () => ({
   },
   orgUserRepository: {
     findManyPaginated: vi.fn(),
+    findManyOptions: vi.fn(),
     findMembershipByEmail: vi.fn(),
     findRoleForOrganization: vi.fn(),
     createWithRole: vi.fn(),
@@ -77,13 +78,44 @@ describe("orgUserService.listUsers", () => {
   it("requires team id for lead-assignment listing", async () => {
     await expectAppErrorAsync(
       () =>
-        orgUserService.listUsers(
+        orgUserService.listUserOptions(
           orgId,
           baseAuthUser({ permissions: [PERMISSIONS.LEADS_WRITE] }),
           { for: "lead-assignment" },
         ),
       400,
       "BAD_REQUEST",
+    );
+  });
+});
+
+describe("orgUserService.listUserOptions", () => {
+  beforeEach(() => {
+    vi.mocked(orgUserRepository.findManyOptions).mockReset();
+    vi.mocked(orgUserRepository.findManyOptions).mockResolvedValue([]);
+  });
+
+  it("returns user options for filter context", async () => {
+    const result = await orgUserService.listUserOptions(
+      orgId,
+      baseAuthUser({ permissions: [PERMISSIONS.USERS_READ] }),
+      { for: "filter" },
+    );
+
+    expect(result.users).toEqual([]);
+    expect(orgUserRepository.findManyOptions).toHaveBeenCalled();
+  });
+
+  it("forbids filter listing without user read permissions", async () => {
+    await expectAppErrorAsync(
+      () =>
+        orgUserService.listUserOptions(
+          orgId,
+          baseAuthUser({ permissions: [PERMISSIONS.LEADS_WRITE] }),
+          { for: "filter" },
+        ),
+      403,
+      "FORBIDDEN",
     );
   });
 });

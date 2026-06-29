@@ -77,3 +77,17 @@ export type UpdateOrganizationInput = {
 export type UpdateOrganizationStatusInput = {
   status: OrganizationStatus;
 };
+
+export type OrganizationOption = {
+  id: string;
+  name: string;
+  code: string;
+};
+
+export type ListOrganizationOptionsQuery = {
+  status?: OrganizationListStatusFilter;
+};
+
+export type OrganizationOptionsResponse = {
+  organizations: OrganizationOption[];
+};

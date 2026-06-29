@@ -7,6 +7,7 @@ import {
   createOrganization,
   getOrganization,
   getOrganizationModules,
+  listOrganizationOptions,
   listOrganizations,
   updateOrganization,
   updateOrganizationModules,
@@ -62,6 +63,7 @@ router.patch(
   updatePlatformUserStatus,
 );
 
+router.get("/organizations/options", ...platformRead, listOrganizationOptions);
 router.get("/organizations", ...platformRead, listOrganizations);
 router.post("/organizations", ...platformWrite, createOrganization);
 router.get("/organizations/:id", ...platformRead, getOrganization);

@@ -16,6 +16,8 @@ import type {
   OrganizationListSortBy,
   OrganizationListSortOrder,
   OrganizationListStatusFilter,
+  OrganizationOption,
+  OrganizationOptionsResponse,
   OrganizationResponse,
   PaginatedOrganizationsResponse,
   ParsedListOrganizationsQuery,
@@ -232,6 +234,29 @@ export const organizationService = {
         total,
         totalPages,
       },
+    };
+  },
+
+  listOrganizationOptions: async (
+    rawQuery: Record<string, unknown>,
+  ): Promise<OrganizationOptionsResponse> => {
+    const statusRaw = parseQueryValue(rawQuery.status)?.toUpperCase();
+    const status = STATUS_FILTER_VALUES.includes(
+      statusRaw as OrganizationListStatusFilter,
+    )
+      ? (statusRaw as OrganizationListStatusFilter)
+      : DEFAULT_LIST_QUERY.status;
+
+    const organizations = await organizationRepository.findManyOptions(status);
+
+    return {
+      organizations: organizations.map(
+        (organization): OrganizationOption => ({
+          id: organization.id,
+          name: organization.name,
+          code: organization.code,
+        }),
+      ),
     };
   },
 

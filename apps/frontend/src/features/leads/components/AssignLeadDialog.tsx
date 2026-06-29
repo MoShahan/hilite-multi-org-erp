@@ -64,15 +64,9 @@ export const AssignLeadDialog = ({
 
     const loadAssignees = async () => {
       try {
-        const result = await leadsService.listAssignableUsers(lead.team.id);
+        const users = await leadsService.listAssignableUsers(lead.team.id);
         if (!cancelled) {
-          setAssignees(
-            result.users.map((user) => ({
-              id: user.id,
-              name: user.name,
-              email: user.email,
-            })),
-          );
+          setAssignees(users);
         }
       } catch (error) {
         if (!cancelled) {

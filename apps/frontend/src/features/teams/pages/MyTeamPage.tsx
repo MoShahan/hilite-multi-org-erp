@@ -49,8 +49,8 @@ export const MyTeamPage = () => {
   useEffect(() => {
     const loadRoles = async () => {
       try {
-        const result = await rolesService.listRoles({ assignableFrom: "team" });
-        setRoles(result.map((role) => ({ id: role.id, name: role.name })));
+        const result = await rolesService.listRoleOptions({ assignableFrom: "team" });
+        setRoles(result.roles.map((role) => ({ id: role.id, name: role.name })));
       } catch (error) {
         setRoles([]);
         if (error instanceof ApiClientError) {

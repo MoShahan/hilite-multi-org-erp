@@ -287,13 +287,56 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
 
+  /api/v1/users/options:
+    get:
+      tags: [Users]
+      summary: List user options
+      description: |
+        Returns a lightweight list of users for dropdowns and pickers.
+        Use `for=lead-assignment` with `teamId` for assignee pickers (`leads:write`).
+        Use `for=filter` for user filter dropdowns (`users:read` or `users:read:team`).
+      operationId: listUserOptions
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/search"
+        - name: for
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [lead-assignment, filter]
+        - name: teamId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: User options
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/UserOptionsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
   /api/v1/users:
     get:
       tags: [Users]
       summary: List users
       description: |
         Returns a paginated list of organization users.
-        Requires one of `users:read`, `users:read:team`, or `leads:write` (for lead assignment picker).
+        Requires `users:read` or `users:read:team`.
       operationId: listUsers
       security:
         - accessTokenCookie: []
@@ -317,12 +360,6 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: for
-          in: query
-          description: When set to `lead-assignment`, scopes results for assignee pickers
-          schema:
-            type: string
-            enum: [lead-assignment]
         - name: sortBy
           in: query
           schema:
@@ -424,6 +461,33 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+
+  /api/v1/teams/options:
+    get:
+      tags: [Teams]
+      summary: List team options
+      description: Returns a lightweight list of teams for dropdowns. Requires `teams:read`.
+      operationId: listTeamOptions
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - $ref: "#/components/parameters/search"
+      responses:
+        "200":
+          description: Team options
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/TeamOptionsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /api/v1/teams:
     get:
@@ -608,6 +672,41 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+
+  /api/v1/roles/options:
+    get:
+      tags: [Roles]
+      summary: List role options
+      description: Returns a lightweight list of roles for dropdowns. Requires `roles:read` or `roles:read:team`.
+      operationId: listRoleOptions
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - name: membershipScope
+          in: query
+          schema:
+            $ref: "#/components/schemas/RoleMembershipScope"
+        - name: assignableFrom
+          in: query
+          schema:
+            type: string
+            enum: [users, team]
+      responses:
+        "200":
+          description: Role options
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/RoleOptionsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /api/v1/roles:
     get:
@@ -1477,6 +1576,36 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /api/v1/platform/organizations/options:
+    get:
+      tags: [Platform]
+      summary: List organization options
+      description: Returns a lightweight list of organizations for dropdowns. Requires `platform:orgs:read`.
+      operationId: listOrganizationOptions
+      security:
+        - accessTokenCookie: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/OrganizationStatusFilter"
+      responses:
+        "200":
+          description: Organization options
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiSuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/OrganizationOptionsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
   /api/v1/platform/organizations:
     get:
       tags: [Platform]
@@ -2294,6 +2423,28 @@ components:
         meta:
           $ref: "#/components/schemas/PaginationMeta"
 
+    UserOption:
+      type: object
+      required: [id, name, email]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+
+    UserOptionsResponse:
+      type: object
+      required: [users]
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserOption"
+
     CreateUserRequest:
       type: object
       required: [name, email, password, roleId]
@@ -2350,6 +2501,25 @@ components:
             $ref: "#/components/schemas/TeamSummary"
         meta:
           $ref: "#/components/schemas/PaginationMeta"
+
+    TeamOption:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+
+    TeamOptionsResponse:
+      type: object
+      required: [teams]
+      properties:
+        teams:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeamOption"
 
     CreateTeamRequest:
       type: object
@@ -2458,6 +2628,27 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/RoleResponse"
+
+    RoleOption:
+      type: object
+      required: [id, name, slug]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+
+    RoleOptionsResponse:
+      type: object
+      required: [roles]
+      properties:
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoleOption"
 
     RoleDetailResponse:
       type: object
@@ -3135,6 +3326,27 @@ components:
             $ref: "#/components/schemas/OrganizationResponse"
         meta:
           $ref: "#/components/schemas/PaginationMeta"
+
+    OrganizationOption:
+      type: object
+      required: [id, name, code]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        code:
+          type: string
+
+    OrganizationOptionsResponse:
+      type: object
+      required: [organizations]
+      properties:
+        organizations:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrganizationOption"
 
     CreateOrganizationOrgAdmin:
       type: object

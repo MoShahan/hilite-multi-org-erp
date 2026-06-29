@@ -39,6 +39,25 @@ export const listRoles = async (
   }
 };
 
+export const listRoleOptions = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const authUser = requireAuthUser(req);
+
+    const result = await roleService.listRoleOptions(
+      req.authUser?.organization?.id ?? null,
+      roleService.parseListQuery(req.query as Record<string, unknown>),
+      authUser,
+    );
+    return res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getRole = async (
   req: Request,
   res: Response,

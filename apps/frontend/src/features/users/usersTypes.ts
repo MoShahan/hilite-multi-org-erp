@@ -89,3 +89,21 @@ export type TeamFilterOption = {
   id: string;
   name: string;
 };
+
+export type UserOption = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+export type UserListFor = "lead-assignment" | "filter";
+
+export type ListUserOptionsQuery = {
+  for: UserListFor;
+  teamId?: string;
+  search?: string;
+};
+
+export type UserOptionsResult = {
+  users: UserOption[];
+};

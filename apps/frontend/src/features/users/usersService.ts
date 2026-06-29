@@ -4,10 +4,12 @@ import { toUserListApiParams } from "./userListParams";
 
 import type {
   CreateUserInput,
+  ListUserOptionsQuery,
   ListUsersResult,
   UpdateUserStatusInput,
   User,
   UserListQuery,
+  UserOptionsResult,
 } from "./usersTypes";
 
 export const usersService = {
@@ -16,6 +18,19 @@ export const usersService = {
       params: toUserListApiParams(query),
     });
     return unwrapResponse<ListUsersResult>(response);
+  },
+
+  listUserOptions: async (
+    query: ListUserOptionsQuery,
+  ): Promise<UserOptionsResult> => {
+    const response = await apiClient.get("/api/v1/users/options", {
+      params: {
+        for: query.for,
+        ...(query.teamId ? { teamId: query.teamId } : {}),
+        ...(query.search ? { search: query.search } : {}),
+      },
+    });
+    return unwrapResponse<UserOptionsResult>(response);
   },
 
   createUser: async (input: CreateUserInput): Promise<User> => {

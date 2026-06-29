@@ -101,3 +101,16 @@ export type PaginatedTeamMembersResponse = {
   members: TeamMember[];
   meta: TeamListMeta;
 };
+
+export type TeamOption = {
+  id: string;
+  name: string;
+};
+
+export type ListTeamOptionsQuery = {
+  search?: string;
+};
+
+export type TeamOptionsResponse = {
+  teams: TeamOption[];
+};

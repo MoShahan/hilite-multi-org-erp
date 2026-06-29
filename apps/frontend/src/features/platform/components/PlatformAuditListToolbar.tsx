@@ -16,12 +16,12 @@ import {
   AUDIT_ENTITY_TYPE_OPTIONS,
 } from "@/features/audit/auditTypes";
 
-import type { Organization, PlatformAuditListQuery } from "../platformTypes";
+import type { OrganizationOption, PlatformAuditListQuery } from "../platformTypes";
 
 type PlatformAuditListToolbarProps = {
   query: PlatformAuditListQuery;
   total: number;
-  organizations: Organization[];
+  organizations: OrganizationOption[];
   hasActiveFilters: boolean;
   onPatchQuery: (patch: Partial<PlatformAuditListQuery>) => void;
   onClearFilters: () => void;

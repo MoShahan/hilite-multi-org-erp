@@ -105,17 +105,11 @@ export const AddTeamMemberDialog = ({
       setRolesLoading(true);
       setRolesError(null);
       try {
-        const teamRoles = await rolesService.listRoles({
+        const teamRoles = await rolesService.listRoleOptions({
           assignableFrom: "team",
         });
         if (!cancelled) {
-          setRoles(
-            teamRoles.map((role) => ({
-              id: role.id,
-              name: role.name,
-              slug: role.slug,
-            })),
-          );
+          setRoles(teamRoles.roles);
         }
       } catch {
         if (!cancelled) setRolesError("Failed to load roles");

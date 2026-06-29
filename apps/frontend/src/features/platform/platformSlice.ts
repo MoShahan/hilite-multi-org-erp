@@ -21,6 +21,9 @@ const initialState: PlatformState = {
   listQuery: null,
   listStatus: "idle",
   listError: null,
+  organizationOptions: [],
+  organizationOptionsStatus: "idle",
+  organizationOptionsError: null,
   selectedOrganization: null,
   detailStatus: "idle",
   detailError: null,
@@ -41,6 +44,11 @@ export const fetchOrganizations = createAsyncThunk(
   "platform/fetchOrganizations",
   async (query: OrganizationListQuery) =>
     platformService.listOrganizations(query),
+);
+
+export const fetchOrganizationOptions = createAsyncThunk(
+  "platform/fetchOrganizationOptions",
+  async () => platformService.listOrganizationOptions(),
 );
 
 export const fetchOrganization = createAsyncThunk(
@@ -185,6 +193,19 @@ const platformSlice = createSlice({
         state.listError =
           action.error.message ?? "Failed to load organizations";
       })
+      .addCase(fetchOrganizationOptions.pending, (state) => {
+        state.organizationOptionsStatus = "loading";
+        state.organizationOptionsError = null;
+      })
+      .addCase(fetchOrganizationOptions.fulfilled, (state, action) => {
+        state.organizationOptions = action.payload.organizations;
+        state.organizationOptionsStatus = "success";
+      })
+      .addCase(fetchOrganizationOptions.rejected, (state, action) => {
+        state.organizationOptionsStatus = "error";
+        state.organizationOptionsError =
+          action.error.message ?? "Failed to load organization options";
+      })
       .addCase(fetchOrganization.pending, (state) => {
         state.detailStatus = "loading";
         state.detailError = null;
@@ -217,6 +238,15 @@ const platformSlice = createSlice({
         state.organizations = state.organizations.map((organization) =>
           organization.id === action.payload.id ? action.payload : organization,
         );
+        state.organizationOptions = state.organizationOptions.map((organization) =>
+          organization.id === action.payload.id
+            ? {
+                id: action.payload.id,
+                name: action.payload.name,
+                code: action.payload.code,
+              }
+            : organization,
+        );
       })
       .addCase(updateOrganization.rejected, (state) => {
         state.mutationStatus = "idle";
@@ -229,6 +259,15 @@ const platformSlice = createSlice({
         state.selectedOrganization = action.payload;
         state.organizations = state.organizations.map((organization) =>
           organization.id === action.payload.id ? action.payload : organization,
+        );
+        state.organizationOptions = state.organizationOptions.map((organization) =>
+          organization.id === action.payload.id
+            ? {
+                id: action.payload.id,
+                name: action.payload.name,
+                code: action.payload.code,
+              }
+            : organization,
         );
       })
       .addCase(updateOrganizationStatus.rejected, (state) => {

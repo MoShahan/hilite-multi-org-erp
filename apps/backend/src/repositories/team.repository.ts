@@ -105,6 +105,25 @@ export const teamRepository = {
     return { teams, total };
   },
 
+  findManyOptions: (
+    organizationId: string,
+    search?: string,
+    limit = 100,
+  ) => {
+    const where: Prisma.TeamWhereInput = { organizationId };
+
+    if (search) {
+      where.name = { contains: search, mode: "insensitive" };
+    }
+
+    return prisma.team.findMany({
+      where,
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+      take: limit,
+    });
+  },
+
   findByIdForOrganization: (
     teamId: string,
     organizationId: string,

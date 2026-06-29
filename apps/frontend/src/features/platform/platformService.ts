@@ -8,12 +8,14 @@ import type { ListAuditLogsResult } from "@/features/audit/auditTypes";
 import type {
   CreateOrganizationInput,
   CreatePlatformUserInput,
+  ListOrganizationOptionsQuery,
   ListOrganizationsResult,
   ListPlatformUsersResult,
   Organization,
   OrganizationListQuery,
   OrganizationModulesMap,
   OrganizationModulesResponse,
+  OrganizationOptionsResult,
   PlatformAuditListQuery,
   PlatformUser,
   PlatformUserListQuery,
@@ -29,6 +31,21 @@ export const platformService = {
       params: toOrganizationListApiParams(query),
     });
     return unwrapResponse<ListOrganizationsResult>(response);
+  },
+
+  listOrganizationOptions: async (
+    query: ListOrganizationOptionsQuery = {},
+  ): Promise<OrganizationOptionsResult> => {
+    const response = await apiClient.get(
+      "/api/v1/platform/organizations/options",
+      {
+        params:
+          query.status && query.status !== "ALL"
+            ? { status: query.status }
+            : undefined,
+      },
+    );
+    return unwrapResponse<OrganizationOptionsResult>(response);
   },
 
   getOrganization: async (id: string): Promise<Organization> => {

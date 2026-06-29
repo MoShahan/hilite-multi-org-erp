@@ -34,7 +34,31 @@ export type UserListSortBy =
 
 export type UserListSortOrder = "asc" | "desc";
 
-export type UserListFor = "lead-assignment";
+export type UserListFor = "lead-assignment" | "filter";
+
+export type UserOption = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+export type ListUserOptionsQuery = {
+  for?: UserListFor;
+  teamId?: string;
+  search?: string;
+};
+
+export type ParsedUserOptionsQuery = {
+  for: UserListFor;
+  teamId?: string;
+  teamIdIsNone?: boolean;
+  search?: string;
+  status: UserListStatusFilter;
+};
+
+export type UserOptionsResponse = {
+  users: UserOption[];
+};
 
 export type ListUsersQuery = {
   search?: string;
@@ -63,7 +87,6 @@ export type ParsedListUsersQuery = {
   membershipScope?: RoleMembershipScopeValue;
   teamId?: string;
   teamIdIsNone?: boolean;
-  for?: UserListFor;
   sortBy: UserListSortBy;
   sortOrder: UserListSortOrder;
   page: number;

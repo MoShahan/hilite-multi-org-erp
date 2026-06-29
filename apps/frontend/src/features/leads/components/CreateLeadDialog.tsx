@@ -113,18 +113,9 @@ export const CreateLeadDialog = ({
     const loadTeams = async () => {
       setTeamsLoading(true);
       try {
-        const result = await teamsService.listTeams({
-          search: "",
-          membership: "ALL",
-          sortBy: "name",
-          sortOrder: "asc",
-          page: 1,
-          pageSize: 100,
-        });
+        const result = await teamsService.listTeamOptions();
         if (!cancelled) {
-          setTeams(
-            result.teams.map((team) => ({ id: team.id, name: team.name })),
-          );
+          setTeams(result.teams);
         }
       } catch (error) {
         if (!cancelled) {
@@ -162,15 +153,9 @@ export const CreateLeadDialog = ({
     const loadAssignees = async () => {
       setAssigneesLoading(true);
       try {
-        const result = await leadsService.listAssignableUsers(selectedTeamId);
+        const users = await leadsService.listAssignableUsers(selectedTeamId);
         if (!cancelled) {
-          setAssignees(
-            result.users.map((user) => ({
-              id: user.id,
-              name: user.name,
-              email: user.email,
-            })),
-          );
+          setAssignees(users);
         }
       } catch (error) {
         if (!cancelled) {

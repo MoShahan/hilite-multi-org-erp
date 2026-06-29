@@ -29,6 +29,19 @@ export const listOrganizations = async (
   }
 };
 
+export const listOrganizationOptions = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const result = await organizationService.listOrganizationOptions(req.query);
+    return res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getOrganizationId = (req: Request): string => {
   const { id } = req.params;
 

@@ -110,18 +110,12 @@ export const CreateUserDialog = ({
       setRolesError(null);
 
       try {
-        const organizationRoles = await rolesService.listRoles({
+        const organizationRoles = await rolesService.listRoleOptions({
           assignableFrom: "users",
         });
 
         if (!cancelled) {
-          setRoles(
-            organizationRoles.map((role) => ({
-              id: role.id,
-              name: role.name,
-              slug: role.slug,
-            })),
-          );
+          setRoles(organizationRoles.roles);
         }
       } catch {
         if (!cancelled) {

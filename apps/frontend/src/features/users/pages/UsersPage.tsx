@@ -69,30 +69,12 @@ export const UsersPage = () => {
   useEffect(() => {
     const loadFilterOptions = async () => {
       try {
-        const [allRoles, teamsResult] = await Promise.all([
-          rolesService.listRoles(),
-          teamsService.listTeams({
-            search: "",
-            membership: "ALL",
-            sortBy: "name",
-            sortOrder: "asc",
-            page: 1,
-            pageSize: 100,
-          }),
+        const [rolesResult, teamsResult] = await Promise.all([
+          rolesService.listRoleOptions(),
+          teamsService.listTeamOptions(),
         ]);
-        setRoles(
-          allRoles.map((role) => ({
-            id: role.id,
-            name: role.name,
-            slug: role.slug,
-          })),
-        );
-        setTeams(
-          teamsResult.teams.map((team) => ({
-            id: team.id,
-            name: team.name,
-          })),
-        );
+        setRoles(rolesResult.roles);
+        setTeams(teamsResult.teams);
       } catch (error) {
         if (error instanceof ApiClientError) {
           toast.error(error.message);

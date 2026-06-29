@@ -31,6 +31,8 @@ import type {
   TeamMember,
   TeamMemberListSortBy,
   TeamMemberListSortOrder,
+  TeamOption,
+  TeamOptionsResponse,
   TeamSummary,
 } from "../types/team";
 import { AppError } from "../utils/AppError";
@@ -215,6 +217,25 @@ export const teamService = {
         total,
         totalPages,
       },
+    };
+  },
+
+  listTeamOptions: async (
+    organizationId: string | null,
+    rawQuery: Record<string, unknown>,
+  ): Promise<TeamOptionsResponse> => {
+    const orgId = requireOrganizationId(organizationId);
+    const search = parseQueryValue(rawQuery.search)?.trim();
+    const teams = await teamRepository.findManyOptions(
+      orgId,
+      search || undefined,
+    );
+
+    return {
+      teams: teams.map((team): TeamOption => ({
+        id: team.id,
+        name: team.name,
+      })),
     };
   },
 

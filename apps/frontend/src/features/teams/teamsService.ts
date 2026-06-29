@@ -7,11 +7,13 @@ import type {
   CreateTeamInput,
   CreateTeamMemberInput,
   ListTeamMembersResult,
+  ListTeamOptionsQuery,
   ListTeamsResult,
   Team,
   TeamListQuery,
   TeamMember,
   TeamMemberListQuery,
+  TeamOptionsResult,
 } from "./teamsTypes";
 
 export const teamsService = {
@@ -20,6 +22,15 @@ export const teamsService = {
       params: toTeamListApiParams(query),
     });
     return unwrapResponse<ListTeamsResult>(response);
+  },
+
+  listTeamOptions: async (
+    query: ListTeamOptionsQuery = {},
+  ): Promise<TeamOptionsResult> => {
+    const response = await apiClient.get("/api/v1/teams/options", {
+      params: query.search ? { search: query.search } : undefined,
+    });
+    return unwrapResponse<TeamOptionsResult>(response);
   },
 
   getTeam: async (id: string): Promise<Team> => {

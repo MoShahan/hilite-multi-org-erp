@@ -49,6 +49,20 @@ export type Organization = {
   updatedAt: string;
 };
 
+export type OrganizationOption = {
+  id: string;
+  name: string;
+  code: string;
+};
+
+export type OrganizationOptionsResult = {
+  organizations: OrganizationOption[];
+};
+
+export type ListOrganizationOptionsQuery = {
+  status?: OrganizationListStatusFilter;
+};
+
 export type ListOrganizationsResult = {
   organizations: Organization[];
   meta: OrganizationListMeta;
@@ -95,6 +109,9 @@ export type PlatformState = {
   listQuery: OrganizationListQuery | null;
   listStatus: "idle" | "loading" | "success" | "error";
   listError: string | null;
+  organizationOptions: OrganizationOption[];
+  organizationOptionsStatus: "idle" | "loading" | "success" | "error";
+  organizationOptionsError: string | null;
   selectedOrganization: Organization | null;
   detailStatus: "idle" | "loading" | "success" | "error";
   detailError: string | null;

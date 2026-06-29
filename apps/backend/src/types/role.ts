@@ -39,3 +39,13 @@ export type ListRolesQuery = {
   membershipScope?: RoleMembershipScopeValue;
   assignableFrom?: AssignableFrom;
 };
+
+export type RoleOption = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+export type RoleOptionsResponse = {
+  roles: RoleOption[];
+};

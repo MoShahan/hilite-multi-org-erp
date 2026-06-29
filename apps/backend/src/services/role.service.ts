@@ -26,6 +26,8 @@ import type {
   ListRolesQuery,
   ListRolesResponse,
   RoleDetailResponse,
+  RoleOption,
+  RoleOptionsResponse,
   RoleResponse,
   UpdateRoleInput,
 } from "../types/role";
@@ -143,6 +145,40 @@ export const roleService = {
 
     return {
       roles: filteredRoles.map(toRoleResponse),
+    };
+  },
+
+  listRoleOptions: async (
+    organizationId: string | null,
+    query: ListRolesQuery = {},
+    authUser: AuthUser,
+  ): Promise<RoleOptionsResponse> => {
+    const orgId = requireOrganizationId(organizationId);
+    const scopedQuery = authorizeRoleListAccess(authUser, query);
+    const membershipScope = scopedQuery.membershipScope
+      ? toPrismaRoleMembershipScope(scopedQuery.membershipScope)
+      : undefined;
+
+    const roles = await roleRepository.findManyOptions(orgId, {
+      membershipScope,
+    });
+
+    const filteredRoles = scopedQuery.assignableFrom
+      ? roles.filter((role) =>
+          getRoleAssignmentRules(role).assignableFrom.includes(
+            scopedQuery.assignableFrom!,
+          ),
+        )
+      : roles;
+
+    return {
+      roles: filteredRoles.map(
+        (role): RoleOption => ({
+          id: role.id,
+          name: role.name,
+          slug: role.slug,
+        }),
+      ),
     };
   },
 

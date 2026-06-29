@@ -15,6 +15,15 @@ export const selectOrganizationsListStatus = (state: RootState) =>
 export const selectOrganizationsListError = (state: RootState) =>
   state.platform.listError;
 
+export const selectOrganizationOptions = (state: RootState) =>
+  state.platform.organizationOptions;
+
+export const selectOrganizationOptionsStatus = (state: RootState) =>
+  state.platform.organizationOptionsStatus;
+
+export const selectOrganizationOptionsError = (state: RootState) =>
+  state.platform.organizationOptionsError;
+
 export const selectSelectedOrganization = (state: RootState) =>
   state.platform.selectedOrganization;
 

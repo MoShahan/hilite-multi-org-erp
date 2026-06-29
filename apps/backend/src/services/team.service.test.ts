@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("../repositories/team.repository", () => ({
   teamRepository: {
     findManyPaginated: vi.fn(),
+    findManyOptions: vi.fn(),
     findByIdForOrganization: vi.fn(),
     create: vi.fn(),
     findMembersPaginated: vi.fn(),
@@ -57,6 +58,31 @@ describe("teamService.listTeams", () => {
 
     expect(result.teams).toEqual([]);
     expect(result.meta.total).toBe(0);
+  });
+});
+
+describe("teamService.listTeamOptions", () => {
+  beforeEach(() => {
+    vi.mocked(teamRepository.findManyOptions).mockReset();
+    vi.mocked(teamRepository.findManyOptions).mockResolvedValue([]);
+  });
+
+  it("requires organization context", async () => {
+    await expectAppErrorAsync(
+      () => teamService.listTeamOptions(null, {}),
+      403,
+      "FORBIDDEN",
+    );
+  });
+
+  it("returns team options", async () => {
+    vi.mocked(teamRepository.findManyOptions).mockResolvedValue([
+      { id: "team-1", name: "Sales" },
+    ]);
+
+    const result = await teamService.listTeamOptions(orgId, {});
+
+    expect(result.teams).toEqual([{ id: "team-1", name: "Sales" }]);
   });
 });
 

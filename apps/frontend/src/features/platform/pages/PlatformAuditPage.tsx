@@ -11,9 +11,9 @@ import { PAGE_SIZE_OPTIONS, TABLE_SKELETON_ROW_COUNT } from "@/lib/pagination";
 
 import { PlatformAuditListToolbar } from "../components/PlatformAuditListToolbar";
 import { usePlatformAuditListQuery } from "../hooks/usePlatformAuditListQuery";
-import { fetchOrganizations } from "../platformSlice";
+import { fetchOrganizationOptions } from "../platformSlice";
 import {
-  selectOrganizations,
+  selectOrganizationOptions,
   selectPlatformAuditListError,
   selectPlatformAuditListMeta,
   selectPlatformAuditListStatus,
@@ -27,19 +27,10 @@ export const PlatformAuditPage = () => {
   const listMeta = useAppSelector(selectPlatformAuditListMeta);
   const listStatus = useAppSelector(selectPlatformAuditListStatus);
   const listError = useAppSelector(selectPlatformAuditListError);
-  const organizations = useAppSelector(selectOrganizations);
+  const organizations = useAppSelector(selectOrganizationOptions);
 
   useEffect(() => {
-    void dispatch(
-      fetchOrganizations({
-        search: "",
-        status: "ALL",
-        sortBy: "name",
-        sortOrder: "asc",
-        page: 1,
-        pageSize: 100,
-      }),
-    );
+    void dispatch(fetchOrganizationOptions());
   }, [dispatch]);
 
   const isLoading = listStatus === "idle" || listStatus === "loading";

@@ -6,7 +6,11 @@ import { PERMISSIONS } from "../constants/permissions";
 import { prisma } from "../lib/prisma";
 import { userWithAuthInclude } from "../lib/authUserMapper";
 import { assignOrgMembership } from "../lib/orgMembership";
-import type { ParsedListUsersQuery } from "../types/user";
+import type {
+  ParsedListUsersQuery,
+  ParsedUserOptionsQuery,
+  UserListFor,
+} from "../types/user";
 import { toPrismaRoleMembershipScope } from "../lib/roleMembershipScope";
 
 const membershipListInclude = {
@@ -35,9 +39,27 @@ export type OrgMemberListRecord = Prisma.OrganizationMemberGetPayload<{
   include: typeof membershipListInclude;
 }>;
 
+const membershipOptionsSelect = {
+  user: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  },
+} as const;
+
+export type OrgMemberOptionRecord = Prisma.OrganizationMemberGetPayload<{
+  select: typeof membershipOptionsSelect;
+}>;
+
+type MembershipListFilter = ParsedListUsersQuery & {
+  for?: UserListFor;
+};
+
 const buildMembershipWhere = (
   organizationId: string,
-  query: ParsedListUsersQuery,
+  query: MembershipListFilter,
 ): Prisma.OrganizationMemberWhereInput => {
   const where: Prisma.OrganizationMemberWhereInput = { organizationId };
 
@@ -58,24 +80,23 @@ const buildMembershipWhere = (
     where.roleId = query.roleId;
   }
 
-  if (query.membershipScope || query.for === "lead-assignment") {
-    const roleFilter: Prisma.RoleWhereInput = {};
-
-    if (query.membershipScope) {
-      roleFilter.membershipScope = toPrismaRoleMembershipScope(
+  if (query.membershipScope) {
+    const roleFilter: Prisma.RoleWhereInput = {
+      membershipScope: toPrismaRoleMembershipScope(
         query.membershipScope,
-      );
-    }
+      ),
+    };
 
-    if (query.for === "lead-assignment") {
-      roleFilter.permissions = {
+    where.role = roleFilter;
+  }
+
+  if (query.for === "lead-assignment") {
+    where.role = {
+      ...(where.role as Prisma.RoleWhereInput | undefined),
+      permissions: {
         some: { permissionKey: PERMISSIONS.LEADS_ASSIGNABLE },
-      };
-    }
-
-    if (Object.keys(roleFilter).length > 0) {
-      where.role = roleFilter;
-    }
+      },
+    };
   }
 
   if (query.teamIdIsNone) {
@@ -129,6 +150,31 @@ export const orgUserRepository = {
     ]);
 
     return { members, total };
+  },
+
+  findManyOptions: async (
+    organizationId: string,
+    query: ParsedUserOptionsQuery,
+    limit: number,
+  ): Promise<OrgMemberOptionRecord[]> => {
+    const listQuery: MembershipListFilter = {
+      search: query.search,
+      status: query.status,
+      teamId: query.teamId,
+      teamIdIsNone: query.teamIdIsNone,
+      for: query.for === "lead-assignment" ? "lead-assignment" : undefined,
+      sortBy: "name",
+      sortOrder: "asc",
+      page: 1,
+      pageSize: limit,
+    };
+
+    return prisma.organizationMember.findMany({
+      where: buildMembershipWhere(organizationId, listQuery),
+      select: membershipOptionsSelect,
+      orderBy: { user: { name: "asc" } },
+      take: limit,
+    });
   },
 
   createWithRole: async (data: {

@@ -5,6 +5,7 @@ import {
   createTeamMember,
   getTeam,
   listTeamMembers,
+  listTeamOptions,
   listTeams,
 } from "../controllers/team.controller";
 import { PERMISSIONS } from "../constants/permissions";
@@ -30,6 +31,7 @@ const teamMembersWrite = [
   ),
 ];
 
+router.get("/options", ...teamsRead, listTeamOptions);
 router.get("/", ...teamsRead, listTeams);
 router.post("/", ...teamsWrite, validateBody(createTeamSchema), createTeam);
 router.get("/:id", ...teamsRead, getTeam);

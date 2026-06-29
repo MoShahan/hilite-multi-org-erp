@@ -3,6 +3,7 @@ import {
   createRole,
   deleteRole,
   getRole,
+  listRoleOptions,
   listRoles,
   updateRole,
 } from "../controllers/role.controller";
@@ -19,6 +20,7 @@ const rolesRead = [
 ];
 const rolesWrite = [authenticate, requirePermission(PERMISSIONS.ROLES_WRITE)];
 
+router.get("/options", ...rolesRead, listRoleOptions);
 router.get("/", ...rolesRead, listRoles);
 router.post("/", ...rolesWrite, createRole);
 router.get("/:id", ...rolesRead, getRole);
