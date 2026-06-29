@@ -21,12 +21,12 @@ export const selectDefaultLandingPath = (state: RootState): string => {
     return "/dashboard";
   }
 
-  if (selectHasAnyPermission([PERMISSIONS.PLATFORM_AUDIT_READ])(state)) {
-    return "/platform/audit";
-  }
-
   if (selectIsPlatformAdmin(state)) {
     return "/platform/organizations";
+  }
+
+  if (selectHasAnyPermission([PERMISSIONS.PLATFORM_AUDIT_READ])(state)) {
+    return "/platform/audit";
   }
 
   if (selectHasAnyPermission([PERMISSIONS.USERS_READ])(state)) {
@@ -46,7 +46,9 @@ export const selectDefaultLandingPath = (state: RootState): string => {
   }
 
   const hasSalesErpModule = selectHasModule(ORG_MODULE_KEYS.SALES_ERP)(state);
-  const canViewLeads = selectHasAnyPermission([...LEADS_READ_PERMISSIONS])(state);
+  const canViewLeads = selectHasAnyPermission([...LEADS_READ_PERMISSIONS])(
+    state,
+  );
   if (hasSalesErpModule && canViewLeads) {
     return "/leads";
   }
