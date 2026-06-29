@@ -75,9 +75,11 @@ export const PlatformAuditPage = () => {
 
         {isLoading ? (
           <div className="space-y-3">
-            {Array.from({ length: TABLE_SKELETON_ROW_COUNT }).map((_, index) => (
-              <Skeleton key={index} className="h-12 w-full" />
-            ))}
+            {Array.from({ length: TABLE_SKELETON_ROW_COUNT }).map(
+              (_, index) => (
+                <Skeleton key={index} className="h-12 w-full" />
+              ),
+            )}
           </div>
         ) : null}
 
@@ -89,7 +91,8 @@ export const PlatformAuditPage = () => {
             <div>
               <p className="font-medium">No audit events yet</p>
               <p className="text-sm text-muted-foreground">
-                Activity will appear here as changes are made across organizations.
+                Activity will appear here as changes are made across
+                organizations.
               </p>
             </div>
           </div>
@@ -111,16 +114,14 @@ export const PlatformAuditPage = () => {
 
         {!isLoading && auditLogs.length > 0 && listMeta ? (
           <>
-            <AuditTable auditLogs={auditLogs} showOrganization />
+            <AuditTable auditLogs={auditLogs} />
             <ListPagination
               page={listMeta.page}
               pageSize={listMeta.pageSize}
               totalPages={listMeta.totalPages}
               pageSizeOptions={PAGE_SIZE_OPTIONS}
               onPageChange={(page) => patchQuery({ page })}
-              onPageSizeChange={(pageSize) =>
-                patchQuery({ pageSize, page: 1 })
-              }
+              onPageSizeChange={(pageSize) => patchQuery({ pageSize, page: 1 })}
               className="border-t pt-4"
             />
           </>

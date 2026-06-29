@@ -18,28 +18,21 @@ import type { AuditLog } from "../auditTypes";
 
 type AuditTableProps = {
   auditLogs: AuditLog[];
-  showOrganization?: boolean;
 };
 
 const headerClassName =
   "h-11 bg-muted/40 text-xs font-semibold tracking-wide uppercase text-muted-foreground";
 
-export const AuditTable = ({
-  auditLogs,
-  showOrganization = false,
-}: AuditTableProps) => {
+export const AuditTable = ({ auditLogs }: AuditTableProps) => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   return (
     <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
-      <Table>
+      <Table className="w-max min-w-full">
         <TableHeader>
           <TableRow className="border-b hover:bg-transparent">
             <TableHead className="h-11 w-12 bg-muted/40" />
             <TableHead className={headerClassName}>Time</TableHead>
-            {showOrganization ? (
-              <TableHead className={headerClassName}>Organization</TableHead>
-            ) : null}
             <TableHead className={headerClassName}>Actor</TableHead>
             <TableHead className={headerClassName}>Action</TableHead>
             <TableHead className={headerClassName}>Entity</TableHead>
@@ -72,11 +65,6 @@ export const AuditTable = ({
                   <TableCell className="py-3 whitespace-nowrap text-sm text-muted-foreground">
                     {formatDateTime(log.createdAt)}
                   </TableCell>
-                  {showOrganization ? (
-                    <TableCell className="py-3 text-sm">
-                      {log.organization?.name ?? "—"}
-                    </TableCell>
-                  ) : null}
                   <TableCell className="py-3 text-sm">
                     <div className="font-medium">
                       {log.actor?.name ?? "System"}
@@ -93,16 +81,13 @@ export const AuditTable = ({
                   <TableCell className="py-3 text-sm capitalize">
                     {log.entityType}
                   </TableCell>
-                  <TableCell className="max-w-md py-3 text-sm text-muted-foreground">
+                  <TableCell className="py-3 text-sm text-muted-foreground">
                     {log.metadata.summary}
                   </TableCell>
                 </TableRow>
                 {isExpanded ? (
                   <TableRow key={`${log.id}-detail`}>
-                    <TableCell
-                      colSpan={showOrganization ? 7 : 6}
-                      className="p-0"
-                    >
+                    <TableCell colSpan={6} className="p-0">
                       <AuditDetailRow log={log} />
                     </TableCell>
                   </TableRow>

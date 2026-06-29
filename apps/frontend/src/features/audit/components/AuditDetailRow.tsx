@@ -45,7 +45,11 @@ const DiffSection = ({
   );
 };
 
-export const AuditActionBadge = ({ action }: { action: AuditLog["action"] }) => {
+export const AuditActionBadge = ({
+  action,
+}: {
+  action: AuditLog["action"];
+}) => {
   const category = getAuditActionCategory(action);
 
   return (
@@ -53,9 +57,12 @@ export const AuditActionBadge = ({ action }: { action: AuditLog["action"] }) => 
       variant="outline"
       className={cn(
         "font-normal",
-        category === "auth" && "border-blue-500/40 text-blue-700 dark:text-blue-300",
-        category === "lead" && "border-emerald-500/40 text-emerald-700 dark:text-emerald-300",
-        category === "admin" && "border-amber-500/40 text-amber-700 dark:text-amber-300",
+        category === "auth" &&
+          "border-blue-500/40 text-blue-700 dark:text-blue-300",
+        category === "lead" &&
+          "border-emerald-500/40 text-emerald-700 dark:text-emerald-300",
+        category === "admin" &&
+          "border-amber-500/40 text-amber-700 dark:text-amber-300",
       )}
     >
       {formatAuditActionLabel(action)}
@@ -89,7 +96,9 @@ export const AuditDetailRow = ({ log }: AuditDetailRowProps) => {
         <div className="text-xs text-muted-foreground">
           {metadata.request.ip ? <p>IP: {metadata.request.ip}</p> : null}
           {metadata.request.userAgent ? (
-            <p className="break-all">User agent: {metadata.request.userAgent}</p>
+            <p className="break-all">
+              User agent: {metadata.request.userAgent}
+            </p>
           ) : null}
         </div>
       ) : null}
