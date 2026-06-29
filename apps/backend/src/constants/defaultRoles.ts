@@ -94,6 +94,9 @@ export const DEFAULT_ORG_ROLES: DefaultRoleDefinition[] = [
     requiresTeamMembership: false,
     assignableFrom: ["users"],
     permissions: [
+      PERMISSIONS.USERS_READ,
+      PERMISSIONS.TEAMS_READ,
+      PERMISSIONS.ROLES_READ,
       PERMISSIONS.LEADS_READ_ORG,
       PERMISSIONS.LEADS_WRITE,
       PERMISSIONS.DASHBOARD_ORG,
