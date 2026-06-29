@@ -201,7 +201,7 @@ Authentication uses a **dual-cookie model**: a short-lived stateless access JWT 
 | Topic                 | Implementation                                                                                            |
 | --------------------- | --------------------------------------------------------------------------------------------------------- |
 | Access token payload  | `{ sub: userId, orgId: string \| null }`                                                                  |
-| Access token signing  | [`jwt.ts`](../apps/backend/src/lib/jwt.ts) — `JWT_SECRET`, `JWT_EXPIRES_IN` (default `15m`)               |
+| Access token signing  | [`jwt.ts`](../apps/backend/src/lib/jwt.ts) — `JWT_SECRET`, `JWT_EXPIRES_IN` (default `1d`)               |
 | Refresh token         | Opaque random string; SHA-256 hash stored in `refresh_tokens` — [`refreshToken.ts`](../apps/backend/src/lib/refreshToken.ts) |
 | Refresh token lifetime | `REFRESH_TOKEN_EXPIRES_IN` (default `7d`)                                                              |
 | Cookie names          | `access_token`, `refresh_token`                                                                           |

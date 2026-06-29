@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 vi.mock("../config/env", () => ({
   env: {
     jwtSecret: "test-jwt-secret",
-    jwtExpiresIn: "15m",
+    jwtExpiresIn: "1d",
     refreshTokenExpiresIn: "7d",
   },
 }));
