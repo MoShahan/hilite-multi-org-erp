@@ -74,7 +74,7 @@ export const AppSidebar = () => {
 
   return (
     <Sidebar collapsible="icon" variant="inset">
-      <SidebarHeader className="border-b border-sidebar-border/60 px-3 py-4">
+      <SidebarHeader className="px-3 py-4">
         <div className="flex items-center gap-3">
           <HiliteLogo className="size-9 rounded-xl" />
           <div className="flex min-w-0 flex-col group-data-[collapsible=icon]:hidden">
@@ -87,6 +87,7 @@ export const AppSidebar = () => {
           </div>
         </div>
       </SidebarHeader>
+      <SidebarSeparator className="mx-0 w-full" />
       <SidebarContent className="px-2 py-3">
         {hasPlatformSection ? (
           <SidebarGroup>
@@ -271,7 +272,7 @@ export const AppSidebar = () => {
       </SidebarContent>
       {user ? (
         <>
-          <SidebarSeparator className="mx-3" />
+          <SidebarSeparator className="mx-0 w-full" />
           <SidebarFooter className="p-3">
             <UserMenu />
           </SidebarFooter>
