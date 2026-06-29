@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { formatDateTime, formatRelativeTime, formatRoleLabel, formatWinRate } from "./format";
+import { formatDate, formatDateTime, formatRelativeTime, formatRoleLabel, formatWinRate, formatWinRateDetail } from "./format";
 
 describe("formatRoleLabel", () => {
   it("returns No role when role is null or undefined", () => {
@@ -61,6 +61,13 @@ describe("formatDateTime", () => {
   });
 });
 
+describe("formatDate", () => {
+  it("formats ISO dates with medium date style", () => {
+    const formatted = formatDate("2026-06-24T12:00:00.000Z");
+    expect(formatted).toContain("2026");
+  });
+});
+
 describe("formatWinRate", () => {
   it("returns em dash for null win rate", () => {
     expect(formatWinRate(null)).toBe("—");
@@ -68,5 +75,21 @@ describe("formatWinRate", () => {
 
   it("returns percentage for numeric win rate", () => {
     expect(formatWinRate(42)).toBe("42%");
+  });
+});
+
+describe("formatWinRateDetail", () => {
+  it("returns placeholder when win rate is null", () => {
+    expect(formatWinRateDetail(null, 0, 0)).toEqual({
+      value: "—",
+      description: "No closed leads yet",
+    });
+  });
+
+  it("returns percentage and closed lead breakdown", () => {
+    expect(formatWinRateDetail(60, 3, 2)).toEqual({
+      value: "60%",
+      description: "3 won / 5 closed",
+    });
   });
 });

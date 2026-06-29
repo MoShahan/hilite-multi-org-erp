@@ -41,6 +41,7 @@ import { ApiClientError } from "@/lib/api-client";
 
 import { createLead } from "../leadsSlice";
 import { leadsService } from "../leadsService";
+import { createLeadSchema } from "../leadFormSchema";
 
 import type { AssigneeOption, TeamFilterOption } from "../leadsTypes";
 
@@ -54,20 +55,6 @@ const isApiRejection = (value: unknown): value is ApiRejection =>
   value !== null &&
   "message" in value &&
   typeof value.message === "string";
-
-const createLeadSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  mobileNumber: z
-    .string()
-    .trim()
-    .min(1, "Mobile number is required")
-    .regex(/^\d{10}$/, "Mobile number must be exactly 10 digits"),
-  email: z.union([z.literal(""), z.email("Enter a valid email address")]),
-  source: z.string().optional(),
-  project: z.string().optional(),
-  teamId: z.string().optional(),
-  assignedToId: z.string().optional(),
-});
 
 type CreateLeadFormValues = z.infer<typeof createLeadSchema>;
 

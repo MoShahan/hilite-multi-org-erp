@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  selectCanAccessNotifications,
   selectHasAnyPermission,
   selectHasModule,
   selectHasPermission,
@@ -47,5 +48,24 @@ describe("authSelectors", () => {
   it("detects org admin role", () => {
     const state = asRootState(authenticatedState());
     expect(selectIsOrgAdmin(state)).toBe(true);
+  });
+
+  it("allows notifications for authenticated platform users without org", () => {
+    const state = asRootState(
+      platformAdminState(),
+    );
+    expect(selectCanAccessNotifications(state)).toBe(true);
+  });
+
+  it("requires notifications module for org users", () => {
+    const withModule = asRootState(
+      authenticatedState({ modules: ["notifications"] }),
+    );
+    const withoutModule = asRootState(
+      authenticatedState({ modules: ["sales_erp"] }),
+    );
+
+    expect(selectCanAccessNotifications(withModule)).toBe(true);
+    expect(selectCanAccessNotifications(withoutModule)).toBe(false);
   });
 });

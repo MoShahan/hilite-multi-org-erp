@@ -1,7 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { toast } from "sonner";
 
 import { useAppDispatch } from "@/app/hooks";
@@ -25,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 
 import { updateLead } from "../leadsSlice";
+import { updateLeadSchema, type UpdateLeadFormValues } from "../leadFormSchema";
 
 import type { Lead } from "../leadsTypes";
 
@@ -38,20 +38,6 @@ const isApiRejection = (value: unknown): value is ApiRejection =>
   value !== null &&
   "message" in value &&
   typeof value.message === "string";
-
-const updateLeadSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  mobileNumber: z
-    .string()
-    .trim()
-    .min(1, "Mobile number is required")
-    .regex(/^\d{10}$/, "Mobile number must be exactly 10 digits"),
-  email: z.union([z.literal(""), z.email("Enter a valid email address")]),
-  source: z.string().optional(),
-  project: z.string().optional(),
-});
-
-type UpdateLeadFormValues = z.infer<typeof updateLeadSchema>;
 
 type UpdateLeadDialogProps = {
   lead: Lead | null;

@@ -17,6 +17,10 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.ts"],
     globals: false,
     css: false,
+    coverage: {
+      provider: "v8",
+      include: ["src/features/**", "src/lib/**"],
+    },
     server: {
       deps: {
         inline: ["@testing-library/jest-dom"],
