@@ -1,8 +1,42 @@
 # HILITE Sales OS
 
-A multi-tenant Sales ERP MVP built for the HILITE technical assessment. The platform supports multiple organizations with isolated users, teams, leads, and dashboards along with platform administration, RBAC, and event-driven notifications.
+A multi-tenant Sales ERP MVP built for the HILITE technical assessment.
 
-User identity is global (one email per person); org access is modeled via `organization_members` so the same user can belong to multiple organizations in the future. See [Multi-Org Readiness](docs/architecture.md#multi-org-readiness).
+## Project Overview
+
+HILITE Sales OS is a **multi-tenant sales platform** where each organization (tenant) gets isolated users, teams, roles, leads, and dashboards. A **platform** layer above tenants handles cross-organization administration. User identity is global (one email per person); org access is modeled via `organization_members` so the same user can belong to multiple organizations in the future. See [Multi-Org Readiness](docs/architecture.md#multi-org-readiness).
+
+### Capabilities
+
+| Area               | Description                                                                     |
+| ------------------ | ------------------------------------------------------------------------------- |
+| **Multi-tenancy**  | Shared database with row-level isolation per organization                       |
+| **Authentication** | Email/password login with httpOnly cookie sessions (access + refresh tokens)    |
+| **RBAC**           | One role per org membership; permissions enforced on API and mirrored in the UI |
+| **Teams**          | Org teams with member management                                                |
+| **Sales CRM**      | Lead pipeline with assignment, status workflow, and activity logging            |
+| **Dashboards**     | Role-scoped analytics with customizable widget layouts                          |
+| **Notifications**  | In-app alerts for lead events and account welcome (event-driven)                |
+| **Audit trails**   | Append-only compliance logs at org and platform scope                           |
+| **Platform admin** | Create/suspend orgs, manage modules, manage platform admins                     |
+
+### Tech stack
+
+| Layer    | Technology                                                                             |
+| -------- | -------------------------------------------------------------------------------------- |
+| Frontend | React 19, Vite, Redux Toolkit, React Router, Axios, shadcn/ui                          |
+| Backend  | Express 5, TypeScript, Prisma 7                                                        |
+| Database | PostgreSQL 16 (Docker Compose for local dev)                                           |
+| Monorepo | npm workspaces — `apps/frontend`, `apps/backend`, `packages/shared` (`@hilite/shared`) |
+
+### Repository layout
+
+```
+apps/backend/     Express API, Prisma schema, migrations, seeds
+apps/frontend/    React SPA
+packages/shared/  Shared constants, types, and Zod schemas
+docs/             Product guide, architecture, OpenAPI spec, schema reference
+```
 
 ## Prerequisites
 
@@ -21,8 +55,6 @@ npm run setup
 
 `npm run setup` runs `npm ci` (workspace root), starts PostgreSQL, runs migrations, regenerates the Prisma client (fallback if migrate did not), and seeds development data.
 
-This repo uses npm workspaces. Shared constants, types, and Zod schemas live in `packages/shared` (`@hilite/shared`) and are consumed by both apps.
-
 ## Environment Variables
 
 ### Backend (`apps/backend/.env`)
@@ -36,9 +68,9 @@ This repo uses npm workspaces. Shared constants, types, and Zod schemas live in 
 | `REFRESH_TOKEN_EXPIRES_IN` | Refresh token lifetime                       | `7d`                                                   |
 | `FRONTEND_URL`             | Allowed frontend origin for CORS and cookies | `http://localhost:5173`                                |
 | `COOKIE_SECURE`            | Set `Secure` flag on auth cookies            | `true`                                                 |
+| `LOG_LEVEL`                | Logging verbosity                            | `info`                                                 |
 
 For local HTTP development (`http://localhost:5173`), set `COOKIE_SECURE=false` in `apps/backend/.env` so auth cookies are sent over plain HTTP.
-| `LOG_LEVEL` | Logging verbosity | `info` |
 
 ### Frontend (`apps/frontend/.env`)
 
@@ -89,12 +121,12 @@ After running `npm run db:seed`, these users are available for auth testing:
 
 ## Theme
 
-The UI uses an Apple-inspired design with **light**, **dark**, and **system** modes. Use the toggle in the app header (or on the login page) to switch themes.
+The UI uses **light**, **dark**, and **system** modes. Use the toggle in the app header (or on the login page) to switch themes.
 
 ## Documentation
 
-- [Product guide](docs/product-guide.md) — features, roles, permissions, notifications, audit, dashboards, and UI reference
-- [API specification (OpenAPI)](docs/openapi.yaml) — import into [Swagger Editor](https://editor.swagger.io) to browse and try endpoints
-- [Architecture](docs/architecture.md) — system design, auth, tenancy, multi-org readiness, notifications, scaling
+- [Product guide](docs/product-guide.md) - features, roles, permissions, notifications, audit, dashboards, and UI reference
+- [API specification (OpenAPI)](docs/openapi.yaml) - import into [Swagger Editor](https://editor.swagger.io) to browse and try endpoints
+- [Architecture](docs/architecture.md) - system design, auth, tenancy, multi-org readiness, notifications, scaling
 - [Database schema](docs/database-schema.md)
 - [ER diagram](docs/er-diagram.md)
