@@ -93,6 +93,41 @@ See [Future scope](#17-future-scope) for planned evolution.
 
 Platform admins suspend or reactivate organizations from the organization list or detail page.
 
+### Multi-tenant strategy
+
+HILITE Sales OS uses **shared-database, row-level multi-tenancy** — a deliberate MVP choice that balances simplicity with strong isolation.
+
+| Approach | Used? | Notes |
+| -------- | ----- | ----- |
+| **Single PostgreSQL database** | Yes | All tenants share one database instance |
+| **Row-level isolation** | Yes | Tenant data carries an `organizationId` foreign key |
+| **Per-tenant databases or schemas** | No | Avoided for operational complexity in the MVP |
+| **Subdomain-based tenant routing** | No | Tenant is implicit from the authenticated session, not the URL |
+| **Tenant ID in org-scoped API URLs** | No | Org context comes from the JWT / session, not path parameters |
+
+**How tenant context flows:**
+
+1. User signs in; the access token carries `sub` (user ID) and `orgId` (active organization).
+2. On every request, the API reloads full auth context from the database (role, permissions, modules).
+3. Org-scoped services call `requireOrganizationId()` and repositories add `WHERE organizationId = …` to every query.
+4. Platform admins (`orgId = null`) use separate `/platform/*` APIs with explicit `platform:*` permissions.
+
+This model keeps deployment simple (one API, one database) while making tenant boundaries enforceable in code. See [Architecture — Multi-Tenant Design](architecture.md#multi-tenant-design) for the technical diagram.
+
+### Tenant data isolation
+
+**A user belonging to one organization must never access another organization's data.** This is enforced at multiple layers:
+
+| Layer | Enforcement |
+| ----- | ----------- |
+| **Authentication** | Org users are bound to their active `orgId` from the session; suspended orgs block login |
+| **Repository queries** | All tenant tables (`teams`, `leads`, `users` via membership, etc.) are filtered by `organizationId` |
+| **Service-layer scoping** | Lead and user services apply permission-based record filters (own / team / org) *within* the tenant |
+| **Cross-tenant responses** | Accessing a record outside the caller's org or scope returns **404 Not Found** (not 403), so existence of other tenants' data is not leaked |
+| **Platform boundary** | Only platform admins with `platform:*` permissions can access cross-tenant APIs under `/platform/*` |
+
+Org audit (`/audit`) is limited to the caller's organization. Platform audit (`/platform/audit`) is the only UI that spans tenants, and it requires `platform:audit:read`.
+
 ---
 
 ## 3. Platform administrators
@@ -244,6 +279,45 @@ The app supports **light**, **dark**, and **system** themes via the header toggl
 ## 6. Roles and default permissions
 
 Each org user has **one role per organization** (stored on their `organization_members` row). Platform admins have a single platform role. Built-in role slugs are **protected** and cannot be deleted. Org admins can create **custom roles** by selecting permissions from the catalog.
+
+### Role implementation approach
+
+Roles are **data-driven**, not hard-coded in application logic:
+
+| Concept | Implementation |
+| ------- | -------------- |
+| **Permission catalog** | Global list of permission keys with labels and scope (`PLATFORM` or `ORGANIZATION`); seeded in the `permissions` table |
+| **Roles** | Per-organization (or platform-level) records linked to permissions via `role_permissions` |
+| **Assignment** | One role per org membership on `organization_members`; platform admins get `platform_admin` via `user_roles` |
+| **Built-in roles** | Defined in application code (`defaultRoles.ts`) and **seeded** when an org is created; slugs are protected from deletion |
+| **Custom roles** | Org admins create new roles and pick permissions from the catalog via the Roles UI |
+| **Membership scope** | Each role has `TEAM` or `ORGANIZATION` scope — team roles require team membership and can only be assigned from team flows |
+| **Grant scope** | Some permissions are tagged `team` or `org_wide` in the catalog; role service validates that team-scoped roles cannot receive org-wide-only permissions |
+
+Team leaders creating members see only **team-assignable** roles (`executive`, `team_lead`). Org admins assigning from the Users page see **org-assignable** roles.
+
+### RBAC implementation strategy
+
+Authorization uses **two enforcement layers** — coarse gates at the route, fine-grained scoping in services:
+
+```text
+Request → authenticate → requireOrgModule (if applicable) → requirePermission → service data scope → repository (organizationId filter)
+```
+
+| Layer | Question answered | Example |
+| ----- | ----------------- | ------- |
+| **1 — Route middleware** | Can this user perform this *type* of action? | `requirePermission('leads:write')` on `POST /leads` |
+| **2 — Service scoping** | Can this user access *this specific record*? | Executive with `leads:read` sees only assigned leads; team lead with `leads:read:team` sees team leads |
+
+**Frontend mirrors backend** for UX (sidebar visibility, route guards) but is **advisory only** — the API is authoritative.
+
+| Mechanism | Purpose |
+| --------- | ------- |
+| `RequirePermission` route guard | Block navigation to unauthorized pages |
+| `authSelectors` (`selectHasPermission`, `selectHasModule`) | Conditional UI rendering |
+| `leadAccess.service` / `user.service` | Record-level list and single-record filters |
+
+Permission changes take effect on the **next request** — the JWT is not the source of truth; the database role assignment is reloaded on every authenticated call.
 
 ### Role summary
 
@@ -441,6 +515,20 @@ Visual reference for major screens is in [§20 UI screenshots](#20-ui-screenshot
 - From Negotiation, only Won or Lost are allowed
 - Won/Lost leads are **closed** - edit, assign, and status advance actions are disabled
 
+### Lead status change tracking
+
+Every lead status change is **tracked and visible** on the lead detail page.
+
+| Mechanism | What is recorded |
+| --------- | ---------------- |
+| **Audit log** | Each status change writes `LEAD_STATUS_CHANGED` to `audit_logs` with `before.status`, `after.status`, actor, and timestamp |
+| **Status history API** | `GET /api/v1/leads/:id/status-history` builds a timeline from audit records |
+| **Lead detail UI** | **Status history** section shows a chronological timeline: initial creation (→ New) plus each transition (from → to) with who changed it and when |
+
+Status history is derived from the **audit trail**, not a separate `lead_status_history` table — a single source of truth for compliance and UI. Initial creation appears as the first entry (from `LEAD_CREATED` audit or lead `createdAt` fallback).
+
+Status changes also emit a `LEAD_STATUS_CHANGED` **domain event** (for notifications) and appear in the org audit trail as `LEAD_STATUS_CHANGED`.
+
 ### Lead detail page (`/leads/:id`)
 
 Not a table — a detail view with:
@@ -497,6 +585,26 @@ Users with `activities:write` permission (default: **Executive**).
 ## 11. Notifications
 
 In-app notifications only. No email or SMS. Delivery uses **REST polling** (every 60 seconds), not WebSockets.
+
+### Implementation approach (event-driven, loosely coupled)
+
+Notifications follow an **event-driven, loosely coupled** design. The Sales module (leads, activities) **does not create notification rows directly**.
+
+```text
+lead.service / activity.service  →  eventBus.emit(domain event)  →  notification.handler  →  notifications table
+```
+
+| Principle | How it is applied |
+| --------- | ----------------- |
+| **Separation of concerns** | Domain services (`lead.service`, `activity.service`) persist business data and emit events; they have no dependency on the notification system |
+| **In-process event bus** | A lightweight `EventEmitter` dispatches events after successful DB writes (`LEAD_CREATED`, `LEAD_ASSIGNED`, `LEAD_REASSIGNED`, `LEAD_STATUS_CHANGED`, `ACTIVITY_LOGGED`) |
+| **Dedicated handler** | `notification.handler` subscribes at server startup, resolves recipients, checks the `notifications` org module, and bulk-inserts notification rows |
+| **Fire-and-forget** | Handler errors are caught and logged; they do not fail the originating lead/activity operation |
+| **Welcome notifications** | Account welcome alerts (`WELCOME_CHANGE_PASSWORD`) are created by `welcomeNotification.service` during user provisioning — the only path that writes notifications outside the event handler |
+
+This keeps the Sales ERP module independent of notification delivery. Disabling the `notifications` module stops the handler from persisting lead-event alerts without changing lead or activity code.
+
+See [Architecture — Notification Design](architecture.md#notification-design) for the full pipeline diagram.
 
 ### Notification types
 
@@ -1039,6 +1147,12 @@ Items below are **not implemented** in the MVP but are documented as evolution p
 
 - Time-based archival or partitioning for `audit_logs` and `notifications`
 - Read replicas for heavy list endpoints
+
+### Lead assignment (potential)
+
+- **Round-robin assignment** — automatically distribute new or unassigned leads across executives in rotation
+- **Least-loaded assignment** — assign to the executive with the fewest open leads in the team
+- Configurable assignment rules per team or organization
 
 ### Product extensions (potential)
 
