@@ -1190,7 +1190,3 @@ Screenshots live under `docs/assets/screenshots/`, grouped by public pages, shar
 ![Leads list - executive view](assets/screenshots/executive/leads-list.png)
 
 ![Lead detail](assets/screenshots/executive/lead-detail.png)
-
----
-
-_Authoritative sources when this document and the codebase diverge: `apps/backend/prisma/schema.prisma`, `apps/backend/src/constants/defaultRoles.ts`, `packages/shared/src/permissions.ts`, `packages/shared/src/dashboardWidgets.ts`._
