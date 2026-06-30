@@ -34,6 +34,7 @@ Complete product reference for **HILITE Sales OS** — a multi-tenant sales ERP 
 17. [Future scope](#17-future-scope)
 18. [Glossary](#18-glossary)
 19. [Development seed accounts](#19-development-seed-accounts)
+20. [UI screenshots](#20-ui-screenshots)
 
 ---
 
@@ -398,6 +399,8 @@ Full list of permissions available when creating custom roles or understanding b
 | Platform audit | `/platform/audit` | `platform:audit:read` | — |
 | Privacy / Terms | `/privacy`, `/terms` | Public | — |
 | Home | `/home` | Fallback landing | — |
+
+Visual reference for major screens is in [§20 UI screenshots](#20-ui-screenshots).
 
 ---
 
@@ -1083,6 +1086,110 @@ After `npm run db:seed`:
 | `admin@hilitebuilders.com` | Org Admin | `HBuilders@123` | HiLite Builders org |
 
 The seed also creates sample organization **HiLite Builders** (`hilite-builders`) with default roles and all modules enabled.
+
+---
+
+## 20. UI screenshots
+
+Screenshots live under `docs/assets/screenshots/`, grouped by public pages, shared account screens, platform admin, org admin, and role-specific dashboards.
+
+### Public
+
+| Screen | Route |
+| ------ | ----- |
+| Login | `/login` |
+| Privacy policy | `/privacy` |
+| Terms & conditions | `/terms` |
+
+![Login page](assets/screenshots/public/login-page.png)
+
+![Privacy policy](assets/screenshots/public/privacy-policy.png)
+
+![Terms and conditions](assets/screenshots/public/terms-and-conditions.png)
+
+### Account (all authenticated users)
+
+| Screen | Route |
+| ------ | ----- |
+| Account settings | `/account` |
+| Change password | `/account` (dialog) |
+
+![Account settings](assets/screenshots/account/account-settings.png)
+
+![Change password](assets/screenshots/account/change-password.png)
+
+### Platform admin
+
+| Screen | Route |
+| ------ | ----- |
+| Organizations list | `/platform/organizations` |
+| Create organization | `/platform/organizations` (dialog) |
+| Organization detail | `/platform/organizations/:id` |
+| Platform admins | `/platform/admins` |
+| Platform audit trail | `/platform/audit` |
+
+![Organizations list](assets/screenshots/platform-admin/organizations-list.png)
+
+![Create organization](assets/screenshots/platform-admin/create-organization.png)
+
+![Organization detail](assets/screenshots/platform-admin/organization-detail.png)
+
+![Platform admins](assets/screenshots/platform-admin/platform-admins.png)
+
+![Platform audit trail](assets/screenshots/platform-admin/platform-audit-trail.png)
+
+### Org admin
+
+| Screen | Route |
+| ------ | ----- |
+| Teams list | `/teams` |
+| Leads list (org-wide) | `/leads` |
+| Roles & permissions | `/roles` |
+| Create role | `/roles` (dialog) |
+
+![Teams list](assets/screenshots/org-admin/teams-list.png)
+
+![Leads list — org admin view](assets/screenshots/org-admin/leads-list.png)
+
+![Roles and permissions](assets/screenshots/org-admin/roles-and-permissions.png)
+
+![Create role](assets/screenshots/org-admin/create-role.png)
+
+### Director
+
+| Screen | Route |
+| ------ | ----- |
+| Organization dashboard | `/dashboard` |
+
+![Organization dashboard](assets/screenshots/director/dashboard.png)
+
+### Team leader
+
+| Screen | Route |
+| ------ | ----- |
+| Team dashboard | `/dashboard` |
+| My team | `/my-team` |
+
+![Team dashboard](assets/screenshots/team-leader/dashboard.png)
+
+![My team](assets/screenshots/team-leader/my-team.png)
+
+### Executive
+
+| Screen | Route |
+| ------ | ----- |
+| My dashboard | `/dashboard` |
+| Customize dashboard | `/dashboard` (sheet) |
+| Leads list (assigned) | `/leads` |
+| Lead detail | `/leads/:id` |
+
+![My dashboard](assets/screenshots/executive/dashboard.png)
+
+![Customize dashboard](assets/screenshots/executive/dashboard-customize.png)
+
+![Leads list — executive view](assets/screenshots/executive/leads-list.png)
+
+![Lead detail](assets/screenshots/executive/lead-detail.png)
 
 ---
 

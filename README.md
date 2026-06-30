@@ -36,6 +36,7 @@ apps/backend/     Express API, Prisma schema, migrations, seeds
 apps/frontend/    React SPA
 packages/shared/  Shared constants, types, and Zod schemas
 docs/             Product guide, architecture, OpenAPI spec, schema reference
+docs/assets/      Screenshots and other documentation assets
 ```
 
 ## Prerequisites
@@ -123,10 +124,16 @@ After running `npm run db:seed`, these users are available for auth testing:
 
 The UI uses **light**, **dark**, and **system** modes. Use the toggle in the app header (or on the login page) to switch themes.
 
+## Screenshots
+
+![Login page](docs/assets/screenshots/public/login-page.png)
+
+Full UI screenshots by role and feature area are in the [Product guide — UI screenshots](docs/product-guide.md#20-ui-screenshots).
+
 ## Documentation
 
-- [Product guide](docs/product-guide.md) - features, roles, permissions, notifications, audit, dashboards, and UI reference
+- [Product guide](docs/product-guide.md) - features, roles, permissions, notifications, audit, dashboards, UI reference, and [screenshots](docs/product-guide.md#20-ui-screenshots)
 - [API specification (OpenAPI)](docs/openapi.yaml) - import into [Swagger Editor](https://editor.swagger.io) to browse and try endpoints
 - [Architecture](docs/architecture.md) - system design, auth, tenancy, multi-org readiness, notifications, scaling
-- [Database schema](docs/database-schema.md)
-- [ER diagram](docs/er-diagram.md)
+- [Database schema](docs/database-schema.md) - table-level reference, columns, enums, and relationships
+- [ER diagram](docs/er-diagram.md) - entity-relationship diagram of all database tables
