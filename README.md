@@ -128,7 +128,7 @@ The UI uses **light**, **dark**, and **system** modes. Use the toggle in the app
 
 ![Login page](docs/assets/screenshots/public/login-page.png)
 
-Full UI screenshots by role and feature area are in the [Product guide — UI screenshots](docs/product-guide.md#20-ui-screenshots).
+Full UI screenshots by role and feature area are in the [Product guide - UI screenshots](docs/product-guide.md#20-ui-screenshots).
 
 ## Documentation
 
